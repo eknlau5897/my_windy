@@ -49,7 +49,7 @@
     };
 
     // Error radii in meters (12h, 24h, 48h, etc.)
-    const forecastErrorRadii = { 0: 0, 24: 150000, 48: 180000, 72: 280000, 96: 380000, 120: 450000 };
+    //const forecastErrorRadii = { 0: 0, 24: 150000, 48: 180000, 72: 280000, 96: 380000, 120: 450000 };
 
     const pastTrack = [
         { lat: 8.6, lon: 153, intensity: "T.D.", wind: 45 },
@@ -57,17 +57,19 @@
         { lat: 8, lon: 151.3, intensity: "T.D.", wind: 60 },
         { lat: 8, lon: 151, intensity: "T.D.", wind: 60 },
         { lat: 8, lon: 150.4, intensity: "T.S.", wind: 65 },
-	{ lat: 8.1, lon: 150.6, intensity: "S.T.S.", wind: 105 }
+	{ lat: 8.1, lon: 150.6, intensity: "S.T.S.", wind: 105 },
+    { lat: 8.1, lon: 151.3, intensity: "S.T.S.", wind: 105 },
+    { lat: 8.4, lon: 151.5, intensity: "S.T.S.", wind: 110 }
     ];
 
     // Added 'hour' property to forecastTrack for the cone calculation
     const forecastTrack = [
-        { lat: 8.1, lon: 150.6, intensity: "S.T.S.", wind: 105, hour: 0 },
-        { lat: 8.7, lon: 151, intensity: "T.", wind: 145, hour: 24 },
-        { lat: 10.5, lon: 150.2, intensity: "SuperT.", wind: 190, hour: 48 },
-        { lat: 12.5, lon: 147.0, intensity: "SuperT.", wind: 205, hour: 72 },
-        { lat: 14.7, lon: 145.7, intensity: "SuperT.", wind: 205, hour: 96 },
-        { lat: 16.2, lon: 144.8, intensity: "SuperT.", wind: 205, hour: 120 }
+        { lat: 8.4, lon: 151.5, intensity: "S.T.S.", wind: 110,pressure: 978, hour: 0 },
+        { lat: 9.8, lon: 150.5, intensity: "T.", wind: 145,pressure: 955, hour: 24 },
+        { lat: 11.9, lon: 148.5, intensity: "SuperT.", wind: 200, pressure:930, hour: 48 },
+        { lat: 13.8, lon: 145.3, intensity: "SuperT.", wind: 200, pressure:930, hour: 72 },
+        { lat: 15.5, lon: 143.4, intensity: "SuperT.", wind: 200, pressure:930,hour: 96 },
+        { lat: 17.1, lon: 142.1, intensity: "SuperT.", wind: 190, pressure:935,hour: 120 }
     ];
 
     // --- 1. DRAW UNCERTAINTY CONE ---
@@ -87,8 +89,8 @@
             fillOpacity: 1
         }).addTo(map);
 
-        marker.bindTooltip(`${point.wind} km/h`, { permanent: true, direction: 'right', className: 'wind-label', offset: [10, 0] });
-        marker.bindPopup(`<b>${style.name}</b><br>Wind: ${point.wind} km/h`);
+        //marker.bindTooltip(`${point.wind} km/h`, { permanent: true, direction: 'right', className: 'wind-label', offset: [10, 0] });
+        marker.bindPopup(`<b>${style.name}</b><br>Wind: ${point.wind} km/h,Pressure:${point.pressure}`);
     }
 
     // --- 3. EXECUTION ---
