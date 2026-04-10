@@ -118,6 +118,8 @@
             
             window.radarLayer = L.tileLayer(radarUrl, { 
                 opacity: 0.5,
+                maxZoom:11,
+                maxNativeZoom:7
                 zIndex: 100 // Ensure radar stays above the wind overlay
             }).addTo(map);
         })
