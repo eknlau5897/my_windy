@@ -66,17 +66,19 @@
 		{ lat: 9.9, lon: 151, intensity: "S.T.", wind: 180 ,pressure:940},
         { lat: 10.2, lon: 150.8, intensity: "SuperT.", wind: 220 ,pressure:915},
         { lat: 10.5, lon: 150.5, intensity: "ViolentT.", wind: 265 ,pressure:898},
-		{ lat: 11.1, lon: 150.2, intensity: "ViolentT.", wind: 265 ,pressure:898}
+		{ lat: 11.1, lon: 150.2, intensity: "ViolentT.", wind: 265 ,pressure:898},
+		{ lat: 11.6, lon: 149.5, intensity: "ViolentT.", wind: 275 ,pressure:894},
+		{ lat: 12.1, lon: 148.5, intensity: "ViolentT.", wind: 265 ,pressure:898}
     ];
 
     // Added 'hour' property to forecastTrack for the cone calculation
     const forecastTrack = [
-        { lat: 11.1, lon: 150.2, intensity: "ViolentT.", wind: 265 ,pressure:898,hour:0 },
-        { lat: 13.3, lon: 147.3, intensity: "ViolentT.", wind: 275,pressure: 894, hour: 24 },
-        { lat: 15.2, lon: 145.4,intensity: "ViolentT.", wind: 250, pressure:906, hour: 48 },
-        { lat: 17.2, lon: 144.4, intensity: "SuperT.", wind: 215, pressure:925, hour: 72 },
-        { lat: 19.8,lon: 144.2, intensity: "SuperT.", wind: 190, pressure:935, hour: 96 },
-        { lat: 22.6,lon: 145.8, intensity: "S.T.", wind: 155, pressure:955,hour: 120 }
+        { lat: 12.1, lon: 148.5, intensity: "ViolentT.", wind: 265 ,pressure:898,hour:0 },
+        { lat: 14.5, lon: 145.9, intensity: "ViolentT.", wind: 250,pressure: 905, hour: 24 },
+        { lat: 16, lon: 144.5,intensity: "SuperT.", wind: 220, pressure:920, hour: 48 },
+        { lat: 18.5, lon: 143.5, intensity: "S.T.", wind: 180, pressure:945, hour: 72 },
+        { lat: 20.8,lon: 144.3, intensity: "T.", wind: 140, pressure:965, hour: 96 },
+        { lat: 23.4,lon: 145.6, intensity: "T.", wind: 120, pressure:975,hour: 120 }
     ];
 
     // --- 1. DRAW UNCERTAINTY CONE ---
