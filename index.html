@@ -45,7 +45,8 @@
         "S.T.S.":  { color: '#0000FF', radius: 8, name: 'Severe Tropical Storm' },
         "T.":      { color: '#FFC000', radius: 8, name: 'Typhoon' },
         "S.T.":    { color: '#FF0000', radius: 8, name: 'Severe Typhoon' },
-        "SuperT.": { color: '#800080', radius: 8, name: 'Super Typhoon' }
+        "SuperT.": { color: '#800080', radius: 8, name: 'Super Typhoon' },
+        "ViolentT.": {color: '#800080', radius: 8, name: 'Violent Typhoon'}
     };
 
     // Error radii in meters (12h, 24h, 48h, etc.)
@@ -62,17 +63,19 @@
     { lat: 8.4, lon: 151.5, intensity: "S.T.S.", wind: 110 ,pressure:978},
 		{ lat: 8.7, lon: 151.6, intensity: "T.", wind: 130 ,pressure:965},
 		{ lat: 8.9, lon: 151.4, intensity: "T.", wind: 145 ,pressure:960},
-		{ lat: 9.9, lon: 151, intensity: "S.T.", wind: 180 ,pressure:940}
+		{ lat: 9.9, lon: 151, intensity: "S.T.", wind: 180 ,pressure:940},
+        { lat: 10.2, lon: 150.8, intensity: "SuperT.", wind: 220 ,pressure:915},
+        { lat: 10.5, lon: 150.5, intensity: "ViolentT.", wind: 265 ,pressure:898}
     ];
 
     // Added 'hour' property to forecastTrack for the cone calculation
     const forecastTrack = [
-        { lat: 9.9, lon: 151, intensity: "S.T.", wind: 180,pressure: 940, hour: 0 },
-        { lat: 12, lon: 148.9, intensity: "SuperT.", wind: 200,pressure: 930, hour: 24 },
-        { lat: 14.1, lon: 146.2,intensity: "SuperT.", wind: 205, pressure:925, hour: 48 },
-        { lat: 16, lon: 145, intensity: "SuperT.", wind: 205, pressure:925, hour: 72 },
-        { lat: 18.3,lon: 144.5, intensity: "SuperT.", wind: 190, pressure:935, hour: 96 },
-        { lat: 20.9,lon: 145.7, intensity: "S.T.", wind: 170, pressure:945,hour: 120 }
+        { lat: 10.5, lon: 150.5, intensity: "ViolentT.", wind: 265 ,pressure:898},
+        { lat: 13, lon: 147.6, intensity: "ViolentT.", wind: 275,pressure: 894, hour: 24 },
+        { lat: 14.8, lon: 145.4,intensity: "SuperT.", wind: 230, pressure:910, hour: 48 },
+        { lat: 16.5, lon: 144.4, intensity: "SuperT.", wind: 215, pressure:925, hour: 72 },
+        { lat: 18.8,lon: 143.8, intensity: "S.T.", wind: 180, pressure:940, hour: 96 },
+        { lat: 21.6,lon: 144.5, intensity: "S.T.", wind: 155, pressure:955,hour: 120 }
     ];
 
     // --- 1. DRAW UNCERTAINTY CONE ---
