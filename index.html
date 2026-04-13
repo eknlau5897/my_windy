@@ -53,28 +53,28 @@
     //const forecastErrorRadii = { 0: 0, 24: 150000, 48: 180000, 72: 280000, 96: 380000, 120: 450000 };
 
     const pastTrack = [
-        { lat: 8.6, lon: 153, intensity: "T.D.", wind: 45 ,pressure:1002,hour: 8/4 20:00},
-        { lat: 8.7, lon: 152.1, intensity: "T.D.", wind: 50 ,pressure:1002,hour:9/4 08:00 },
-        { lat: 8, lon: 151.3, intensity: "T.D.", wind: 60 ,pressure:1000,hour:9/4 20:00},
-        { lat: 8, lon: 151, intensity: "T.D.", wind: 60 ,pressure:998, hour:10/4 08:00},
-        { lat: 8, lon: 150.4, intensity: "T.S.", wind: 65 ,pressure:996, hour:10/4 14:00},
-	{ lat: 8.1, lon: 150.6, intensity: "S.T.S.", wind: 105 ,pressure:982,hour:10/4 20:00},
-    { lat: 8.1, lon: 151.3, intensity: "S.T.S.", wind: 105 ,pressure:980, hour:11/4 02:00},
-    { lat: 8.4, lon: 151.5, intensity: "S.T.S.", wind: 110 ,pressure:978, hour:11/4 08:00},
-		{ lat: 8.7, lon: 151.6, intensity: "T.", wind: 130 ,pressure:965, hour:11/4 20:00},
-		{ lat: 8.9, lon: 151.4, intensity: "T.", wind: 145 ,pressure:960, hour:12/4 02:00},
-		{ lat: 9.9, lon: 151, intensity: "S.T.", wind: 180 ,pressure:940, hour:12/4 08:00},
-        { lat: 10.2, lon: 150.8, intensity: "SuperT.", wind: 220 ,pressure:915, hour:12/4 14:00},
-        { lat: 10.5, lon: 150.5, intensity: "ViolentT.", wind: 265 ,pressure:898, hour:12/4 17:00},
-		{ lat: 11.1, lon: 150.2, intensity: "ViolentT.", wind: 265 ,pressure:898, hour:12/4 20:00},
-		{ lat: 11.6, lon: 149.5, intensity: "ViolentT.", wind: 275 ,pressure:894, hour:13/4 02:00},
-		{ lat: 12.1, lon: 148.5, intensity: "ViolentT.", wind: 265 ,pressure:898, hour:13/4 08:00},
-		{ lat: 12.1, lon: 148.5, intensity: "ViolentT.", wind: 255 ,pressure:902, hour:13/4 16:00}
+        { lat: 8.6, lon: 153, intensity: "T.D.", wind: 45 ,pressure:1002,hour: 8-4 12Z},
+        { lat: 8.7, lon: 152.1, intensity: "T.D.", wind: 50 ,pressure:1002,hour: 9-4 00Z},
+        { lat: 8, lon: 151.3, intensity: "T.D.", wind: 60 ,pressure:1000,hour:9-4 12Z},
+        { lat: 8, lon: 151, intensity: "T.D.", wind: 60 ,pressure:998, hour:10-4 00Z},
+        { lat: 8, lon: 150.4, intensity: "T.S.", wind: 65 ,pressure:996, hour:10-4 06Z},
+	{ lat: 8.1, lon: 150.6, intensity: "S.T.S.", wind: 105 ,pressure:982,hour:10-4 12Z},
+    { lat: 8.1, lon: 151.3, intensity: "S.T.S.", wind: 105 ,pressure:980, hour:10-4 18Z},
+    { lat: 8.4, lon: 151.5, intensity: "S.T.S.", wind: 110 ,pressure:978, hour:11-4 00Z},
+		{ lat: 8.7, lon: 151.6, intensity: "T.", wind: 130 ,pressure:965, hour:11-4 12Z},
+		{ lat: 8.9, lon: 151.4, intensity: "T.", wind: 145 ,pressure:960, hour:11-4 18Z},
+		{ lat: 9.9, lon: 151, intensity: "S.T.", wind: 180 ,pressure:940, hour:12-4 00Z},
+        { lat: 10.2, lon: 150.8, intensity: "SuperT.", wind: 220 ,pressure:915, hour:12-4 06Z},
+        { lat: 10.5, lon: 150.5, intensity: "ViolentT.", wind: 265 ,pressure:898, hour:12-4 09Z},
+		{ lat: 11.1, lon: 150.2, intensity: "ViolentT.", wind: 265 ,pressure:898, hour:12-4 12Z},
+		{ lat: 11.6, lon: 149.5, intensity: "ViolentT.", wind: 275 ,pressure:894, hour:12-4 18Z},
+		{ lat: 12.1, lon: 148.5, intensity: "ViolentT.", wind: 265 ,pressure:898, hour:13-4 00Z},
+		{ lat: 12.1, lon: 148.5, intensity: "ViolentT.", wind: 255 ,pressure:902, hour:13-4 08Z}
     ];
 
     // Added 'hour' property to forecastTrack for the cone calculation
     const forecastTrack = [
-        { lat: 12.8, lon: 147.8, intensity: "ViolentT.", wind: 255 ,pressure:902,hour:13/4 16:00 },
+        { lat: 12.8, lon: 147.8, intensity: "ViolentT.", wind: 255 ,pressure:902,hour:13-4 08Z},
         { lat: 14.9, lon: 146.1, intensity: "ViolentT.", wind: 240,pressure: 905, hour:T+24 },
         { lat: 16.5, lon: 144.7,intensity: "SuperT.", wind: 205, pressure:920, hour: T+48 },
         { lat: 19.1,lon: 144, intensity: "S.T.", wind: 170, pressure:948, hour: T+72 },
