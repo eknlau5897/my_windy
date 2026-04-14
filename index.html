@@ -110,16 +110,18 @@ windyInit(options, windyAPI => {
     const forecastLine = L.polyline([], { color: 'red', weight: 2, dashArray: '5, 10' }).addTo(map);
 
     function addMarker(point, isPast, isForecast) {
-        const style = intensityStyles[point.intensity] || { color: '#fff', radius: 4, name: 'Unknown' };
-        const marker = L.circleMarker([point.lat, point.lon], {
-            radius: style.radius,
-            fillColor: style.color,
-            color: isPast ? '#000' : 'red',
-            weight: 1.5,
-            fillOpacity: 1
-        }).addTo(map);
-        marker.bindPopup(`<b>${style.name}</b><br>Wind: ${point.wind} km/h, Pressure: ${point.pressure}, Time: ${point.hour}`);
-    }
+    const style = intensityStyles[point.intensity] || { color: '#fff', radius: 4, name: 'Unknown' };
+    const marker = L.circleMarker([point.lat, point.lon], {
+        radius: style.radius,
+        fillColor: style.color,
+        color: isPast ? '#000' : 'red',
+        weight: 1.5,
+        fillOpacity: 1
+    }).addTo(map);
+
+    // Bind the content
+    marker.bindPopup(`<b>${style.name}</b><br>Wind: ${point.wind} km/h, Pressure: ${point.pressure}, Time: ${point.hour}`)
+	};
 
     pastTrack.forEach(p => addMarker(p, true));
 
