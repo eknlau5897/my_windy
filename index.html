@@ -101,6 +101,9 @@ windyInit(options, windyAPI => {
         { lat: 28.2, lon: 156.8, intensity: "T.S.", wind: 70 ,pressure:994,hour:"19-4 09Z"}
     ];
 
+    const forecastErrors = [0, 100000, 250000, 450000, 650000, 900000];
+
+    // Visual elements
     L.circle([22.3193, 114.1694], { color: '#000000', fillOpacity: 0.05, radius: 800000, weight: 1 }).addTo(map);
     L.polyline(pastTrack.map(p => [p.lat, p.lon]), { color: '#333', weight: 2 }).addTo(map);
     const forecastLine = L.polyline([], { color: 'red', weight: 2, dashArray: '5, 10' }).addTo(map);
@@ -118,10 +121,47 @@ windyInit(options, windyAPI => {
     }
 
     pastTrack.forEach(p => addMarker(p, true));
-	const forecastErrors = [0, 100000, 250000, 450000, 650000, 900000];
 
-    // 2. RADAR LOGIC
-    const updateRadar = () => {
+    function drawUncertaintyCone(track, errors) {
+        const leftPoints = [];
+        const rightPoints = [];
+
+        track.forEach((point, i) => {
+            const radius = errors[i] || errors[errors.length - 1];
+            if (radius === 0) {
+                leftPoints.push([point.lat, point.lon]);
+                return;
+            }
+            const next = track[i + 1] || track[i - 1];
+            const bearing = Math.atan2(next.lon - point.lon, next.lat - point.lat);
+            const angleOffset = (i === track.length - 1) ? 0 : Math.PI / 2;
+            const latOffset = (radius / 111320); 
+            const lonOffset = (radius / (111320 * Math.cos(point.lat * Math.PI / 180)));
+
+            leftPoints.push([point.lat + latOffset * Math.cos(bearing + angleOffset), point.lon + lonOffset * Math.sin(bearing + angleOffset)]);
+            rightPoints.unshift([point.lat + latOffset * Math.cos(bearing - angleOffset), point.lon + lonOffset * Math.sin(bearing - angleOffset)]);
+        });
+
+        L.polygon(leftPoints.concat(rightPoints), {
+            color: 'red', weight: 1, fillColor: 'red', fillOpacity: 0.1, dashArray: '5, 5', interactive: false
+        }).addTo(map);
+    }
+
+    let step = 0;
+    function animateForecast() {
+        if (step < forecastTrack.length) {
+            forecastLine.addLatLng([forecastTrack[step].lat, forecastTrack[step].lon]);
+            addMarker(forecastTrack[step], false);
+            step++;
+            setTimeout(animateForecast, 600);
+        } else {
+            drawUncertaintyCone(forecastTrack, forecastErrors);
+        }
+    }
+
+    // Start the processes
+    animateForecast();
+	 const updateRadar = () => {
         fetch('https://api.rainviewer.com/public/weather-maps.json')
             .then(res => res.json())
             .then(data => {
@@ -139,57 +179,10 @@ windyInit(options, windyAPI => {
             })
             .catch(err => console.error("Radar failed:", err));
     };
-    updateRadar();
-	function drawUncertaintyCone(track, errors) {
-    const leftPoints = [];
-    const rightPoints = [];
-
-    track.forEach((point, i) => {
-        const radius = errors[i] || errors[errors.length - 1];
-        if (radius === 0) {
-            leftPoints.push([point.lat, point.lon]);
-            return;
-        }
-
-        // Calculate bearing between current and next point to offset the cone sides
-        const next = track[i + 1] || track[i - 1];
-        const bearing = Math.atan2(next.lon - point.lon, next.lat - point.lat);
-        
-        // Push points for both sides of the cone (90 degrees off the track)
-        const angleOffset = (i === track.length - 1) ? 0 : Math.PI / 2;
-        
-        // Simple approximation for lat/lon offset based on meters
-        const latOffset = (radius / 111320); 
-        const lonOffset = (radius / (111320 * Math.cos(point.lat * Math.PI / 180)));
-
-        leftPoints.push([point.lat + latOffset * Math.cos(bearing + angleOffset), point.lon + lonOffset * Math.sin(bearing + angleOffset)]);
-        rightPoints.unshift([point.lat + latOffset * Math.cos(bearing - angleOffset), point.lon + lonOffset * Math.sin(bearing - angleOffset)]);
-    });
-
-    // Combine sides to create a single closed polygon
-    const coneCoords = leftPoints.concat(rightPoints);
-    L.polygon(coneCoords, {
-        color: 'red',
-        weight: 1,
-        fillColor: 'red',
-        fillOpacity: 0.1,
-        dashArray: '5, 5',
-        interactive: false
-    }).addTo(map);
-	let step = 0;
-function animateForecast() {
-    if (step < forecastTrack.length) {
-        forecastLine.addLatLng([forecastTrack[step].lat, forecastTrack[step].lon]);
-        addMarker(forecastTrack[step], false);
-        step++;
-        setTimeout(animateForecast, 600);
-    } else {
-        // DRAW THE CONE ONCE ANIMATION FINISHES
-        drawUncertaintyCone(forecastTrack, forecastErrors);
-    }
-}
-}
+    updateRadar(); // Assuming updateRadar is defined as in your snippet
 });
+
+    // 2. RADAR LOGIC
 // 3. TOGGLE FUNCTION (Outside init, using global leafletMap)
 		function toggleHimawari() {
             const btn = document.getElementById('toggleH9');
