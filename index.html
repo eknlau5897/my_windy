@@ -142,6 +142,24 @@
 };
 updateRadar();
 });
+		document.getElementById('toggleRadar').onclick = function() {
+    if (!window.radarLayer || !leafletMap) return;
+
+    if (leafletMap.hasLayer(window.radarLayer)) {
+        leafletMap.removeLayer(window.radarLayer);
+        this.style.background = "#555"; // Optional: dim button when off
+    } else {
+        leafletMap.addLayer(window.radarLayer);
+        this.style.background = "#fff"; // Optional: highlight button when on
+    }
+};
+
+// Also define the changeOverlay function used in your HTML buttons
+function changeOverlay(type) {
+    if (window.windyStore) {
+        window.windyStore.set('overlay', type);
+    }
+}
     </script>
 </body>
 </html>
