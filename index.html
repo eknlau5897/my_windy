@@ -26,19 +26,24 @@
 
     <script>
         let windyStore, radarLayer;
+		let leafletMap; // Global reference for the toggle function
 
-        const options = {
-            key: 'oY3mEEE9INICIpQQi8QvQlDJA365LMC3', // Replace with your actual key
-            lat: 22.3,
-            lon: 114.17,
-            zoom: 5
-            // --- SMOOTH ZOOM SETTINGS ---
-        };
+const options = {
+    key: 'oY3mEEE9INICIpQQi8QvQlDJA365LMC3',
+    lat: 22.3,
+    lon: 114.17,
+    zoom: 5
+};
 
-       windyInit(options, windyAPI => {
+windyInit(options, windyAPI => {
+    // 1. Assign global references from the API
     const { map, store } = windyAPI;
+    leafletMap = map;
+    windyStore = store;
+
     store.set('overlay', 'wind');
 
+    // --- TYPHOON TRACK DATA & VISUALS ---
     const intensityStyles = {
         "T.D.":    { color: '#808080', radius: 8, name: 'Tropical Depression' },
         "T.S.":    { color: '#008000', radius: 8, name: 'Tropical Storm' },
@@ -49,33 +54,29 @@
         "ViolentT.": {color: '#000000', radius: 8, name: 'Violent Typhoon'}
     };
 
-    // Error radii in meters (12h, 24h, 48h, etc.)
-    //const forecastErrorRadii = { 0: 0, 24: 150000, 48: 180000, 72: 280000, 96: 380000, 120: 450000 };
-
     const pastTrack = [
         { lat: 8.6, lon: 153, intensity: "T.D.", wind: 45 ,pressure:1002,hour: "8-4 12Z"},
         { lat: 8.7, lon: 152.1, intensity: "T.D.", wind: 50 ,pressure:1002,hour: "9-4 00Z"},
         { lat: 8, lon: 151.3, intensity: "T.D.", wind: 60 ,pressure:1000,hour:"9-4 12Z"},
         { lat: 8, lon: 151, intensity: "T.D.", wind: 60 ,pressure:998, hour:"10-4 00Z"},
         { lat: 8, lon: 150.4, intensity: "T.S.", wind: 65 ,pressure:996, hour:"10-4 06Z"},
-	{ lat: 8.1, lon: 150.6, intensity: "S.T.S.", wind: 105 ,pressure:982,hour:"10-4 12Z"},
-    { lat: 8.1, lon: 151.3, intensity: "S.T.S.", wind: 105 ,pressure:980, hour:"10-4 18Z"},
-    { lat: 8.4, lon: 151.5, intensity: "S.T.S.", wind: 110 ,pressure:978, hour:"11-4 00Z"},
-		{ lat: 8.7, lon: 151.6, intensity: "T.", wind: 130 ,pressure:965, hour:"11-4 12Z"},
-		{ lat: 8.9, lon: 151.4, intensity: "T.", wind: 145 ,pressure:960, hour:"11-4 18Z"},
-		{ lat: 9.9, lon: 151, intensity: "S.T.", wind: 180 ,pressure:940, hour:"12-4 00Z"},
+        { lat: 8.1, lon: 150.6, intensity: "S.T.S.", wind: 105 ,pressure:982,hour:"10-4 12Z"},
+        { lat: 8.1, lon: 151.3, intensity: "S.T.S.", wind: 105 ,pressure:980, hour:"10-4 18Z"},
+        { lat: 8.4, lon: 151.5, intensity: "S.T.S.", wind: 110 ,pressure:978, hour:"11-4 00Z"},
+        { lat: 8.7, lon: 151.6, intensity: "T.", wind: 130 ,pressure:965, hour:"11-4 12Z"},
+        { lat: 8.9, lon: 151.4, intensity: "T.", wind: 145 ,pressure:960, hour:"11-4 18Z"},
+        { lat: 9.9, lon: 151, intensity: "S.T.", wind: 180 ,pressure:940, hour:"12-4 00Z"},
         { lat: 10.2, lon: 150.8, intensity: "SuperT.", wind: 220 ,pressure:915, hour:"12-4 06Z"},
         { lat: 10.5, lon: 150.5, intensity: "ViolentT.", wind: 265 ,pressure:898, hour:"12-4 09Z"},
-		{ lat: 11.1, lon: 150.2, intensity: "ViolentT.", wind: 265 ,pressure:898, hour:"12-4 12Z"},
-		{ lat: 11.6, lon: 149.5, intensity: "ViolentT.", wind: 275 ,pressure:894, hour:"12-4 18Z"},
-		{ lat: 12.1, lon: 148.5, intensity: "ViolentT.", wind: 265 ,pressure:898, hour:"13-4 00Z"},
-		{ lat: 12.8, lon: 147.8, intensity: "ViolentT.", wind: 255 ,pressure:902, hour:"13-4 08Z"},
-		{ lat: 13.1, lon: 147.6, intensity: "ViolentT.", wind: 250 ,pressure:905, hour:"13-4 12Z"},
-		{ lat: 13.9, lon: 146.8, intensity: "ViolentT.", wind: 250 ,pressure:905, hour:"13-4 21Z"},
-		{ lat: 14.3, lon: 146.6, intensity: "SuperT.", wind: 230 ,pressure:915, hour:"14-4 00Z"}
+        { lat: 11.1, lon: 150.2, intensity: "ViolentT.", wind: 265 ,pressure:898, hour:"12-4 12Z"},
+        { lat: 11.6, lon: 149.5, intensity: "ViolentT.", wind: 275 ,pressure:894, hour:"12-4 18Z"},
+        { lat: 12.1, lon: 148.5, intensity: "ViolentT.", wind: 265 ,pressure:898, hour:"13-4 00Z"},
+        { lat: 12.8, lon: 147.8, intensity: "ViolentT.", wind: 255 ,pressure:902, hour:"13-4 08Z"},
+        { lat: 13.1, lon: 147.6, intensity: "ViolentT.", wind: 250 ,pressure:905, hour:"13-4 12Z"},
+        { lat: 13.9, lon: 146.8, intensity: "ViolentT.", wind: 250 ,pressure:905, hour:"13-4 21Z"},
+        { lat: 14.3, lon: 146.6, intensity: "SuperT.", wind: 230 ,pressure:915, hour:"14-4 00Z"}
     ];
 
-    // Added 'hour' property to forecastTrack for the cone calculation
     const forecastTrack = [
         { lat: 14.3, lon: 146.6, intensity: "SuperT.", wind: 230 ,pressure:915, hour:"14-4 00Z"},
         { lat: 15.7, lon: 145.8, intensity: "SuperT.", wind: 205,pressure: 925, hour:"14-4 21Z"},
@@ -85,9 +86,6 @@
         { lat: 26.4, lon: 154.8, intensity: "S.T.S.", wind: 105 ,pressure:984,hour:"18-4 21Z"}
     ];
 
-    // --- 1. DRAW UNCERTAINTY CONE ---
-
-    // --- 2. TRACK VISUALS ---
     L.circle([22.3193, 114.1694], { color: '#000000', fillOpacity: 0.05, radius: 800000, weight: 1 }).addTo(map);
     L.polyline(pastTrack.map(p => [p.lat, p.lon]), { color: '#333', weight: 2 }).addTo(map);
     const forecastLine = L.polyline([], { color: 'red', weight: 2, dashArray: '5, 10' }).addTo(map);
@@ -101,12 +99,9 @@
             weight: 1.5,
             fillOpacity: 1
         }).addTo(map);
-
-        //marker.bindTooltip(`${point.wind} km/h`, { permanent: true, direction: 'right', className: 'wind-label', offset: [10, 0] });
-        marker.bindPopup(`<b>${style.name}</b><br>Wind: ${point.wind} km/h,Pressure:${point.pressure},Time:${point.hour}`);
+        marker.bindPopup(`<b>${style.name}</b><br>Wind: ${point.wind} km/h, Pressure: ${point.pressure}, Time: ${point.hour}`);
     }
 
-    // --- 3. EXECUTION ---
     pastTrack.forEach(p => addMarker(p, true));
 
     let step = 0;
@@ -120,47 +115,52 @@
     }
     animateForecast();
 
-
-    // 7. RainViewer Radar Logic
+    // 2. RADAR LOGIC
     const updateRadar = () => {
-    fetch('https://api.rainviewer.com/public/weather-maps.json')
-        .then(res => res.json())
-        .then(data => {
-            const latest = data.radar.past.pop();
-            const radarUrl = `${data.host}${latest.path}/1024/{z}/{x}/{y}/2/1_1.png`;
-            
-            if (window.radarLayer) map.removeLayer(window.radarLayer);
-            
-            window.radarLayer = L.tileLayer(radarUrl, { 
-                opacity: 0.5,
-                maxZoom:11,
-                maxNativeZoom:7,
-                zIndex: 100 // Ensure radar stays above the wind overlay
-            }).addTo(map);
-        })
-        .catch(err => console.error("Radar failed:", err));
-};
-updateRadar();
-		let leafletMap;
-		document.getElementById('toggleRadar').onclick = function() {
-    if (!window.radarLayer || !leafletMap) return;
+        fetch('https://api.rainviewer.com/public/weather-maps.json')
+            .then(res => res.json())
+            .then(data => {
+                const latest = data.radar.past.pop();
+                const radarUrl = `${data.host}${latest.path}/1024/{z}/{x}/{y}/2/1_1.png`;
+                
+                if (window.radarLayer) map.removeLayer(window.radarLayer);
+                
+                window.radarLayer = L.tileLayer(radarUrl, { 
+                    opacity: 0.5,
+                    maxZoom: 11,
+                    maxNativeZoom: 7,
+                    zIndex: 100 
+                }).addTo(map);
+            })
+            .catch(err => console.error("Radar failed:", err));
+    };
+    updateRadar();
+});
+
+// 3. TOGGLE FUNCTION (Outside init, using global leafletMap)
+document.getElementById('toggleRadar').onclick = function() {
+    if (!window.radarLayer || !leafletMap) {
+        console.log("Radar layer or map not ready yet");
+        return;
+    }
 
     if (leafletMap.hasLayer(window.radarLayer)) {
         leafletMap.removeLayer(window.radarLayer);
-        this.style.background = "#555"; // Optional: dim button when off
+        this.style.background = "rgba(0,0,0,0.7)"; 
+        this.innerText = "Radar OFF";
     } else {
         leafletMap.addLayer(window.radarLayer);
-        this.style.background = "#fff"; // Optional: highlight button when on
+        this.style.background = "#2c3e50";
+        this.innerText = "Radar ON";
     }
 };
 
-// Also define the changeOverlay function used in your HTML buttons
+// 4. OVERLAY SWITCHER
 function changeOverlay(type) {
-    if (window.windyStore) {
-        window.windyStore.set('overlay', type);
+    if (windyStore) {
+        windyStore.set('overlay', type);
     }
 }
-	   });
-    </script>
+</script>
 </body>
 </html>
