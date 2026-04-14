@@ -100,9 +100,7 @@ windyInit(options, windyAPI => {
         { lat: 25.2, lon: 151.4, intensity: "T.", wind: 120 ,pressure:978, hour:"18-4 12Z"},
         { lat: 28.5, lon: 158.6, intensity: "S.T.S.", wind: 105 ,pressure:985,hour:"19-4 12Z"}
     ];
-	map.createPane('labelPane');
-map.getPane('labelPane').style.zIndex = 650; // Higher than standard markers (600) and vectors (400)
-map.getPane('labelPane').style.pointerEvents = 'none';
+	
     const forecastErrors = [0, 100000, 180000, 220000, 380000, 480000];
 
     // Static Visuals
@@ -112,25 +110,25 @@ map.getPane('labelPane').style.pointerEvents = 'none';
 
     function addMarker(point, isPast, isForecast) {
     const style = intensityStyles[point.intensity] || { color: '#fff', radius: 4, name: 'Unknown' };
+    
     const marker = L.circleMarker([point.lat, point.lon], {
         radius: style.radius,
         fillColor: style.color,
-        color: isPast ? '#000' : 'red',
+        color: isPast ? '#000' : 'red', // Black for past, Red for forecast
         weight: 1.5,
         fillOpacity: 1
     }).addTo(map);
 
-    // Add the popup to the custom 'labelPane' to stay above the cone
-    marker.bindPopup(`<b>${style.name}</b><br>Time: ${point.hour}`, {
-        autoClose: false,
-        closeOnClick: false,
-        pane: 'labelPane', // This keeps it above the cone
-        className: 'forecast-popup' 
-    });
-
-    if (!isPast) {
-        marker.openPopup();
-    }
+    // Bind popup with settings to keep multiple open at once
+    marker.bindPopup(
+        `<b>${style.name}</b><br>Wind: ${point.wind} km/h, Pressure:${point.pressure}hPa,Time: ${point.hour}`, 
+        { 
+            autoClose: true,      // KEY: Prevents closing when another opens
+            closeOnClick: true,   // KEY: Keeps labels if you click the map
+            offset: [0, -5],       // Shifts label slightly above the point
+            className: isPast ? 'past-label' : 'forecast-label'
+        }
+    ).openPopup(); // Open immediately so they appear as the animation runs
 };
 
     pastTrack.forEach(p => addMarker(p, true));
