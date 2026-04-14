@@ -123,43 +123,71 @@ windyInit(options, windyAPI => {
     pastTrack.forEach(p => addMarker(p, true));
 
     function drawUncertaintyCone(track, errors) {
-        const leftPoints = [];
-        const rightPoints = [];
+    const leftPoints = [];
+    const rightPoints = [];
 
-        track.forEach((point, i) => {
-            const radius = errors[i] || errors[errors.length - 1];
-            if (radius === 0) {
-                leftPoints.push([point.lat, point.lon]);
-                return;
-            }
-            const next = track[i + 1] || track[i - 1];
-            const bearing = Math.atan2(next.lon - point.lon, next.lat - point.lat);
-            const angleOffset = (i === track.length - 1) ? 0 : Math.PI / 2;
-            const latOffset = (radius / 111320); 
-            const lonOffset = (radius / (111320 * Math.cos(point.lat * Math.PI / 180)));
-
-            leftPoints.push([point.lat + latOffset * Math.cos(bearing + angleOffset), point.lon + lonOffset * Math.sin(bearing + angleOffset)]);
-            rightPoints.unshift([point.lat + latOffset * Math.cos(bearing - angleOffset), point.lon + lonOffset * Math.sin(bearing - angleOffset)]);
-        });
-
-        L.polygon(leftPoints.concat(rightPoints), {
-            color: 'red', weight: 1, fillColor: 'red', fillOpacity: 0.1, dashArray: '5, 5', interactive: false
-        }).addTo(map);
-    }
-
-    let step = 0;
-    function animateForecast() {
-        if (step < forecastTrack.length) {
-            forecastLine.addLatLng([forecastTrack[step].lat, forecastTrack[step].lon]);
-            addMarker(forecastTrack[step], false);
-            step++;
-            setTimeout(animateForecast, 600);
-        } else {
-            drawUncertaintyCone(forecastTrack, forecastErrors);
+    track.forEach((point, i) => {
+        const radius = errors[i] || 0;
+        if (radius === 0) {
+            leftPoints.push([point.lat, point.lon]);
+            rightPoints.unshift([point.lat, point.lon]);
+            return;
         }
-    }
 
-    animateForecast();
+        // 1. Get direction of the track at this point
+        let angle;
+        if (i < track.length - 1) {
+            // Angle to next point
+            angle = Math.atan2(track[i+1].lon - point.lon, track[i+1].lat - point.lat);
+        } else {
+            // Angle from previous point (for the final tip)
+            angle = Math.atan2(point.lon - track[i-1].lon, point.lat - track[i-1].lat);
+        }
+
+        // 2. Convert meters to lat/lon degrees (approximation)
+        const latOff = radius / 111320;
+        const lonOff = radius / (111320 * Math.cos(point.lat * Math.PI / 180));
+
+        // 3. Offset points perpendicular to the direction (90 degrees / PI/2)
+        leftPoints.push([
+            point.lat + latOff * Math.cos(angle + Math.PI / 2),
+            point.lon + lonOff * Math.sin(angle + Math.PI / 2)
+        ]);
+        rightPoints.unshift([
+            point.lat + latOff * Math.cos(angle - Math.PI / 2),
+            point.lon + lonOff * Math.sin(angle - Math.PI / 2)
+        ]);
+    });
+
+    // Combine for a smooth closed loop
+    const coneCoords = leftPoints.concat(rightPoints);
+
+    L.polygon(coneCoords, {
+        color: '#ff0000',
+        weight: 1.5,
+        fillColor: '#ff0000',
+        fillOpacity: 0.15,
+        dashArray: '4, 4',
+        lineJoin: 'round' // Smooths the jagged corners
+    }).addTo(map);
+}
+
+// FIX: Ensure this is NOT nested inside drawUncertaintyCone
+let step = 0;
+function animateForecast() {
+    if (step < forecastTrack.length) {
+        forecastLine.addLatLng([forecastTrack[step].lat, forecastTrack[step].lon]);
+        addMarker(forecastTrack[step], false);
+        step++;
+        setTimeout(animateForecast, 600);
+    } else {
+        // Only draw the cone once the path is complete
+        drawUncertaintyCone(forecastTrack, forecastErrors);
+    }
+}
+
+// START THE ANIMATION
+animateForecast();
 	 const updateRadar = () => {
         fetch('https://api.rainviewer.com/public/weather-maps.json')
             .then(res => res.json())
