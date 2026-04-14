@@ -109,7 +109,7 @@ windyInit(options, windyAPI => {
     L.polyline(pastTrack.map(p => [p.lat, p.lon]), { color: '#333', weight: 2 }).addTo(map);
     const forecastLine = L.polyline([], { color: 'red', weight: 2, dashArray: '5, 10' }).addTo(map);
 
-    function addMarker(point, isPast) {
+    function addMarker(point, isPast, isForecast) {
         const style = intensityStyles[point.intensity] || { color: '#fff', radius: 4, name: 'Unknown' };
         const marker = L.circleMarker([point.lat, point.lon], {
             radius: style.radius,
