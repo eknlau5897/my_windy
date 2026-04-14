@@ -8,9 +8,18 @@
     <style>
         body { margin: 0; padding: 0; font-family: sans-serif; }
         #windy { width: 100vw; height: 100vh; }
-        #controls { position: absolute; top: 10px; left: 10px; z-index: 1000; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; color: white; }
-        #cursor-label { position: absolute; z-index: 2000; pointer-events: none; background: rgba(0,0,0,0.8); color: #fff; padding: 5px 10px; border-radius: 4px; display: none; font-size: 13px; border: 1px solid #444; }
-        button { cursor: pointer; padding: 5px 10px; margin: 2px; border: none; border-radius: 3px; }
+        #controls { 
+            position: absolute; top: 10px; left: 10px; z-index: 1000; 
+            background: rgba(0,0,0,0.85); padding: 12px; border-radius: 8px; 
+            color: white; display: flex; flex-direction: column; gap: 8px; width: 180px;
+        }
+        button { 
+            cursor: pointer; padding: 10px; border: none; border-radius: 4px; 
+            background: #333; color: white; font-weight: bold; transition: 0.3s; 
+        }
+        button:hover { background: #555; }
+        .active { background: #e67e22 !important; }
+        .section-label { font-size: 10px; text-transform: uppercase; color: #aaa; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -19,12 +28,14 @@
     <div id="cursor-label"></div>
 
     <div id="controls">
-    <button onclick="changeOverlay('wind')">Wind</button>
-    <button onclick="changeOverlay('temp')">Temp</button>
-    <button id="toggleRadar">Toggle Radar</button>
-    <!-- New Button -->
-    <button onclick="toggleEastAsiaSatellite()">East Asia Sat</button>
-</div>
+        <div class="section-label">Overlays</div>
+        <button id="btn-wind" class="active" onclick="changeOverlay('wind')">Wind</button>
+        <button id="btn-temp" onclick="changeOverlay('temp')">Temperature</button>
+        
+        <div class="section-label">Satellite & Radar</div>
+        <button id="toggleH9" onclick="toggleHimawari()">Himawari-9 IR</button>
+        <button id="toggleRadar" onclick="toggleRadar()">Rain Radar</button>
+    </div>
 
     <script>
         let windyStore, radarLayer;
@@ -137,31 +148,25 @@ windyInit(options, windyAPI => {
             .catch(err => console.error("Radar failed:", err));
     };
     updateRadar();
-	const hkoEastAsiaUrl = 'https://hko.gov.hk';
-
-// Approximate bounds for HKO's "Eastern Asia" sector (adjust if alignment is off)
-// These bounds typically cover roughly 0N to 60N and 70E to 150E
-const eastAsiaBounds = [[0, 70], [60, 150]]; 
 });
-
-		function toggleEastAsiaSatellite() {
-    if (!leafletMap) return;
-
-    if (window.eastAsiaLayer && leafletMap.hasLayer(window.eastAsiaLayer)) {
-        leafletMap.removeLayer(window.eastAsiaLayer);
-        console.log("East Asia Satellite OFF");
-    } else {
-        window.eastAsiaLayer = L.imageOverlay(hkoEastAsiaUrl, eastAsiaBounds, {
-            opacity: 0.6,
-            zIndex: 150
-        }).addTo(leafletMap);
-        
-        // Optional: Zoom map to fit the new overlay
-        leafletMap.fitBounds(eastAsiaBounds);
-        console.log("East Asia Satellite ON");
-    }
-}
 // 3. TOGGLE FUNCTION (Outside init, using global leafletMap)
+		function toggleHimawari() {
+            const btn = document.getElementById('toggleH9');
+            // Himawari-AHI Band 13 (Clean Infrared)
+            const h9Url = 'https://nasa.gov{time}/GoogleMapsCompatible_Level13/{z}/{y}/{x}.png';
+
+            if (h9Layer && leafletMap.hasLayer(h9Layer)) {
+                leafletMap.removeLayer(h9Layer);
+                btn.classList.remove('active');
+            } else {
+                h9Layer = L.tileLayer(h9Url.replace('{time}', 'default'), {
+                    opacity: 0.6,
+                    zIndex: 50,
+                    attribution: 'JMA/NOAA/NASA'
+                }).addTo(leafletMap);
+                btn.classList.add('active');
+            }
+        }
 document.getElementById('toggleRadar').onclick = function() {
     if (!window.radarLayer || !leafletMap) {
         console.log("Radar layer or map not ready yet");
