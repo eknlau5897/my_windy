@@ -19,10 +19,12 @@
     <div id="cursor-label"></div>
 
     <div id="controls">
-        <button onclick="changeOverlay('wind')">Wind</button>
-        <button onclick="changeOverlay('temp')">Temp</button>
-        <button id="toggleRadar">Toggle Radar</button>
-    </div>
+    <button onclick="changeOverlay('wind')">Wind</button>
+    <button onclick="changeOverlay('temp')">Temp</button>
+    <button id="toggleRadar">Toggle Radar</button>
+    <!-- New Button -->
+    <button onclick="toggleEastAsiaSatellite()">East Asia Sat</button>
+</div>
 
     <script>
         let windyStore, radarLayer;
@@ -135,8 +137,30 @@ windyInit(options, windyAPI => {
             .catch(err => console.error("Radar failed:", err));
     };
     updateRadar();
+	const hkoEastAsiaUrl = 'https://hko.gov.hk';
+
+// Approximate bounds for HKO's "Eastern Asia" sector (adjust if alignment is off)
+// These bounds typically cover roughly 0N to 60N and 70E to 150E
+const eastAsiaBounds = [[0, 70], [60, 150]]; 
 });
 
+		function toggleEastAsiaSatellite() {
+    if (!leafletMap) return;
+
+    if (window.eastAsiaLayer && leafletMap.hasLayer(window.eastAsiaLayer)) {
+        leafletMap.removeLayer(window.eastAsiaLayer);
+        console.log("East Asia Satellite OFF");
+    } else {
+        window.eastAsiaLayer = L.imageOverlay(hkoEastAsiaUrl, eastAsiaBounds, {
+            opacity: 0.6,
+            zIndex: 150
+        }).addTo(leafletMap);
+        
+        // Optional: Zoom map to fit the new overlay
+        leafletMap.fitBounds(eastAsiaBounds);
+        console.log("East Asia Satellite ON");
+    }
+}
 // 3. TOGGLE FUNCTION (Outside init, using global leafletMap)
 document.getElementById('toggleRadar').onclick = function() {
     if (!window.radarLayer || !leafletMap) {
