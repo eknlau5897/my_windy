@@ -141,7 +141,6 @@
         .catch(err => console.error("Radar failed:", err));
 };
 updateRadar();
-});
 		let leafletMap;
 		document.getElementById('toggleRadar').onclick = function() {
     if (!window.radarLayer || !leafletMap) return;
@@ -161,6 +160,7 @@ function changeOverlay(type) {
         window.windyStore.set('overlay', type);
     }
 }
+	   });
     </script>
 </body>
 </html>
