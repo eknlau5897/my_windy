@@ -119,18 +119,6 @@ windyInit(options, windyAPI => {
 
     pastTrack.forEach(p => addMarker(p, true));
 	const forecastErrors = [0, 100000, 250000, 450000, 650000, 900000];
-    let step = 0;
-function animateForecast() {
-    if (step < forecastTrack.length) {
-        forecastLine.addLatLng([forecastTrack[step].lat, forecastTrack[step].lon]);
-        addMarker(forecastTrack[step], false);
-        step++;
-        setTimeout(animateForecast, 600);
-    } else {
-        // DRAW THE CONE ONCE ANIMATION FINISHES
-        drawUncertaintyCone(forecastTrack, forecastErrors);
-    }
-}
 
     // 2. RADAR LOGIC
     const updateRadar = () => {
@@ -188,6 +176,18 @@ function animateForecast() {
         dashArray: '5, 5',
         interactive: false
     }).addTo(map);
+	let step = 0;
+function animateForecast() {
+    if (step < forecastTrack.length) {
+        forecastLine.addLatLng([forecastTrack[step].lat, forecastTrack[step].lon]);
+        addMarker(forecastTrack[step], false);
+        step++;
+        setTimeout(animateForecast, 600);
+    } else {
+        // DRAW THE CONE ONCE ANIMATION FINISHES
+        drawUncertaintyCone(forecastTrack, forecastErrors);
+    }
+}
 }
 });
 // 3. TOGGLE FUNCTION (Outside init, using global leafletMap)
