@@ -87,16 +87,17 @@ windyInit(options, windyAPI => {
         { lat: 12.8, lon: 147.8, intensity: "ViolentT.", wind: 255 ,pressure:902, hour:"13-4 08Z"},
         { lat: 13.1, lon: 147.6, intensity: "ViolentT.", wind: 250 ,pressure:905, hour:"13-4 12Z"},
         { lat: 13.9, lon: 146.8, intensity: "ViolentT.", wind: 250 ,pressure:905, hour:"13-4 21Z"},
-        { lat: 14.3, lon: 146.6, intensity: "SuperT.", wind: 230 ,pressure:915, hour:"14-4 00Z"}
+        { lat: 14.3, lon: 146.6, intensity: "SuperT.", wind: 230 ,pressure:915, hour:"14-4 00Z"},
+		{ lat: 14.5, lon: 146.2, intensity: "SuperT.", wind: 220 ,pressure:920, hour:"14-4 03Z"}
     ];
 
     const forecastTrack = [
-        { lat: 14.3, lon: 146.6, intensity: "SuperT.", wind: 230 ,pressure:915, hour:"14-4 00Z"},
-        { lat: 15.7, lon: 145.8, intensity: "SuperT.", wind: 205,pressure: 925, hour:"14-4 21Z"},
-        { lat: 17.8, lon: 145.4, intensity: "S.T.", wind: 180 , pressure:945, hour:"15-4 21Z"},
-        { lat: 20.8, lon: 147, intensity: "T.", wind: 140 ,pressure:965, hour:"16-4 21Z"},
-        { lat: 23.5, lon: 150.8, intensity: "T.", wind: 120 ,pressure:975, hour:"17-4 21Z"},
-        { lat: 26.4, lon: 154.8, intensity: "S.T.S.", wind: 105 ,pressure:984,hour:"18-4 21Z"}
+        { lat: 14.5, lon: 146.2, intensity: "SuperT.", wind: 220 ,pressure:920, hour:"14-4 03Z"},
+        { lat: 16.1, lon: 145.5, intensity: "SuperT.", wind: 205,pressure: 930, hour:"15-4 03Z"},
+        { lat: 18.4, lon: 145.3, intensity: "S.T.", wind: 180 , pressure:945, hour:"16-4 03Z"},
+        { lat: 21.4, lon: 147.5, intensity: "T.", wind: 130 ,pressure:968, hour:"17-4 03Z"},
+        { lat: 24.3, lon: 151.4, intensity: "S.T.S.", wind: 110 ,pressure:980, hour:"18-4 03Z"},
+        { lat: 27.2, lon: 155.6, intensity: "S.T.S.", wind: 90 ,pressure:988,hour:"19-4 03Z"}
     ];
 
     L.circle([22.3193, 114.1694], { color: '#000000', fillOpacity: 0.05, radius: 800000, weight: 1 }).addTo(map);
