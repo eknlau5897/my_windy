@@ -47,7 +47,9 @@ const options = {
     lon: 114.17,
     zoom: 5
 };
-
+map.createPane('labelPane');
+map.getPane('labelPane').style.zIndex = 650; // Higher than standard markers (600) and vectors (400)
+map.getPane('labelPane').style.pointerEvents = 'none';
 windyInit(options, windyAPI => {
     // 1. Assign global references from the API
     const { map, store } = windyAPI;
@@ -119,15 +121,18 @@ windyInit(options, windyAPI => {
         fillOpacity: 1
     }).addTo(map);
 
-    // FIX: Add autoClose: false to keep multiple popups open
-    marker.bindPopup(
-        `<b>${style.name}</b><br>Wind: ${point.wind} km/h, Pressure: ${point.pressure}, Time: ${point.hour}`, 
-        { 
-            autoClose: false, 
-            closeOnClick: false 
-        }
-    );
-	};
+    // Add the popup to the custom 'labelPane' to stay above the cone
+    marker.bindPopup(`<b>${style.name}</b><br>Time: ${point.hour}`, {
+        autoClose: false,
+        closeOnClick: false,
+        pane: 'labelPane', // This keeps it above the cone
+        className: 'forecast-popup' 
+    });
+
+    if (!isPast) {
+        marker.openPopup();
+    }
+};
 
     pastTrack.forEach(p => addMarker(p, true));
 
