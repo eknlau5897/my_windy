@@ -119,8 +119,14 @@ windyInit(options, windyAPI => {
         fillOpacity: 1
     }).addTo(map);
 
-    // Bind the content
-    marker.bindPopup(`<b>${style.name}</b><br>Wind: ${point.wind} km/h, Pressure: ${point.pressure}, Time: ${point.hour}`)
+    // FIX: Add autoClose: false to keep multiple popups open
+    marker.bindPopup(
+        `<b>${style.name}</b><br>Wind: ${point.wind} km/h, Pressure: ${point.pressure}, Time: ${point.hour}`, 
+        { 
+            autoClose: false, 
+            closeOnClick: false 
+        }
+    );
 	};
 
     pastTrack.forEach(p => addMarker(p, true));
