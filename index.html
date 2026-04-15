@@ -230,19 +230,20 @@ animateForecast();
     
     // Official NASA GIBS REST endpoint for Himawari-9 AHI Band 13 (Clean Infrared)
     const h9Url = 'https://nasa.gov' +
-                  'Himawari_AHI_Band13_Clean_Infrared/default/' +
-                  '{time}/GoogleMapsCompatible_Level13/{z}/{y}/{x}.png';
+              'Himawari_AHI_Band13_Clean_Infrared/default/' +
+              '{time}/GoogleMapsCompatible_Level13/{z}/{y}/{x}.png';
 
+// Inside your toggle function:
     if (h9Layer && leafletMap.hasLayer(h9Layer)) {
         leafletMap.removeLayer(h9Layer);
         btn.classList.remove('active');
     } else {
         // Replace {time} with 'default' or a specific date like '2024-04-14'
         h9Layer = L.tileLayer(h9Url.replace('{time}', 'default'), {
-            opacity: 0.6,
-            zIndex: 450,
-            attribution: '&copy; <a href="https://nasa.gov">NASA GIBS</a> / JMA'
-        }).addTo(leafletMap);
+    opacity: 0.6,
+    zIndex: 50,
+    attribution: 'NASA GIBS / JMA'
+}).addTo(leafletMap);
         btn.classList.add('active');
     }
 }
