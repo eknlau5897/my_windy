@@ -228,20 +228,20 @@ animateForecast();
 		function toggleHimawari() {
     const btn = document.getElementById('toggleH9');
     
-    // Correct NASA GIBS URL for Himawari-9
+    // Official NASA GIBS REST endpoint for Himawari-9 AHI Band 13 (Clean Infrared)
     const h9Url = 'https://nasa.gov' +
                   'Himawari_AHI_Band13_Clean_Infrared/default/' +
                   '{time}/GoogleMapsCompatible_Level13/{z}/{y}/{x}.png';
 
-    // 2. Now the function can find and track h9Layer properly
     if (h9Layer && leafletMap.hasLayer(h9Layer)) {
         leafletMap.removeLayer(h9Layer);
         btn.classList.remove('active');
     } else {
-        h9Layer = L.tileLayer(h9Url.replace('{time}', '2024-04-14'), {
+        // Replace {time} with 'default' or a specific date like '2024-04-14'
+        h9Layer = L.tileLayer(h9Url.replace('{time}', 'default'), {
             opacity: 0.6,
-            zIndex: 500,
-            attribution: 'NASA GIBS / JMA'
+            zIndex: 450,
+            attribution: '&copy; <a href="https://nasa.gov">NASA GIBS</a> / JMA'
         }).addTo(leafletMap);
         btn.classList.add('active');
     }
