@@ -33,6 +33,7 @@
         <button id="btn-temp" onclick="changeOverlay('temp')">Temperature</button>
         
         <div class="section-label">Satellite & Radar</div>
+		<button id="addNasaToWindyMenu" onclick="addNasaToWindyMenu()">satellite image</button>
         <button id="toggleRadar" onclick="toggleRadar()">Rain Radar</button>
     </div>
 
@@ -53,17 +54,6 @@ windyInit(options, windyAPI => {
     windyStore = store;
 
     store.set('overlay', 'wind');
-	const nasaLayer = L.tileLayer.wms('https://nasa.gov', {
-        layers: 'MODIS_Terra_CorrectedReflectance_TrueColor',
-        format: 'image/png',
-        transparent: true,
-        opacity: 0.7, // Lower opacity helps see Windy's data underneath
-        attribution: 'NASA GIBS'
-    });
-
-	const overlays = {
-        "NASA Satellite View": nasaLayer
-    };
 
     // 3. Add the control button to the map
     // The layer stays 'off' because it wasn't added to the map in step 1
@@ -233,12 +223,58 @@ animateForecast();
             })
             .catch(err => console.error("Radar failed:", err));
     };
-    updateRadar(); // Assuming updateRadar is defined as in your snippet
+    updateRadar(); 
+	addNasaToWindyMenu(map, 'MODIS_Terra_CorrectedReflectance_TrueColor', 'NASA Satellite');
 });
+		function addNasaToWindyMenu(map, layerID, label) {
+    // 1. Create the NASA Layer (hidden by default)
+    const nasaLayer = L.tileLayer.wms('https://nasa.gov', {
+        layers: layerID,
+        format: 'image/png',
+        transparent: true,
+        opacity: 0.8,
+        attribution: 'NASA'
+    });
 
+    // 2. Function to inject the button into the DOM
+    const injectButton = () => {
+        // Search for the Windy menu container
+        const menu = document.querySelector('.menu-content') || document.querySelector('.layers-list');
+        if (!menu) return;
+
+        // Check if button already exists to avoid duplicates
+        if (document.getElementById(`btn-${layerID}`)) return;
+
+        const btn = document.createElement('div');
+        btn.id = `btn-${layerID}`;
+        btn.className = 'menu-item'; // Matches Windy's native button class
+        btn.style.cssText = 'cursor: pointer; padding: 10px; margin-top: 5px; border-radius: 4px; background: #333; transition: 0.3s;';
+        btn.innerHTML = `<span>${label}</span>`;
+
+        // 3. Toggle Logic
+        btn.onclick = () => {
+            if (map.hasLayer(nasaLayer)) {
+                map.removeLayer(nasaLayer);
+                btn.style.background = '#333'; // Reset to dark
+                btn.style.color = 'white';
+            } else {
+                map.addLayer(nasaLayer);
+                btn.style.background = '#e67e22'; // Matches Windy orange
+                btn.style.color = 'white';
+            }
+        };
+
+        menu.appendChild(btn);
+    };
+
+    // Run injection. We use an interval because Windy's menu often 
+    // re-renders when the user interacts with it.
+    setInterval(injectButton, 2000);
+}
     // 2. RADAR LOGIC
 // 3. TOGGLE FUNCTION (Outside init, using global leafletMap)
 		// URL Template for NASA GIBS
+	
 document.getElementById('toggleRadar').onclick = function() {
     if (!window.radarLayer || !leafletMap) {
         console.log("Radar layer or map not ready yet");
