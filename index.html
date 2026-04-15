@@ -54,7 +54,22 @@ windyInit(options, windyAPI => {
     windyStore = store;
 
     store.set('overlay', 'wind');
+	const nasaLayer = L.tileLayer.wms('https://nasa.gov', {
+        layers: 'MODIS_Terra_CorrectedReflectance_TrueColor',
+        format: 'image/png',
+        transparent: true,
+        opacity: 0.7, // Lower opacity helps see Windy's data underneath
+        attribution: 'NASA GIBS'
+    });
 
+	const overlays = {
+        "NASA Satellite View": nasaLayer
+    };
+
+    // 3. Add the control button to the map
+    // The layer stays 'off' because it wasn't added to the map in step 1
+    L.control.layers(null, overlays, { collapsed: true }).addTo(map);
+	
     // --- TYPHOON TRACK DATA & VISUALS ---
     const intensityStyles = {
         "T.D.":    { color: '#808080', radius: 8, name: 'Tropical Depression' },
@@ -225,39 +240,6 @@ animateForecast();
     // 2. RADAR LOGIC
 // 3. TOGGLE FUNCTION (Outside init, using global leafletMap)
 		// URL Template for NASA GIBS
-let h9Layer; // Global variable to track the layer
-
-function toggleHimawari() {
-    const btn = document.getElementById('toggleH9');
-    
-    // 1. DYNAMIC DATE CALCULATION
-    // Satellite imagery is usually available up to 'now' (UTC), 
-    // but the 'default' string or current date are safest.
-    const now = new Date();
-    const utcDate = now.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-
-    // 2. FIXED NASA GIBS URL TEMPLATE
-    const h9Url = 'https://nasa.gov' +
-                  'Himawari_AHI_Band13_Clean_Infrared/default/' +
-                  '{time}/GoogleMapsCompatible_Level13/{z}/{y}/{x}.png';
-
-    if (h9Layer && leafletMap.hasLayer(h9Layer)) {
-        // TURN OFF
-        leafletMap.removeLayer(h9Layer);
-        btn.classList.remove('active');
-        btn.innerHTML = 'Show Himawari-9'; // Reset button text
-    } else {
-        // TURN ON
-        h9Layer = L.tileLayer(h9Url.replace('{time}', utcDate), {
-            opacity: 0.6,
-            zIndex: 50,
-            attribution: 'NASA GIBS / JMA'
-        }).addTo(leafletMap);
-        
-        btn.classList.add('active');
-        btn.innerHTML = 'Hide Himawari-9'; // Update button text
-    }
-};
 document.getElementById('toggleRadar').onclick = function() {
     if (!window.radarLayer || !leafletMap) {
         console.log("Radar layer or map not ready yet");
