@@ -68,8 +68,22 @@ windyInit(options, windyAPI => {
 ]);
     // 2. Now you can use map.on or other functions
     map.on('click', (e) => {
-        console.log("Clicked at:", e.latlng);
-        picker.open(e.latlng);
+        const { lat, lng } = e.latlng;
+
+        // 1. Get the raw value from the coordinates
+        const data = utils.getInterpolatedValue(lat, lng);
+
+        if (data && data.value !== undefined) {
+            // 2. Convert m/s to Knots (1 m/s ≈ 1.94384 kt)
+            const speedInKnots = (data.value * 3.6 / 1.852).toFixed(1);
+
+            console.log(`Wind speed at this point: ${speedInKnots} kt`);
+            
+            // Optional: Show it in a simple alert or update a UI element
+            alert(`Wind speed: ${speedInKnots} kt`);
+        } else {
+            console.log("No data available for this location.");
+        }
     });
     store.set('overlay', 'wind');
     // --- TYPHOON TRACK DATA & VISUALS ---
