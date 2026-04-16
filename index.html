@@ -68,6 +68,10 @@ windyInit(options, windyAPI => {
 ]);
     // 2. Now you can use map.on or other functions
     store.set('overlay', 'wind');
+	store.set('isolines', 'pressure');
+
+// Add temperature isolines
+	store.set('isolines', 'temp');
     // --- TYPHOON TRACK DATA & VISUALS ---
     const intensityStyles = {
         "T.D.":    { color: '#808080', radius: 8, name: 'Tropical Depression' },
