@@ -54,10 +54,6 @@ windyInit(options, windyAPI => {
     windyStore = store;
 
     store.set('overlay', 'wind');
-
-    // 3. Add the control button to the map
-    // The layer stays 'off' because it wasn't added to the map in step 1
-	
     // --- TYPHOON TRACK DATA & VISUALS ---
     const intensityStyles = {
         "T.D.":    { color: '#808080', radius: 8, name: 'Tropical Depression' },
