@@ -47,6 +47,28 @@ const options = {
     lon: 114.17,
     zoom: 5
 };
+		let stationLookup = {};
+
+    // 1. Load your CSV file
+    async function loadStationCSV() {
+        const response = await fetch('https://data.weather.gov.hk/weatherAPI/opendata/hourlyRainfall.php?lang=en'); // Path to your CSV
+        const csvText = await response.text();
+        
+        Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+                // Convert CSV array to a lookup object by Station Name
+                results.data.forEach(row => {
+                    stationLookup[row.Station.trim()] = [
+                        parseFloat(row.Latitude), 
+                        parseFloat(row.Longitude)
+                    ];
+                });
+                console.log("CSV Loaded:", stationLookup);
+            }
+        });
+    }
 windyInit(options, windyAPI => {
     // 1. Assign global references from the API
     const { map, store,picker,utils } = windyAPI;
@@ -201,6 +223,38 @@ map.getPane('topLabels').style.pointerEvents = 'none';
     
         const warningMarker_3= L.marker([22.18, 113.53]).addTo(map);
     warningMarker_3.bindPopup("Very heavy rain warning:Macau,source:radar indicated,expect 30-50mm/hr rainfall,valid until 0930Z 17/4,<br>Severe thunderstorm warning:Macau,expect severe thunderstorm,source:radar indicated,valid until 10Z 17/4");
+		const rainLayer = L.layerGroup().addTo(map);
+
+            async function updateRainfall() {
+                try {
+                    const res = await fetch(RAIN_API);
+                    const data = await res.json();
+                    
+                    rainLayer.clearLayers(); // Remove old markers
+
+                    // Loop through HKO 'hourlyRainfall' array
+                    data.hourlyRainfall.forEach(obs => {
+                        const stationName = obs.automaticWeatherStation;
+                        const amount = obs.value1;
+                        const coords = stationLookup[stationName];
+
+                        if (coords && amount > 0) { // Only show stations with recorded rain
+                            L.marker(coords, {
+                                icon: L.divIcon({
+                                    className: 'rainfall-label',
+                                    html: `${amount} <small>mm</small>`
+                                })
+                            }).bindPopup(`<b>${stationName}</b>: ${amount}mm`)
+                              .addTo(rainLayer);
+                        }
+                    });
+                } catch (err) { console.error("Rain API Error:", err); }
+            }
+
+            // Start logic after CSV is ready
+            loadStationCSV().then(() => {
+                updateRainfall();
+                setInterval(updateRainfall, 600000); // Auto-refresh every 10 mins
     });
     
     const coneCoords = leftPoints.concat(rightPoints);
