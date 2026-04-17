@@ -67,7 +67,7 @@ windyInit(options, windyAPI => {
     [85,  [255, 255, 255]] // White (Hurricane Force)
 ]);
     // 2. Now you can use map.on or other functions
-    store.set('overlay', 'wind','radar','satellite');
+    store.set('overlay', 'wind');
 	store.set('isolines', 'pressure');
 
 // Add temperature isolines
@@ -193,7 +193,7 @@ map.getPane('topLabels').style.pointerEvents = 'none';
 		const warningMarker_1 = L.marker([24.5, 114.4]).addTo(map);
 
     // 2. Add the popup label
-    warningMarker_1.bindPopup("Rainstorm warning:Guangdong,source:radar indicated,expect 30-50mm/hr rainfall,valid until 16Z 17/4");
+    warningMarker_1.bindPopup("Very heavy rain warning:Guangdong,source:radar indicated,expect 30-50mm/hr rainfall,valid until 16Z 17/4");
     // Combine for a smooth closed loop
     
         const warningMarker_2= L.marker([22.4, 114.17]).addTo(map);
