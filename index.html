@@ -190,8 +190,8 @@ map.getPane('topLabels').style.pointerEvents = 'none';
             point.lat + latOff * Math.cos(angle - Math.PI / 2),
             point.lon + lonOff * Math.sin(angle - Math.PI / 2)
         ]);
-		const warningMarker_1 = L.marker([24.5, 114.4]).addTo(map);
 	});
+		const warningMarker_1 = L.marker([24.5, 114.4]).addTo(map);
     // 2. Add the popup label
     warningMarker_1.bindPopup("Very heavy rain warning:Guangdong,source:radar indicated,expect 30-50mm/hr rainfall,valid until 16Z 17/4");
     // Combine for a smooth closed loop
