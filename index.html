@@ -197,10 +197,18 @@ map.getPane('topLabels').style.pointerEvents = 'none';
     // Combine for a smooth closed loop
     
         const warningMarker_2= L.marker([22.4, 114.17]).addTo(map);
+<<<<<<< HEAD
     warningMarker_2.bindPopup("No warning/watch for Hong Kong");
     
         const warningMarker_3= L.marker([22.18, 113.53]).addTo(map);
     warningMarker_3.bindPopup("No warning/watch for Macau");
+=======
+    warningMarker_2.bindPopup("No warning/watch:HK");
+    
+        const warningMarker_3= L.marker([22.18, 113.53]).addTo(map);
+    warningMarker_3.bindPopup("No warning/watch:Macau")
+    
+>>>>>>> 0e99ba3642a104fa7da8256fa4c8124ee8174c77
     });
     
     const coneCoords = leftPoints.concat(rightPoints);
