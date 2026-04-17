@@ -191,7 +191,7 @@ map.getPane('topLabels').style.pointerEvents = 'none';
             point.lon + lonOff * Math.sin(angle - Math.PI / 2)
         ]);
 		const warningMarker_1 = L.marker([24.5, 114.4]).addTo(map);
-
+	});
     // 2. Add the popup label
     warningMarker_1.bindPopup("Very heavy rain warning:Guangdong,source:radar indicated,expect 30-50mm/hr rainfall,valid until 16Z 17/4");
     // Combine for a smooth closed loop
@@ -249,7 +249,6 @@ animateForecast();
     };
     updateRadar(); 
 	addNasaToWindyMenu(map, 'MODIS_Terra_CorrectedReflectance_TrueColor', 'NASA Satellite');
-});
 		// 1. Create a simple HTML element to follow the mouse
 		function addNasaToWindyMenu(map, layerID, label) {
     // 1. Create the NASA Layer (hidden by default)
