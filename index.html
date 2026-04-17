@@ -197,10 +197,10 @@ map.getPane('topLabels').style.pointerEvents = 'none';
     // Combine for a smooth closed loop
     
         const warningMarker_2= L.marker([22.4, 114.17]).addTo(map);
-    warningMarker_2.bindPopup("Heavy rain warning:HK,source:radar indicated,expect 10-20mm/hr rainfall,valid until 09Z 17/4");
+    warningMarker_2.bindPopup("Heavy rain warning:HK,source:radar indicated,expect 10-20mm/hr rainfall,valid until 09Z 17/4<\n>Severe thunderstorm watch:HK,expect severe thunderstorm next couple of hours,source:radar indicated,valid until 09Z 17/4");
     
         const warningMarker_3= L.marker([22.18, 113.53]).addTo(map);
-    warningMarker_3.bindPopup("Very heavy rain warning:Macau,source:radar indicated,expect 10-20mm/hr rainfall,valid until 0830Z 17/4");
+    warningMarker_3.bindPopup("Very heavy rain warning:Macau,source:radar indicated,expect 30-50mm/hr rainfall,valid until 09Z 17/4,Severe thunderstorm warning:Macau,expect severe thunderstorm,source:radar indicated,valid until 09Z 17/4");
     });
     
     const coneCoords = leftPoints.concat(rightPoints);
