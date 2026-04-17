@@ -193,14 +193,14 @@ map.getPane('topLabels').style.pointerEvents = 'none';
 		const warningMarker_1 = L.marker([24.5, 114.4]).addTo(map);
 
     // 2. Add the popup label
-    warningMarker_1.bindPopup("Very heavy rain warning:Guangdong,source:radar indicated,expect 30-50mm/hr rainfall,valid until 16Z 17/4");
+    warningMarker_1.bindPopup("No warning/watch for Guangdong");
     // Combine for a smooth closed loop
     
         const warningMarker_2= L.marker([22.4, 114.17]).addTo(map);
-    warningMarker_2.bindPopup("Very heavy rain warning:HK,source:radar indicated,expect 30-50mm/hr rainfall,valid until 0930Z 17/4<br>Severe thunderstorm warning:HK,expect severe thunderstorm ,source:radar indicated,valid until 10Z 17/4");
+    warningMarker_2.bindPopup("No warning/watch for Hong Kong");
     
         const warningMarker_3= L.marker([22.18, 113.53]).addTo(map);
-    warningMarker_3.bindPopup("Very heavy rain warning:Macau,source:radar indicated,expect 30-50mm/hr rainfall,valid until 0930Z 17/4,<br>Severe thunderstorm warning:Macau,expect severe thunderstorm,source:radar indicated,valid until 10Z 17/4");
+    warningMarker_3.bindPopup("No warning/watch for Macau");
     });
     
     const coneCoords = leftPoints.concat(rightPoints);
