@@ -199,6 +199,9 @@ map.getPane('topLabels').style.pointerEvents = 'none';
         const warningMarker_2= L.marker([22.4, 114.17]).addTo(map);
     warningMarker_2.bindPopup("Heavy rain watch:HK,source:radar indicated,expect 10-20mm/hr rainfall,valid until 16Z 17/4");
     });
+        const warningMarker_3= L.marker([22.3, 113.93]).addTo(map);
+    warningMarker_3.bindPopup("Heavy rain warning:Macau,source:radar indicated,expect 10-20mm/hr rainfall,valid until 16Z 17/4");
+    });
     
     const coneCoords = leftPoints.concat(rightPoints);
     // Combine for a smooth closed loop
