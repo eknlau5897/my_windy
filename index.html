@@ -194,10 +194,12 @@ map.getPane('topLabels').style.pointerEvents = 'none';
     warningMarker_1.bindPopup("Rainstorm warning:Southern China,source:radar indicated,expect 30-50mm/hr rainfall");
     });
     // Combine for a smooth closed loop
-    const coneCoords = leftPoints.concat(rightPoints);
+    
     const warningMarker_2= L.marker([22.4, 114.17]).addTo(map);
     warningMarker_2.bindPopup("Heavy rain watch:HK,source:radar indicated,expect 10-20mm/hr rainfall");
     });
+    
+    const coneCoords = leftPoints.concat(rightPoints);
     // Combine for a smooth closed loop
     L.polygon(coneCoords, {
         color: '#ff0000',
