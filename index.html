@@ -54,17 +54,17 @@ windyInit(options, windyAPI => {
     windyStore = store;
 	windyAPI.colors.wind.changeColor([
     [0,   [255, 255, 255]],    // Deep Blue (Calm)
-    [5,   [0, 128, 255]],  // Medium Blue
-    [10,  [0, 255, 255]],  // Cyan (Light Breeze)
-    [15,  [0, 255, 128]],  // Spring Green
-    [20,  [0, 255, 0]],    // Green (Moderate)
-    [25,  [128, 255, 0]],  // Lime
-    [30,  [255, 255, 0]],  // Yellow (Strong)
-    [35,  [255, 128, 0]],  // Orange (Near Gale)
-    [45,  [255, 0, 0]],    // Red (Gale/Storm)
-    [55,  [255, 0, 255]],  // Magenta (Violent Storm)
-    [70,  [255, 200, 255]],// Light Pink
-    [85,  [255, 255, 255]] // White (Hurricane Force)
+    [7,   [0, 128, 255]],  // Medium Blue
+    [15,  [0, 255, 255]],  // Cyan (Light Breeze)
+    [22,  [0, 255, 128]],  // Spring Green
+    [29,  [0, 255, 0]],    // Green (Moderate)
+    [35,  [128, 255, 0]],  // Lime
+    [42,  [255, 255, 0]],  // Yellow (Strong)
+    [48,  [255, 128, 0]],  // Orange (Near Gale)
+    [55,  [255, 0, 0]],    // Red (Gale/Storm)
+    [64,  [255, 0, 255]],  // Magenta (Violent Storm)
+    [85,  [255, 200, 255]],// Light Pink
+    [100,  [255, 255, 255]] // White (Hurricane Force)
 ]);
     // 2. Now you can use map.on or other functions
     store.set('overlay', 'wind');
