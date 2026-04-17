@@ -50,11 +50,6 @@ const options = {
 windyInit(options, windyAPI => {
     // 1. Assign global references from the API
     const { map, store,picker,utils } = windyAPI;
-    const smoothZoomOnly = (level) => {
-        map.setZoom(level, {
-            animate: true
-        });
-    };
     leafletMap = map;
     windyStore = store;
 	windyAPI.colors.wind.changeColor([
