@@ -72,7 +72,7 @@ windyInit(options, windyAPI => {
 
 // Add temperature isolines
     // --- TYPHOON TRACK DATA & VISUALS ---
-    const intensityStyles = {
+    <!--const intensityStyles = {//skip 1 start
         "T.D.":    { color: '#808080', radius: 8, name: 'Tropical Depression' },
         "T.S.":    { color: '#008000', radius: 8, name: 'Tropical Storm' },
         "S.T.S.":  { color: '#0000FF', radius: 8, name: 'Severe Tropical Storm' },
@@ -190,7 +190,7 @@ map.getPane('topLabels').style.pointerEvents = 'none';
         rightPoints.unshift([
             point.lat + latOff * Math.cos(angle - Math.PI / 2),
             point.lon + lonOff * Math.sin(angle - Math.PI / 2)
-        ]);
+        ]);-->//skip 1 end
 		const warningMarker_1 = L.marker([24.5, 114.4]).addTo(map);
 
     // 2. Add the popup label
@@ -210,7 +210,7 @@ map.getPane('topLabels').style.pointerEvents = 'none';
         
     });
         
-    const coneCoords = leftPoints.concat(rightPoints);
+    <!--const coneCoords = leftPoints.concat(rightPoints);//skip 2 start
     // Combine for a smooth closed loop
     L.polygon(coneCoords, {
         color: '#ff0000',
@@ -220,10 +220,10 @@ map.getPane('topLabels').style.pointerEvents = 'none';
         dashArray: '4, 4',
         lineJoin: 'round' // Smooths the jagged corners
     }).addTo(map);
-}
+    }-->//skip 2 end
 
 // FIX: Ensure this is NOT nested inside drawUncertaintyCone
-let step = 0;
+<!--let step = 0;//skip 3 start
 function animateForecast() {
     if (step < forecastTrack.length) {
         forecastLine.addLatLng([forecastTrack[step].lat, forecastTrack[step].lon]);
@@ -234,10 +234,10 @@ function animateForecast() {
         // Only draw the cone once the path is complete
         drawUncertaintyCone(forecastTrack, forecastErrors);
     }
-}
+}-->//skip 3 end
 
 // START THE ANIMATION
-animateForecast();
+<!--animateForecast();-->//skip 4
 	 const updateRadar = () => {
         fetch('https://api.rainviewer.com/public/weather-maps.json')
             .then(res => res.json())
