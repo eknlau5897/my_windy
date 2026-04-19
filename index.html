@@ -79,7 +79,8 @@ windyInit(options, windyAPI => {
         "T.":      { color: '#FFC000', radius: 8, name: 'Typhoon' },
         "S.T.":    { color: '#FF0000', radius: 8, name: 'Severe Typhoon' },
         "SuperT.": { color: '#800080', radius: 8, name: 'Super Typhoon' },
-        "ViolentT.": {color: '#000000', radius: 8, name: 'Violent Typhoon'}
+        "ViolentT.": {color: '#000000', radius: 8, name: 'Violent Typhoon'},
+        "Ex-TC": {color: '#EEEEEE', radius: 8, name: 'Ex-TC'}
     };
 
     const pastTrack = [
@@ -116,7 +117,8 @@ windyInit(options, windyAPI => {
     ];  
 
     const forecastTrack = [
-        { lat: 26.4, lon: 149.5, intensity: "T.S.", wind: 80, pressure:990, hour:"19-4 00Z"}
+        { lat: 26.4, lon: 149.5, intensity: "T.S.", wind: 80, pressure:990, hour:"19-4 00Z"},
+        { lat: 29.5, lon: 157.5, intensity: "Ex-TC", wind: 70, pressure:994, hour:"20-4 00Z"}
     ];
 	
     const forecastErrors = [0];
