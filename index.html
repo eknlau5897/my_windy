@@ -121,7 +121,7 @@ windyInit(options, windyAPI => {
         { lat: 29.5, lon: 157.5, intensity: "Ex-TC", wind: 70, pressure:994, hour:"20-4 00Z"}
     ];
 	
-    const forecastErrors = [0];
+    const forecastErrors = [0 100000];
     map.createPane('topLabels');
 map.getPane('topLabels').style.zIndex = 650; // Above vectors (400) and markers (600)
 map.getPane('topLabels').style.pointerEvents = 'none';
