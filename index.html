@@ -130,10 +130,10 @@ windyInit(options, windyAPI => {
 	L.circle([22.3025, 114.17], { color: '#0000FF', fillOpacity: 0.05, radius: 400000, weight: 1 }).addTo(map);
 	L.circle([22.3025, 114.17], { color: '#FF0000', fillOpacity: 0.05, radius: 200000, weight: 1 }).addTo(map);
 	L.circle([22.3025, 114.17], { color: '#800080', fillOpacity: 0.05, radius: 100000, weight: 1 }).addTo(map);
-    L.polyline(pastTrack.map(p => [p.lat, p.lon]), { color: '#333', weight: 2 }).addTo(map);
+    /*L.polyline(pastTrack.map(p => [p.lat, p.lon]), { color: '#333', weight: 2 }).addTo(map);*/
     /*const forecastLine = L.polyline([], { color: 'red', weight: 2, dashArray: '5, 10' }).addTo(map);-->//skip 8
 
-    function addMarker(point, isPast, isForecast) {
+    /*function addMarker(point, isPast, isForecast) {
     const style = intensityStyles[point.intensity] || { color: '#fff', radius: 4, name: 'Unknown' };
     
     const marker = L.circleMarker([point.lat, point.lon], {
