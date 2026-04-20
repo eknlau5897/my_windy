@@ -78,7 +78,7 @@ windyInit(options, windyAPI => {
     store.set('overlay', 'wind');
 	store.set('isolines', 'pressure');
     try {
-                const response = await fetch('https://rainviewer.com');
+                const response = await fetch('https://api.rainviewer.com/public/weather-maps.json');
                 const data = await response.json();
                 const host = data.host;
                 const frames = data.radar.past; // 只取過去的雷達資料
