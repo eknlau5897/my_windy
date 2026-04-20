@@ -36,7 +36,7 @@
         <button id="btn-temp" onclick="changeOverlay('temp')">Temperature</button>
         
         <div class="section-label">RainViewer Radar</div>
-        <button id="radar play-pause">▶ Play Radar</button>
+        <button id="play-pause">▶ Play Radar</button>
         <div id="time-label">Loading radar...</div>
     </div>
 
@@ -118,7 +118,7 @@ windyInit(options, async (windyAPI) => {
                 updateLabel();
 
                 // 4. 綁定按鈕事件
-                document.getElementById('radar play-pause').onclick = toggleAnimation;
+                document.getElementById('play-pause').onclick = toggleAnimation;
 
             } catch (e) {
                 console.error("RainViewer data load failed", e);
@@ -364,7 +364,7 @@ function showFrame(index) {
         }
 
         function toggleAnimation() {
-            const btn = document.getElementById('radar play-pause');
+            const btn = document.getElementById('play-pause');
             if (isPlaying) {
                 clearInterval(animationInterval);
                 btn.innerText = "Play";
