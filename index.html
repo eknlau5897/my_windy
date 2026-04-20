@@ -43,6 +43,14 @@
 
     <script>
         let windyStore;
+        function changeOverlay(type) {
+    if (windyStore) {
+        windyStore.set('overlay', type);
+        document.querySelectorAll('#controls button').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.getElementById(`btn-${type}`);
+        if (activeBtn) activeBtn.classList.add('active');
+    }
+};
         let radarLayers = [];
         let currentIndex = 0;
         let animationInterval = null;
@@ -371,11 +379,6 @@ function showFrame(index) {
             isPlaying = !isPlaying;
         };
 // 4. OVERLAY SWITCHER
-function changeOverlay(type) {
-    if (windyStore) {
-        windyStore.set('overlay', type);
-    }
-}
 </script>
 </body>
 </html>
