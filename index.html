@@ -275,7 +275,39 @@ function animateForecast() {
         drawUncertaintyCone(forecastTrack, forecastErrors);
     }
 }*/
+function showFrame(index) {
+            // 隱藏當前圖層
+            if (radarLayers[currentIndex]) {
+                radarLayers[currentIndex].layer.setOpacity(0);
+            }
+            
+            // 顯示新圖層
+            currentIndex = index;
+            radarLayers[currentIndex].layer.setOpacity(0.7);
+            updateLabel();
+        }
 
+        function updateLabel() {
+            const label = document.getElementById('time-label');
+            if (radarLayers[currentIndex]) {
+                label.innerText = radarLayers[currentIndex].time;
+            }
+        }
+
+        function toggleAnimation() {
+            const btn = document.getElementById('radar play-pause');
+            if (isPlaying) {
+                clearInterval(animationInterval);
+                btn.innerText = "Play";
+            } else {
+                btn.innerText = "Pause";
+                animationInterval = setInterval(() => {
+                    let next = (currentIndex + 1) % radarLayers.length;
+                    showFrame(next);
+                }, 500); // 500ms 切換一幀
+            }
+            isPlaying = !isPlaying;
+        };
 // START THE ANIMATION
 /*animateForecast();*/
 	addNasaToWindyMenu(map, 'MODIS_Terra_CorrectedReflectance_TrueColor', 'NASA Satellite');
@@ -329,40 +361,6 @@ function animateForecast() {
     // 2. RADAR LOGIC
 // 3. TOGGLE FUNCTION (Outside init, using global leafletMap)
 		// URL Template for NASA GIBS
-	
-function showFrame(index) {
-            // 隱藏當前圖層
-            if (radarLayers[currentIndex]) {
-                radarLayers[currentIndex].layer.setOpacity(0);
-            }
-            
-            // 顯示新圖層
-            currentIndex = index;
-            radarLayers[currentIndex].layer.setOpacity(0.7);
-            updateLabel();
-        }
-
-        function updateLabel() {
-            const label = document.getElementById('time-label');
-            if (radarLayers[currentIndex]) {
-                label.innerText = radarLayers[currentIndex].time;
-            }
-        }
-
-        function toggleAnimation() {
-            const btn = document.getElementById('radar play-pause');
-            if (isPlaying) {
-                clearInterval(animationInterval);
-                btn.innerText = "Play";
-            } else {
-                btn.innerText = "Pause";
-                animationInterval = setInterval(() => {
-                    let next = (currentIndex + 1) % radarLayers.length;
-                    showFrame(next);
-                }, 500); // 500ms 切換一幀
-            }
-            isPlaying = !isPlaying;
-        };
 
 // 4. OVERLAY SWITCHER
 function changeOverlay(type) {
