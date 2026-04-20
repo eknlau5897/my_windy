@@ -196,7 +196,7 @@ windyInit(options, windyAPI => {
         	const warningMarker_1 = L.marker([24.5, 114.4]).addTo(map);
 
     // 2. Add the popup label
-    warningMarker_1.bindPopup("大雨注意報：廣東北部,source:radar indicated,expect 10-20mm/hr rainfall, valid until 20/4 12Z");
+    warningMarker_1.bindPopup("大雨注意報：廣東北部,source:radar indicated,expect 10-20mm/hr rainfall, valid until 21/4 05Z");
     
         const warningMarker_2= L.marker([22.4, 114.17]).addTo(map);
     warningMarker_2.bindPopup("No warning/watch for Hong Kong");
@@ -205,11 +205,11 @@ windyInit(options, windyAPI => {
     warningMarker_3.bindPopup("No warning/watch for Macau");
 
         const warningMarker_4= L.marker([40, 114]).addTo(map);
-    warningMarker_4.bindPopup("降溫警報：華北,source:observed, valid until 19/4 16Z<br>強烈北風潮注意報：華北,source:observed,valid until 20/4 16Z<br>沙塵暴警報：華北,source:observed,valid until 20/4 16Z");
+    warningMarker_4.bindPopup("no warning/watch for northern China");
         const warningMarker_5= L.marker([40, 95]).addTo(map);
     warningMarker_5.bindPopup("No warning/watch for Northwest");
         const warningMarker_6= L.marker([30, 113]).addTo(map);
-    warningMarker_6.bindPopup("暴雨特別警戒：華中南部,source:observed,expect 50-70mm/hr,or 150-200mm/24hr rainfall, valid until 20/4 12Z<br>強對流注意報：華中,source:observed,expect scattered 60mph wind,some hail,valid until 20/4 12Z<br>北風潮注意報：華中,source:observed,valid until 20/4 12Z<br>降溫警報：華中,source:observed,valid until 20/4 12Z");
+    warningMarker_6.bindPopup("暴雨特別警戒：華中南部,source:observed,expect 50-70mm/hr,or 150-200mm/24hr rainfall, valid until 21/4 05Z<br>東北季候風注意報：華中,source:observed,valid until 21/4 05Z<br>降溫注意報：華中,source:observed,valid until 21/4 05Z");
     /*const coneCoords = leftPoints.concat(rightPoints);//skip 12
     // Combine for a smooth closed loop
     <!--L.polygon(coneCoords, {
