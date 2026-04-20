@@ -3,62 +3,70 @@
 <head>
     <title>Windy API Smooth Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 必須引入 Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com" />
     <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
     <script src="https://api.windy.com/assets/map-forecast/libBoot.js"></script>
     <style>
         body { margin: 0; padding: 0; font-family: sans-serif; }
         #windy { width: 100vw; height: 100vh; }
+        /* 放在左側避免遮擋右下角 Windy Logo */
         #controls { 
             position: absolute; top: 10px; left: 10px; z-index: 1000; 
             background: rgba(0,0,0,0.85); padding: 12px; border-radius: 4px; 
-            color: white; display: flex; flex-direction: column; gap: 8px; width: 80px;
+            color: white; display: flex; flex-direction: column; gap: 8px; width: 150px;
         }
         button { 
             cursor: pointer; padding: 10px; border: none; border-radius: 4px; 
             background: #333; color: white; font-weight: bold; transition: 0.3s; 
+            text-align: left;
         }
         button:hover { background: #555; }
         .active { background: #e67e22 !important; }
         .section-label { font-size: 10px; text-transform: uppercase; color: #aaa; margin-top: 5px; }
-        #time-label { min-width: 150px; font-weight: bold; }
+        #time-label { font-size: 12px; margin-top: 5px; color: #00d1b2; }
      </style>
 </head>
 <body>
 
     <div id="windy"></div>
-    <div id="cursor-label"></div>
 
     <div id="controls">
         <div class="section-label">Overlays</div>
         <button id="btn-wind" class="active" onclick="changeOverlay('wind')">Wind</button>
         <button id="btn-temp" onclick="changeOverlay('temp')">Temperature</button>
         
-        <div class="section-label">Satellite & Radar</div>
-		<button id="addNasaToWindyMenu" onclick="addNasaToWindyMenu()">satellite image</button>
-        <button id="radar play-pause">Play</button>
-        <div id="time-label">Loading Radar...</div>
+        <div class="section-label">RainViewer Radar</div>
+        <button id="radar play-pause">▶ Play Radar</button>
+        <div id="time-label">Loading radar...</div>
     </div>
 
     <script>
-        let windyStore, radarLayer;
-		let leafletMap;
+        let windyStore;
         let radarLayers = [];
-        let mapInstance = null;
         let currentIndex = 0;
         let animationInterval = null;
         let isPlaying = false;
-         // Global reference for the toggle function
 
-const options = {
-    key: 'oY3mEEE9INICIpQQi8QvQlDJA365LMC3',
-    lat: 22.3,
-    lon: 114.17,
-    zoom: 5
-};
+        const options = {
+            key: 'oY3mEEE9INICIpQQi8QvQlDJA365LMC3',
+            lat: 22.3,
+            lon: 114.17,
+            zoom: 5
+        };
+
+        // 切換 Windy 疊層函數
+        function changeOverlay(type) {
+            if (windyStore) {
+                windyStore.set('overlay', type);
+                document.querySelectorAll('#controls button').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(`btn-${type}`).classList.add('active');
+            }
+        }
 
 windyInit(options, async (windyAPI) => {
     const { map, store } = windyAPI;
-
+    windyStore=store;
             // ✨ 關鍵：保留 Windy 的疊層 (可改為 'temp', 'rain', 'clouds' 等)
 	windyAPI.colors.wind.changeColor([
     [0,   [255, 255, 255]],    // Deep Blue (Calm)
@@ -87,7 +95,7 @@ windyInit(options, async (windyAPI) => {
                 frames.forEach((frame, index) => {
                     const layer = L.tileLayer(`${host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`, {
                         opacity: 0,
-                        zIndex: 100,
+                        zIndex: 500,
                         attribution: 'RainViewer'
                     });
                     
