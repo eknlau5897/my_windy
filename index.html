@@ -55,11 +55,11 @@ const options = {
     lon: 114.17,
     zoom: 5
 };
-windyInit(options, windyAPI => {
-    // 1. Assign global references from the API
-    const { map, store,picker,utils } = windyAPI;
-    leafletMap = map;
-    windyStore = store;
+
+windyInit(options, async (windyAPI) => {
+    const { map, store } = windyAPI;
+
+            // ✨ 關鍵：保留 Windy 的疊層 (可改為 'temp', 'rain', 'clouds' 等)
 	windyAPI.colors.wind.changeColor([
     [0,   [255, 255, 255]],    // Deep Blue (Calm)
     [7,   [0, 128, 255]],  // Medium Blue
