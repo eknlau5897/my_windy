@@ -1,337 +1,236 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Windy API Smooth Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
-    <script src="https://api.windy.com/assets/map-forecast/libBoot.js"></script>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
-        body { margin: 0; padding: 0; font-family: sans-serif; }
-        #windy { width: 100vw; height: 100vh; }
-        #controls { 
-            position: absolute; top: 10px; left: 10px; z-index: 1000; 
-            background: rgba(0,0,0,0.85); padding: 12px; border-radius: 4px; 
-            color: white; display: flex; flex-direction: column; gap: 8px; width: 80px;
+        #map_d9b7c97eb2d3d7e0befce17df6a8eadc {
+            position: relative;
+            width: 100.0%;
+            height: 100.0%;
+            left: 0.0%;
+            top: 0.0%;
         }
-        button { 
-            cursor: pointer; padding: 10px; border: none; border-radius: 4px; 
-            background: #333; color: white; font-weight: bold; transition: 0.3s; 
-        }
-        button:hover { background: #555; }
-        .active { background: #e67e22 !important; }
-        .section-label { font-size: 10px; text-transform: uppercase; color: #aaa; margin-top: 5px; }
+        .leaflet-container { font-size: 1rem; }
     </style>
-</head>
-<body>
 
-    <div id="windy"></div>
-    <div id="cursor-label"></div>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
 
-    <div id="controls">
-        <div class="section-label">Overlays</div>
-        <button id="btn-wind" class="active" onclick="changeOverlay('wind')">Wind</button>
-        <button id="btn-temp" onclick="changeOverlay('temp')">Temperature</button>
-        
-        <div class="section-label">Satellite & Radar</div>
-		<button id="addNasaToWindyMenu" onclick="addNasaToWindyMenu()">satellite image</button>
-        <button id="toggleRadar" onclick="toggleRadar()">Rain Radar</button>
-    </div>
+    <style>
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            left: 0;
+        }
+    </style>
 
     <script>
-        let windyStore, radarLayer;
-		let leafletMap; // Global reference for the toggle function
-
-const options = {
-    key: 'oY3mEEE9INICIpQQi8QvQlDJA365LMC3',
-    lat: 22.3,
-    lon: 114.17,
-    zoom: 5
-};
-windyInit(options, windyAPI => {
-    // 1. Assign global references from the API
-    const { map, store,picker,utils } = windyAPI;
-    leafletMap = map;
-    windyStore = store;
-	windyAPI.colors.wind.changeColor([
-    [0,   [255, 255, 255]],    // Deep Blue (Calm)
-    [7,   [0, 128, 255]],  // Medium Blue
-    [15,  [0, 255, 255]],  // Cyan (Light Breeze)
-    [20,  [0, 255, 128]],  // Spring Green
-    [25,  [0, 255, 0]],    // Green (Moderate)
-    [30,  [128, 255, 0]],  // Lime
-    [35,  [255, 255, 0]],  // Yellow (Strong)
-    [45,  [255, 128, 0]],  // Orange (Near Gale)
-    [55,  [255, 0, 0]],    // Red (Gale/Storm)
-    [64,  [255, 0, 255]],  // Magenta (Violent Storm)
-    [85,  [255, 200, 255]],// Light Pink
-    [100,  [255, 255, 255]] // White (Hurricane Force)
-]);
-    // 2. Now you can use map.on or other functions
-    store.set('overlay', 'wind');
-	store.set('isolines', 'pressure');
-
-// Add temperature isolines
-    // --- TYPHOON TRACK DATA & VISUALS ---
-    /*const intensityStyles = {//skip 1 start
-        "T.D.":    { color: '#808080', radius: 8, name: 'Tropical Depression' },
-        "T.S.":    { color: '#008000', radius: 8, name: 'Tropical Storm' },
-        "S.T.S.":  { color: '#0000FF', radius: 8, name: 'Severe Tropical Storm' },
-        "T.":      { color: '#FFC000', radius: 8, name: 'Typhoon' },
-        "S.T.":    { color: '#FF0000', radius: 8, name: 'Severe Typhoon' },
-        "SuperT.": { color: '#800080', radius: 8, name: 'Super Typhoon' },
-        "ViolentT.": {color: '#000000', radius: 8, name: 'Violent Typhoon'},
-        "Ex-TC": {color: '#EEEEEE', radius: 8, name: 'Ex-TC'}
-    };*/
-    /*   
-    const pastTrack = [//skip 2 start
-        { lat: 8.6, lon: 153, intensity: "T.D.", wind: 45 ,pressure:1002,hour: "8-4 12Z"},
-        { lat: 8.7, lon: 152.1, intensity: "T.D.", wind: 50 ,pressure:1002,hour: "9-4 00Z"},
-        { lat: 8, lon: 151.3, intensity: "T.D.", wind: 60 ,pressure:1000,hour:"9-4 12Z"},
-        { lat: 8, lon: 151, intensity: "T.D.", wind: 60 ,pressure:998, hour:"10-4 00Z"},
-        { lat: 8, lon: 150.4, intensity: "T.S.", wind: 65 ,pressure:996, hour:"10-4 06Z"},
-        { lat: 8.1, lon: 150.6, intensity: "S.T.S.", wind: 105 ,pressure:982,hour:"10-4 12Z"},
-        { lat: 8.1, lon: 151.3, intensity: "S.T.S.", wind: 105 ,pressure:980, hour:"10-4 18Z"},
-        { lat: 8.4, lon: 151.5, intensity: "S.T.S.", wind: 110 ,pressure:978, hour:"11-4 00Z"},
-        { lat: 8.7, lon: 151.6, intensity: "T.", wind: 130 ,pressure:965, hour:"11-4 12Z"},
-        { lat: 8.9, lon: 151.4, intensity: "T.", wind: 145 ,pressure:960, hour:"11-4 18Z"},
-        { lat: 9.9, lon: 151, intensity: "S.T.", wind: 180 ,pressure:940, hour:"12-4 00Z"},
-        { lat: 10.2, lon: 150.8, intensity: "SuperT.", wind: 220 ,pressure:915, hour:"12-4 06Z"},
-        { lat: 10.5, lon: 150.5, intensity: "ViolentT.", wind: 265 ,pressure:898, hour:"12-4 09Z"},
-        { lat: 11.1, lon: 150.2, intensity: "ViolentT.", wind: 265 ,pressure:898, hour:"12-4 12Z"},
-        { lat: 11.6, lon: 149.5, intensity: "ViolentT.", wind: 275 ,pressure:894, hour:"12-4 18Z"},
-        { lat: 12.1, lon: 148.5, intensity: "ViolentT.", wind: 265 ,pressure:898, hour:"13-4 00Z"},
-        { lat: 12.8, lon: 147.8, intensity: "ViolentT.", wind: 255 ,pressure:902, hour:"13-4 08Z"},
-        { lat: 13.1, lon: 147.6, intensity: "ViolentT.", wind: 250 ,pressure:905, hour:"13-4 12Z"},
-        { lat: 13.9, lon: 146.8, intensity: "ViolentT.", wind: 250 ,pressure:905, hour:"13-4 21Z"},
-        { lat: 14.3, lon: 146.6, intensity: "SuperT.", wind: 230 ,pressure:915, hour:"14-4 00Z"},
-		{ lat: 14.5, lon: 146.2, intensity: "SuperT.", wind: 220 ,pressure:920, hour:"14-4 03Z"},
-		{ lat: 14.7, lon: 145.9, intensity: "SuperT.", wind: 205 ,pressure:928, hour:"14-4 09Z"},
-		{ lat: 15.2, lon: 145.8, intensity: "SuperT.", wind: 200 ,pressure:932, hour:"14-4 12Z"},
-		{ lat: 15.5, lon: 145.3, intensity: "SuperT.", wind: 190 ,pressure:940, hour:"14-4 18Z"},
-		{ lat: 15.6, lon: 145.2, intensity: "S.T.", wind: 180 ,pressure:945, hour:"15-4 00Z"},
-        { lat: 16.2, lon: 144.6, intensity: "S.T.", wind: 180 ,pressure:945, hour:"15-4 12Z"},
-        { lat: 17.2, lon: 144.4, intensity: "S.T.", wind: 165 ,pressure:950, hour:"16-4 00Z"},
-		{ lat: 19.4, lon: 145.2, intensity: "T.", wind: 130 ,pressure:968, hour:"17-4 00Z"},
-        { lat: 22.2, lon: 146.5, intensity: "S.T.S.", wind: 105, pressure:982, hour:"18-4 00Z"},
-        { lat: 26.4, lon: 149.5, intensity: "T.S.", wind: 80, pressure:990, hour:"19-4 00Z"}
-    ];*/
-
-    /*const forecastTrack = [
-        { lat: 26.4, lon: 149.5, intensity: "T.S.", wind: 80, pressure:990, hour:"19-4 00Z"},
-        { lat: 29.5, lon: 157.5, intensity: "Ex-TC", wind: 70, pressure:994, hour:"20-4 00Z"}
-    ];*/
-	
-    /*const forecastErrors = [0,100000];*/
-    /*map.createPane('topLabels');*/
-/*map.getPane('topLabels').style.zIndex = 650;*/
-/*map.getPane('topLabels').style.pointerEvents = 'none';*/
-    // Static Visuals
-    L.circle([22.3025, 114.17], { color: '#000', fillOpacity: 0.05, radius: 800000, weight: 1 }).addTo(map);
-	L.circle([22.3025, 114.17], { color: '#0000FF', fillOpacity: 0.05, radius: 400000, weight: 1 }).addTo(map);
-	L.circle([22.3025, 114.17], { color: '#FF0000', fillOpacity: 0.05, radius: 200000, weight: 1 }).addTo(map);
-	L.circle([22.3025, 114.17], { color: '#800080', fillOpacity: 0.05, radius: 100000, weight: 1 }).addTo(map);
-    /*L.polyline(pastTrack.map(p => [p.lat, p.lon]), { color: '#333', weight: 2 }).addTo(map);*/
-    /*const forecastLine = L.polyline([], { color: 'red', weight: 2, dashArray: '5, 10' }).addTo(map);-->//skip 8
-
-    /*function addMarker(point, isPast, isForecast) {
-    const style = intensityStyles[point.intensity] || { color: '#fff', radius: 4, name: 'Unknown' };
-    
-    const marker = L.circleMarker([point.lat, point.lon], {
-        radius: style.radius,
-        fillColor: style.color,
-        color: isPast ? '#000' : 'red',
-        weight: 1.5,
-        fillOpacity: 1
-    }).addTo(map);
-
-    marker.bindPopup(
-        `<b>${style.name}</b><br>Wind: ${point.wind} km/h,Pressure:${point.pressure}hPa, Time: ${point.hour}`, 
-        { 
-            pane: 'topLabels',     // CRITICAL: Keeps it above the uncertainty cone
-            autoClose: true,      // Keeps both past and forecast labels open
-            closeOnClick: true,   // Stops map clicks from hiding them
-            offset: [0, -5] 
+        L_NO_TOUCH = false;
+        L_DISABLE_3D = false;
+    </script>
+</head>
+<body>
+    <div class="folium-map" id="map_d9b7c97eb2d3d7e0befce17df6a8eadc"></div>
+</body>
+<script>
+    var map_d9b7c97eb2d3d7e0befce17df6a8eadc = L.map(
+        "map_d9b7c97eb2d3d7e0befce17df6a8eadc",
+        {
+            center: [23.0, 113.5],
+            crs: L.CRS.EPSG3857,
+            zoom: 8,
+            zoomControl: true,
+            preferCanvas: false,
         }
-    ).openPopup();
-    }//skip 9
-    pastTrack.forEach(p => addMarker(p, true));-->//skip 10
+    );
 
-    function drawUncertaintyCone(track, errors) {
-    const leftPoints = [];
-    const rightPoints = [];
-
-    track.forEach((point, i) => {
-        const radius = errors[i] || 0;
-        if (radius === 0) {
-            leftPoints.push([point.lat, point.lon]);
-            rightPoints.unshift([point.lat, point.lon]);
-            return;
+    var tile_layer_5ebd549b70ecdbe3c0f8dc764dd2b426 = L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        {
+            minZoom: 0,
+            maxZoom: 20,
+            maxNativeZoom: 20,
+            noWrap: false,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: "abcd",
+            detectRetina: false,
+            tms: false,
+            opacity: 1,
         }
+    );
+    tile_layer_5ebd549b70ecdbe3c0f8dc764dd2b426.addTo(map_d9b7c97eb2d3d7e0befce17df6a8eadc);
 
-        // 1. Get direction of the track at this point
-        let angle;
-        if (i < track.length - 1) {
-            // Angle to next point
-            angle = Math.atan2(track[i+1].lon - point.lon, track[i+1].lat - point.lat);
-        } else {
-            // Angle from previous point (for the final tip)
-            angle = Math.atan2(point.lon - track[i-1].lon, point.lat - track[i-1].lat);
-        }
+    // ----------------------------------------------------
+    // METAR Station 1: ZGGG
+    // ----------------------------------------------------
+    var marker_3400af7653941dd0cfe22e623c6210cc = L.marker(
+        [23.3924, 113.2988],
+        {}
+    ).addTo(map_d9b7c97eb2d3d7e0befce17df6a8eadc);
 
-        // 2. Convert meters to lat/lon degrees (approximation)
-        const latOff = radius / 111320;
-        const lonOff = radius / (111320 * Math.cos(point.lat * Math.PI / 180));
-
-        // 3. Offset points perpendicular to the direction (90 degrees / PI/2)
-        leftPoints.push([
-            point.lat + latOff * Math.cos(angle + Math.PI / 2),
-            point.lon + lonOff * Math.sin(angle + Math.PI / 2)
-        ]);
-        rightPoints.unshift([
-            point.lat + latOff * Math.cos(angle - Math.PI / 2),
-            point.lon + lonOff * Math.sin(angle - Math.PI / 2)
-        ]); 
-        
-    });*///skip 11
-        	const warningMarker_1 = L.marker([24.5, 114.4]).addTo(map);
-
-    // 2. Add the popup label
-    warningMarker_1.bindPopup("暴雨警報：廣東內陸,source:forecast model, expect 30-50mm/hr rainfall, or 100-150mm/24hr rainfall, valid until 23/4 00Z<br>東北季候風注意報，降溫注意報：廣東北部：source:observed,valid until 23/4 00Z");
-    
-        const warningMarker_2= L.marker([22.4, 114.17]).addTo(map);
-    warningMarker_2.bindPopup("No warning/watch for Hong Kong");
-    
-        const warningMarker_3= L.marker([22.18, 113.53]).addTo(map);
-    warningMarker_3.bindPopup("No warning/watch for Macau");
-
-        const warningMarker_4= L.marker([40, 114]).addTo(map);
-    warningMarker_4.bindPopup("no warning/watch for northern China");
-        const warningMarker_5= L.marker([40, 95]).addTo(map);
-    warningMarker_5.bindPopup("No warning/watch for Northwest");
-        const warningMarker_6= L.marker([30, 113]).addTo(map);
-    warningMarker_6.bindPopup("<br>東北季候風注意報：華中,source:observed,valid until 23/4 00Z<br>降溫注意報：華中,source:observed,valid until 23/4 00Z");
-    /*const coneCoords = leftPoints.concat(rightPoints);//skip 12
-    // Combine for a smooth closed loop
-    <!--L.polygon(coneCoords, {
-        color: '#ff0000',
-        weight: 1.5,
-        fillColor: '#ff0000',
-        fillOpacity: 0.15,
-        dashArray: '4, 4',
-        lineJoin: 'round' // Smooths the jagged corners
-    }).addTo(map);
-    }*/
-
-// FIX: Ensure this is NOT nested inside drawUncertaintyCone
-/*let step = 0;//skip 14 start
-function animateForecast() {
-    if (step < forecastTrack.length) {
-        forecastLine.addLatLng([forecastTrack[step].lat, forecastTrack[step].lon]);
-        addMarker(forecastTrack[step], false);
-        step++;
-        setTimeout(animateForecast, 600);
-    } else {
-        // Only draw the cone once the path is complete
-        drawUncertaintyCone(forecastTrack, forecastErrors);
-    }
-}*/
-
-// START THE ANIMATION
-/*animateForecast();*/
-	 const updateRadar = () => {
-        fetch('https://api.rainviewer.com/public/weather-maps.json')
-            .then(res => res.json())
-            .then(data => {
-                const latest = data.radar.past.pop();
-                const radarUrl = `${data.host}${latest.path}/1024/{z}/{x}/{y}/2/1_1.png`;
-                
-                if (window.radarLayer) map.removeLayer(window.radarLayer);
-                
-                window.radarLayer = L.tileLayer(radarUrl, { 
-                    opacity: 0.75,
-                    maxZoom: 11,
-                    maxNativeZoom: 7,
-                    zIndex: 100 
-                }).addTo(map);
-            })
-            .catch(err => console.error("Radar failed:", err));
-    };
-    updateRadar(); 
-	addNasaToWindyMenu(map, 'MODIS_Terra_CorrectedReflectance_TrueColor', 'NASA Satellite');
-});
-		// 1. Create a simple HTML element to follow the mouse
-		function addNasaToWindyMenu(map, layerID, label) {
-    // 1. Create the NASA Layer (hidden by default)
-    const nasaLayer = L.tileLayer.wms('https://nasa.gov', {
-        layers: layerID,
-        format: 'image/png',
-        transparent: true,
-        opacity: 0.8,
-        attribution: 'NASA'
+    var div_icon_7912e84ede95cc3e7292beded99ab228 = L.divIcon({
+        "html": `
+        <div style="position: relative; width: 60px; height: 60px; font-family: Arial; font-weight: bold; font-size: 10px;">
+            <!-- Temperature (NW) -->
+            <div style="position: absolute; top: 5px; left: 0; color: darkred;">24.0</div>
+            <!-- Dewpoint (SW) -->
+            <div style="position: absolute; bottom: 5px; left: 0; color: darkgreen;">--</div>
+            <!-- Station Circle Center -->
+            <div style="position: absolute; top: 25px; left: 25px; width: 8px; height: 8px; background-color: green; border: 1px solid black; border-radius: 50%;"></div>
+            <!-- Wind Barb -->
+            <div style="position: absolute; top: 28px; left: 29px; width: 2px; height: 25px; background-color: black; transform-origin: top center; transform: rotate(180deg); border-radius: 1px;">
+                <div style="width: 8px; height: 2px; background-color: black; position: absolute; bottom: 0; right: 0;"></div>
+            </div>
+            <!-- ID (Right) -->
+            <div style="position: absolute; top: 25px; left: 38px; font-size: 8px; color: #333;">ZGGG</div>
+        </div>`,
+        "iconSize": [60, 60],
+        "iconAnchor": [30, 30],
+        "className": "empty",
     });
 
-    // 2. Function to inject the button into the DOM
-    const injectButton = () => {
-        // Search for the Windy menu container
-        const menu = document.querySelector('.menu-content') || document.querySelector('.layers-list');
-        if (!menu) return;
+    var popup_e4613111cc69282c32e850731a132d93 = L.popup({"maxWidth": "100%"});
+    var html_30de0d53c9943faeaaf0ca64a6928715 = $(`<div id="html_30de0d53c9943faeaaf0ca64a6928715" style="width: 100.0%; height: 100.0%;">METAR: ZGGG 150330Z 16004MPS 9999 FEW025 24/18 Q1012 NOSIG</div>`)[0];
+    popup_e4613111cc69282c32e850731a132d93.setContent(html_30de0d53c9943faeaaf0ca64a6928715);
+    marker_3400af7653941dd0cfe22e623c6210cc.bindPopup(popup_e4613111cc69282c32e850731a132d93);
+    marker_3400af7653941dd0cfe22e623c6210cc.setIcon(div_icon_7912e84ede95cc3e7292beded99ab228);
 
-        // Check if button already exists to avoid duplicates
-        if (document.getElementById(`btn-${layerID}`)) return;
+    // ----------------------------------------------------
+    // METAR Station 2: ZGSZ
+    // ----------------------------------------------------
+    var marker_0daa6b721c922c285a75e2a70fe65bc6 = L.marker(
+        [22.6394, 113.8107],
+        {}
+    ).addTo(map_d9b7c97eb2d3d7e0befce17df6a8eadc);
 
-        const btn = document.createElement('div');
-        btn.id = `btn-${layerID}`;
-        btn.className = 'menu-item'; // Matches Windy's native button class
-        btn.style.cssText = 'cursor: pointer; padding: 10px; margin-top: 5px; border-radius: 4px; background: #333; transition: 0.3s;';
-        btn.innerHTML = `<span>${label}</span>`;
+    var div_icon_4ca5914ddd5b045e8ed6eae54dd204aa = L.divIcon({
+        "html": `
+        <div style="position: relative; width: 60px; height: 60px; font-family: Arial; font-weight: bold; font-size: 10px;">
+            <!-- Temperature (NW) -->
+            <div style="position: absolute; top: 5px; left: 0; color: darkred;">25.0</div>
+            <!-- Dewpoint (SW) -->
+            <div style="position: absolute; bottom: 5px; left: 0; color: darkgreen;">--</div>
+            <!-- Station Circle Center -->
+            <div style="position: absolute; top: 25px; left: 25px; width: 8px; height: 8px; background-color: blue; border: 1px solid black; border-radius: 50%;"></div>
+            <!-- Wind Barb -->
+            <div style="position: absolute; top: 28px; left: 29px; width: 2px; height: 25px; background-color: black; transform-origin: top center; transform: rotate(180deg); border-radius: 1px;">
+                <div style="width: 8px; height: 2px; background-color: black; position: absolute; bottom: 0; right: 0;"></div>
+            </div>
+            <!-- ID (Right) -->
+            <div style="position: absolute; top: 25px; left: 38px; font-size: 8px; color: #333;">ZGSZ</div>
+        </div>`,
+        "iconSize": [60, 60],
+        "iconAnchor": [30, 30],
+        "className": "empty",
+    });
 
-        // 3. Toggle Logic
-        btn.onclick = () => {
-            if (map.hasLayer(nasaLayer)) {
-                map.removeLayer(nasaLayer);
-                btn.style.background = '#333'; // Reset to dark
-                btn.style.color = 'white';
-            } else {
-                map.addLayer(nasaLayer);
-                btn.style.background = '#e67e22'; // Matches Windy orange
-                btn.style.color = 'white';
-            }
-        };
+    var popup_9ab9a36098c942030f4998ab427a179b = L.popup({"maxWidth": "100%"});
+    var html_2eeb920b191570155fb41b956449dd97 = $(`<div id="html_2eeb920b191570155fb41b956449dd97" style="width: 100.0%; height: 100.0%;">METAR: ZGSZ 150330Z 18005MPS 4500 BR HZ FEW015 BKN030 25/20 Q1011</div>`)[0];
+    popup_9ab9a36098c942030f4998ab427a179b.setContent(html_2eeb920b191570155fb41b956449dd97);
+    marker_0daa6b721c922c285a75e2a70fe65bc6.bindPopup(popup_9ab9a36098c942030f4998ab427a179b);
+    marker_0daa6b721c922c285a75e2a70fe65bc6.setIcon(div_icon_4ca5914ddd5b045e8ed6eae54dd204aa);
 
-        menu.appendChild(btn);
-    };
+    // ----------------------------------------------------
+    // METAR Station 3: ZGZHA
+    // ----------------------------------------------------
+    var marker_728574c1c0e55247401b909434100269 = L.marker(
+        [22.0064, 113.3761],
+        {}
+    ).addTo(map_d9b7c97eb2d3d7e0befce17df6a8eadc);
 
-    // Run injection. We use an interval because Windy's menu often 
-    // re-renders when the user interacts with it.
-    setInterval(injectButton, 2000);
-}
-    // 2. RADAR LOGIC
-// 3. TOGGLE FUNCTION (Outside init, using global leafletMap)
-		// URL Template for NASA GIBS
-	
-document.getElementById('toggleRadar').onclick = function() {
-    if (!window.radarLayer || !leafletMap) {
-        console.log("Radar layer or map not ready yet");
-        return;
-    }
+    var div_icon_2f4a344667239d65c0387f8c6eec334c = L.divIcon({
+        "html": `
+        <div style="position: relative; width: 60px; height: 60px; font-family: Arial; font-weight: bold; font-size: 10px;">
+            <!-- Temperature (NW) -->
+            <div style="position: absolute; top: 5px; left: 0; color: darkred;">23.5</div>
+            <!-- Dewpoint (SW) -->
+            <div style="position: absolute; bottom: 5px; left: 0; color: darkgreen;">--</div>
+            <!-- Station Circle Center -->
+            <div style="position: absolute; top: 25px; left: 25px; width: 8px; height: 8px; background-color: green; border: 1px solid black; border-radius: 50%;"></div>
+            <!-- Wind Barb -->
+            <div style="position: absolute; top: 28px; left: 29px; width: 2px; height: 25px; background-color: black; transform-origin: top center; transform: rotate(180deg); border-radius: 1px;">
+                <div style="width: 8px; height: 2px; background-color: black; position: absolute; bottom: 0; right: 0;"></div>
+            </div>
+            <!-- ID (Right) -->
+            <div style="position: absolute; top: 25px; left: 38px; font-size: 8px; color: #333;">ZGZHA</div>
+        </div>`,
+        "iconSize": [60, 60],
+        "iconAnchor": [30, 30],
+        "className": "empty",
+    });
 
-    if (leafletMap.hasLayer(window.radarLayer)) {
-        leafletMap.removeLayer(window.radarLayer);
-        this.style.background = "rgba(0,0,0,0.7)"; 
-        this.innerText = "Radar OFF";
-    } else {
-        leafletMap.addLayer(window.radarLayer);
-        this.style.background = "#2c3e50";
-        this.innerText = "Radar ON";
-    }
-};
+    var popup_ce387b164df41af636c07b140c55fdb4 = L.popup({"maxWidth": "100%"});
+    var html_da9006a2ff8317c756b561985e7f9181 = $(`<div id="html_da9006a2ff8317c756b561985e7f9181" style="width: 100.0%; height: 100.0%;">METAR: ZGZHA 150330Z 15003MPS 9999 SCT020 24/19 Q1013</div>`)[0];
+    popup_ce387b164df41af636c07b140c55fdb4.setContent(html_da9006a2ff8317c756b561985e7f9181);
+    marker_728574c1c0e55247401b909434100269.bindPopup(popup_ce387b164df41af636c07b140c55fdb4);
+    marker_728574c1c0e55247401b909434100269.setIcon(div_icon_2f4a344667239d65c0387f8c6eec334c);
 
-// 4. OVERLAY SWITCHER
-function changeOverlay(type) {
-    if (windyStore) {
-        windyStore.set('overlay', type);
-    }
-}
+    // ----------------------------------------------------
+    // GTS Weather Observation Station: 59287
+    // ----------------------------------------------------
+    var marker_gts_59287 = L.marker(
+        [23.13, 113.26],
+        {}
+    ).addTo(map_d9b7c97eb2d3d7e0befce17df6a8eadc);
+
+    var div_icon_gts_59287 = L.divIcon({
+        "html": `
+        <div style="position: relative; width: 60px; height: 60px; font-family: Arial; font-weight: bold; font-size: 10px;">
+            <!-- Temperature (NW Corner) -->
+            <div style="position: absolute; top: 5px; left: 0; color: darkred;">23.8</div>
+            
+            <!-- Dewpoint (SW Corner) -->
+            <div style="position: absolute; bottom: 5px; left: 0; color: darkgreen;">18.2</div>
+
+            <!-- Sea Level Pressure / SLP in hPa (NE Corner) -->
+            <div style="position: absolute; top: 5px; right: 0; color: darkblue;">1012.4</div>
+            
+            <!-- GTS Station Center Marker (Red circle) -->
+            <div style="position: absolute; top: 25px; left: 25px; width: 8px; height: 8px; background-color: #e74c3c; border: 1px solid black; border-radius: 50%;"></div>
+            
+            <!-- Wind Barb -->
+            <div style="position: absolute; top: 28px; left: 29px; width: 2px; height: 25px; background-color: black; transform-origin: top center; transform: rotate(140deg); border-radius: 1px;">
+                <div style="width: 8px; height: 2px; background-color: black; position: absolute; bottom: 0; right: 0;"></div>
+            </div>
+            
+            <!-- WMO Station ID (Right) -->
+            <div style="position: absolute; top: 25px; left: 38px; font-size: 8px; color: #333;">59287</div>
+        </div>`,
+        "iconSize": [60, 60],
+        "iconAnchor": [30, 30],
+        "className": "empty",
+    });
+
+    var popup_gts_59287 = L.popup({"maxWidth": "100%"});
+    var html_gts_59287 = $(`
+        <div style="width: 100.0%; height: 100.0%;">
+            <strong>GTS SYNOP Observation:</strong><br/>
+            <code>AAXX 15034 59287 11583 81404 10238 20182 40124 58003</code>
+        </div>
+    `)[0];
+
+    popup_gts_59287.setContent(html_gts_59287);
+    marker_gts_59287.bindPopup(popup_gts_59287);
+    marker_gts_59287.setIcon(div_icon_gts_59287);
 </script>
-</body>
 </html>
