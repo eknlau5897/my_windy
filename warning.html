@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>OpenStreetMap - Authenticated GeoJSON Upload</title>
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Floating UI Panel */
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 18px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+            width: 240px;
+        }
+
+        .control-panel h4 {
+            margin: 0 0 12px 0;
+            font-size: 15px;
+            color: #2c3e50;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 8px 0;
+            margin-top: 8px;
+            color: white;
+            text-align: center;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            box-sizing: border-box;
+        }
+
+        .btn-primary { background-color: #3498db; }
+        .btn-primary:hover { background-color: #2980b9; }
+        
+        .btn-danger { background-color: #e74c3c; }
+        .btn-danger:hover { background-color: #c0392b; }
+
+        .btn-auth { background-color: #2ecc71; }
+        .btn-auth:hover { background-color: #27ae60; }
+
+        input[type="file"] { display: none; }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Modal Content Box */
+        .modal-box {
+            background: white;
+            padding: 25px 30px;
+            border-radius: 8px;
+            width: 300px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .modal-box h3 { margin-top: 0; color: #2c3e50; }
+
+        .input-field {
+            width: 100%;
+            padding: 9px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .error-msg {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .status-badge {
+            font-size: 11px;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-weight: normal;
+        }
+        .status-locked { background: #ffebee; color: #c62828; }
+        .status-unlocked { background: #e8f5e9; color: #2e7d32; }
+    </style>
+</head>
+<body>
+
+    <!-- Map UI Control Panel -->
+    <div class="control-panel">
+        <h4>GeoJSON Layer Manager 
+            <span id="auth-status" class="status-badge status-locked">Locked</span>
+        </h4>
+
+        <!-- Login Trigger Button (Visible when logged out) -->
+        <button id="login-trigger-btn" class="btn btn-auth" onclick="openLoginModal()">🔒 Log In to Add GeoJSON</button>
+
+        <!-- GeoJSON Upload Controls (Hidden until authenticated) -->
+        <div id="authenticated-controls" style="display: none;">
+            <label for="geojson-input" class="btn btn-primary">📂 Select GeoJSON File</label>
+            <input type="file" id="geojson-input" accept=".geojson, .json" />
+            <button class="btn btn-danger" onclick="clearGeoJSON()">Clear Layers</button>
+            <button class="btn btn-danger" style="background-color: #7f8c8d; margin-top: 15px;" onclick="logout()">Log Out</button>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>Authorization Required</h3>
+            <p style="font-size: 12px; color: #666;">Enter your credentials to upload map data.</p>
+            <input type="text" id="username" class="input-field" placeholder="Username" />
+            <input type="password" id="password" class="input-field" placeholder="Password" />
+            <div id="error-message" class="error-msg">Invalid credentials.</div>
+            
+            <button class="btn btn-auth" style="margin-top: 12px;" onclick="attemptLogin()">Submit Login</button>
+            <button class="btn btn-danger" style="background-color: #95a5a6;" onclick="closeLoginModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Map Container -->
+    <div id="map"></div>
+
+<script>
+    // 1. Initialize Leaflet Map
+    var map = L.map('map').setView([22.3193, 114.1694], 10);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    var geojsonLayerGroup = L.layerGroup().addTo(map);
+
+    // 2. Authentication Logic
+    const DEMO_USER = "admin";
+    const DEMO_PASS = "map123";
+
+    function checkAuthState() {
+        var isAuthenticated = sessionStorage.getItem("geojson_auth") === "true";
+        
+        var authStatus = document.getElementById("auth-status");
+        var loginBtn = document.getElementById("login-trigger-btn");
+        var authControls = document.getElementById("authenticated-controls");
+
+        if (isAuthenticated) {
+            authStatus.textContent = "Unlocked";
+            authStatus.className = "status-badge status-unlocked";
+            loginBtn.style.display = "none";
+            authControls.style.display = "block";
+        } else {
+            authStatus.textContent = "Locked";
+            authStatus.className = "status-badge status-locked";
+            loginBtn.style.display = "block";
+            authControls.style.display = "none";
+        }
+    }
+
+    function openLoginModal() {
+        document.getElementById("login-modal").style.display = "flex";
+    }
+
+    function closeLoginModal() {
+        document.getElementById("login-modal").style.display = "none";
+        document.getElementById("error-message").style.display = "none";
+    }
+
+    function attemptLogin() {
+        var user = document.getElementById("username").value;
+        var pass = document.getElementById("password").value;
+
+        // Credentials verification (Replace demo check with your API endpoint if needed)
+        if (user === DEMO_USER && pass === DEMO_PASS) {
+            sessionStorage.setItem("geojson_auth", "true");
+            closeLoginModal();
+            checkAuthState();
+            // Clear input fields
+            document.getElementById("username").value = "";
+            document.getElementById("password").value = "";
+        } else {
+            document.getElementById("error-message").style.display = "block";
+        }
+    }
+
+    function logout() {
+        sessionStorage.removeItem("geojson_auth");
+        clearGeoJSON();
+        checkAuthState();
+    }
+
+    // 3. GeoJSON File Handling
+    document.getElementById('geojson-input').addEventListener('change', function (event) {
+        // Enforce login check before reading file
+        if (sessionStorage.getItem("geojson_auth") !== "true") {
+            alert("Unauthorized attempt. Please log in first.");
+            return;
+        }
+
+        var file = event.target.files[0];
+        if (!file) return;
+
+        var reader = new FileReader();
+
+        reader.onload = function (e) {
+            try {
+                var geojsonData = JSON.parse(e.target.result);
+
+                geojsonLayerGroup.clearLayers();
+
+                var newLayer = L.geoJSON(geojsonData, {
+                    style: {
+                        color: "#2980b9",
+                        weight: 3,
+                        fillColor: "#3498db",
+                        fillOpacity: 0.4
+                    },
+                    onEachFeature: function (feature, layer) {
+                        if (feature.properties) {
+                            var popup = "<strong>Properties:</strong><br/>";
+                            for (var k in feature.properties) {
+                                popup += k + ": " + feature.properties[k] + "<br/>";
+                            }
+                            layer.bindPopup(popup);
+                        }
+                    }
+                });
+
+                geojsonLayerGroup.addLayer(newLayer);
+                map.fitBounds(newLayer.getBounds());
+
+            } catch (err) {
+                alert("Invalid GeoJSON file formatting.");
+            }
+        };
+
+        reader.readAsText(file);
+    });
+
+    function clearGeoJSON() {
+        geojsonLayerGroup.clearLayers();
+        document.getElementById('geojson-input').value = "";
+    }
+
+    // Initialize Auth state on load
+    checkAuthState();
+</script>
+
+</body>
+</html>
