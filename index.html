@@ -23,24 +23,11 @@
             top: 0.0%;
         }
         .leaflet-container { font-size: 1rem; }
-    </style>
-
-    <style>
         html, body {
             width: 100%;
             height: 100%;
             margin: 0;
             padding: 0;
-        }
-    </style>
-
-    <style>
-        #map {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            right: 0;
-            left: 0;
         }
     </style>
 
@@ -53,18 +40,19 @@
     <div class="folium-map" id="map_d9b7c97eb2d3d7e0befce17df6a8eadc"></div>
 </body>
 <script>
-    var map_d9b7c97eb2d3d7e0befce17df6a8eadc = L.map(
+    // Initialize map zoomed out to global level
+    var map = L.map(
         "map_d9b7c97eb2d3d7e0befce17df6a8eadc",
         {
-            center: [23.0, 113.5],
+            center: [20.0, 0.0],
             crs: L.CRS.EPSG3857,
-            zoom: 8,
+            zoom: 3,
             zoomControl: true,
             preferCanvas: false,
         }
     );
 
-    var tile_layer_5ebd549b70ecdbe3c0f8dc764dd2b426 = L.tileLayer(
+    var tileLayer = L.tileLayer(
         "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
         {
             minZoom: 0,
@@ -73,164 +61,95 @@
             noWrap: false,
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
             subdomains: "abcd",
-            detectRetina: false,
-            tms: false,
             opacity: 1,
         }
     );
-    tile_layer_5ebd549b70ecdbe3c0f8dc764dd2b426.addTo(map_d9b7c97eb2d3d7e0befce17df6a8eadc);
+    tileLayer.addTo(map);
 
-    // ----------------------------------------------------
-    // METAR Station 1: ZGGG
-    // ----------------------------------------------------
-    var marker_3400af7653941dd0cfe22e623c6210cc = L.marker(
-        [23.3924, 113.2988],
-        {}
-    ).addTo(map_d9b7c97eb2d3d7e0befce17df6a8eadc);
+    // Layer Group to hold all dynamic GTS observations globally
+    var gtsLayerGroup = L.layerGroup().addTo(map);
 
-    var div_icon_7912e84ede95cc3e7292beded99ab228 = L.divIcon({
-        "html": `
-        <div style="position: relative; width: 60px; height: 60px; font-family: Arial; font-weight: bold; font-size: 10px;">
-            <!-- Temperature (NW) -->
-            <div style="position: absolute; top: 5px; left: 0; color: darkred;">24.0</div>
-            <!-- Dewpoint (SW) -->
-            <div style="position: absolute; bottom: 5px; left: 0; color: darkgreen;">--</div>
-            <!-- Station Circle Center -->
-            <div style="position: absolute; top: 25px; left: 25px; width: 8px; height: 8px; background-color: green; border: 1px solid black; border-radius: 50%;"></div>
-            <!-- Wind Barb -->
-            <div style="position: absolute; top: 28px; left: 29px; width: 2px; height: 25px; background-color: black; transform-origin: top center; transform: rotate(180deg); border-radius: 1px;">
-                <div style="width: 8px; height: 2px; background-color: black; position: absolute; bottom: 0; right: 0;"></div>
-            </div>
-            <!-- ID (Right) -->
-            <div style="position: absolute; top: 25px; left: 38px; font-size: 8px; color: #333;">ZGGG</div>
-        </div>`,
-        "iconSize": [60, 60],
-        "iconAnchor": [30, 30],
-        "className": "empty",
-    });
+    // Helper function: Render station plot icon
+    function createGTSStationIcon(station) {
+        var temp = station.temp !== undefined ? station.temp.toFixed(1) : '--';
+        var dewpoint = station.dewpoint !== undefined ? station.dewpoint.toFixed(1) : '--';
+        var pressure = station.slp !== undefined ? station.slp.toFixed(1) : '--';
+        var windDir = station.windDir || 0;
+        var stationId = station.id || 'N/A';
 
-    var popup_e4613111cc69282c32e850731a132d93 = L.popup({"maxWidth": "100%"});
-    var html_30de0d53c9943faeaaf0ca64a6928715 = $(`<div id="html_30de0d53c9943faeaaf0ca64a6928715" style="width: 100.0%; height: 100.0%;">METAR: ZGGG 150330Z 16004MPS 9999 FEW025 24/18 Q1012 NOSIG</div>`)[0];
-    popup_e4613111cc69282c32e850731a132d93.setContent(html_30de0d53c9943faeaaf0ca64a6928715);
-    marker_3400af7653941dd0cfe22e623c6210cc.bindPopup(popup_e4613111cc69282c32e850731a132d93);
-    marker_3400af7653941dd0cfe22e623c6210cc.setIcon(div_icon_7912e84ede95cc3e7292beded99ab228);
+        return L.divIcon({
+            "html": `
+            <div style="position: relative; width: 60px; height: 60px; font-family: Arial; font-weight: bold; font-size: 10px;">
+                <!-- Temperature (NW Corner) -->
+                <div style="position: absolute; top: 5px; left: 0; color: darkred;">${temp}</div>
+                
+                <!-- Dewpoint (SW Corner) -->
+                <div style="position: absolute; bottom: 5px; left: 0; color: darkgreen;">${dewpoint}</div>
 
-    // ----------------------------------------------------
-    // METAR Station 2: ZGSZ
-    // ----------------------------------------------------
-    var marker_0daa6b721c922c285a75e2a70fe65bc6 = L.marker(
-        [22.6394, 113.8107],
-        {}
-    ).addTo(map_d9b7c97eb2d3d7e0befce17df6a8eadc);
+                <!-- Sea Level Pressure / SLP (NE Corner) -->
+                <div style="position: absolute; top: 5px; right: 0; color: darkblue;">${pressure}</div>
+                
+                <!-- GTS Station Center Marker -->
+                <div style="position: absolute; top: 25px; left: 25px; width: 8px; height: 8px; background-color: #e74c3c; border: 1px solid black; border-radius: 50%;"></div>
+                
+                <!-- Wind Barb / Vector Direction -->
+                <div style="position: absolute; top: 28px; left: 29px; width: 2px; height: 25px; background-color: black; transform-origin: top center; transform: rotate(${windDir}deg); border-radius: 1px;">
+                    <div style="width: 8px; height: 2px; background-color: black; position: absolute; bottom: 0; right: 0;"></div>
+                </div>
+                
+                <!-- WMO Station ID (Right) -->
+                <div style="position: absolute; top: 25px; left: 38px; font-size: 8px; color: #333;">${stationId}</div>
+            </div>`,
+            "iconSize": [60, 60],
+            "iconAnchor": [30, 30],
+            "className": "empty",
+        });
+    }
 
-    var div_icon_4ca5914ddd5b045e8ed6eae54dd204aa = L.divIcon({
-        "html": `
-        <div style="position: relative; width: 60px; height: 60px; font-family: Arial; font-weight: bold; font-size: 10px;">
-            <!-- Temperature (NW) -->
-            <div style="position: absolute; top: 5px; left: 0; color: darkred;">25.0</div>
-            <!-- Dewpoint (SW) -->
-            <div style="position: absolute; bottom: 5px; left: 0; color: darkgreen;">--</div>
-            <!-- Station Circle Center -->
-            <div style="position: absolute; top: 25px; left: 25px; width: 8px; height: 8px; background-color: blue; border: 1px solid black; border-radius: 50%;"></div>
-            <!-- Wind Barb -->
-            <div style="position: absolute; top: 28px; left: 29px; width: 2px; height: 25px; background-color: black; transform-origin: top center; transform: rotate(180deg); border-radius: 1px;">
-                <div style="width: 8px; height: 2px; background-color: black; position: absolute; bottom: 0; right: 0;"></div>
-            </div>
-            <!-- ID (Right) -->
-            <div style="position: absolute; top: 25px; left: 38px; font-size: 8px; color: #333;">ZGSZ</div>
-        </div>`,
-        "iconSize": [60, 60],
-        "iconAnchor": [30, 30],
-        "className": "empty",
-    });
-
-    var popup_9ab9a36098c942030f4998ab427a179b = L.popup({"maxWidth": "100%"});
-    var html_2eeb920b191570155fb41b956449dd97 = $(`<div id="html_2eeb920b191570155fb41b956449dd97" style="width: 100.0%; height: 100.0%;">METAR: ZGSZ 150330Z 18005MPS 4500 BR HZ FEW015 BKN030 25/20 Q1011</div>`)[0];
-    popup_9ab9a36098c942030f4998ab427a179b.setContent(html_2eeb920b191570155fb41b956449dd97);
-    marker_0daa6b721c922c285a75e2a70fe65bc6.bindPopup(popup_9ab9a36098c942030f4998ab427a179b);
-    marker_0daa6b721c922c285a75e2a70fe65bc6.setIcon(div_icon_4ca5914ddd5b045e8ed6eae54dd204aa);
-
-    // ----------------------------------------------------
-    // METAR Station 3: ZGZHA
-    // ----------------------------------------------------
-    var marker_728574c1c0e55247401b909434100269 = L.marker(
-        [22.0064, 113.3761],
-        {}
-    ).addTo(map_d9b7c97eb2d3d7e0befce17df6a8eadc);
-
-    var div_icon_2f4a344667239d65c0387f8c6eec334c = L.divIcon({
-        "html": `
-        <div style="position: relative; width: 60px; height: 60px; font-family: Arial; font-weight: bold; font-size: 10px;">
-            <!-- Temperature (NW) -->
-            <div style="position: absolute; top: 5px; left: 0; color: darkred;">23.5</div>
-            <!-- Dewpoint (SW) -->
-            <div style="position: absolute; bottom: 5px; left: 0; color: darkgreen;">--</div>
-            <!-- Station Circle Center -->
-            <div style="position: absolute; top: 25px; left: 25px; width: 8px; height: 8px; background-color: green; border: 1px solid black; border-radius: 50%;"></div>
-            <!-- Wind Barb -->
-            <div style="position: absolute; top: 28px; left: 29px; width: 2px; height: 25px; background-color: black; transform-origin: top center; transform: rotate(180deg); border-radius: 1px;">
-                <div style="width: 8px; height: 2px; background-color: black; position: absolute; bottom: 0; right: 0;"></div>
-            </div>
-            <!-- ID (Right) -->
-            <div style="position: absolute; top: 25px; left: 38px; font-size: 8px; color: #333;">ZGZHA</div>
-        </div>`,
-        "iconSize": [60, 60],
-        "iconAnchor": [30, 30],
-        "className": "empty",
-    });
-
-    var popup_ce387b164df41af636c07b140c55fdb4 = L.popup({"maxWidth": "100%"});
-    var html_da9006a2ff8317c756b561985e7f9181 = $(`<div id="html_da9006a2ff8317c756b561985e7f9181" style="width: 100.0%; height: 100.0%;">METAR: ZGZHA 150330Z 15003MPS 9999 SCT020 24/19 Q1013</div>`)[0];
-    popup_ce387b164df41af636c07b140c55fdb4.setContent(html_da9006a2ff8317c756b561985e7f9181);
-    marker_728574c1c0e55247401b909434100269.bindPopup(popup_ce387b164df41af636c07b140c55fdb4);
-    marker_728574c1c0e55247401b909434100269.setIcon(div_icon_2f4a344667239d65c0387f8c6eec334c);
-
-    // ----------------------------------------------------
-    // GTS Weather Observation Station: 59287
-    // ----------------------------------------------------
-    var marker_gts_59287 = L.marker(
-        [23.13, 113.26],
-        {}
-    ).addTo(map_d9b7c97eb2d3d7e0befce17df6a8eadc);
-
-    var div_icon_gts_59287 = L.divIcon({
-        "html": `
-        <div style="position: relative; width: 60px; height: 60px; font-family: Arial; font-weight: bold; font-size: 10px;">
-            <!-- Temperature (NW Corner) -->
-            <div style="position: absolute; top: 5px; left: 0; color: darkred;">23.8</div>
+    // Function to load global GTS weather data asynchronously
+    async function fetchGlobalGTSObservations() {
+        try {
+            // Replace endpoint URL with your backend GTS feed API URL (GeoJSON or JSON endpoint)
+            // Example response structure expected: Array of station objects with lat, lon, temp, dewpoint, slp, windDir, id, rawMsg
             
-            <!-- Dewpoint (SW Corner) -->
-            <div style="position: absolute; bottom: 5px; left: 0; color: darkgreen;">18.2</div>
+            // DEMO DATA: Simulating a global feed payload
+            const globalGTSData = [
+                { id: "59287", lat: 23.13, lon: 113.26, temp: 23.8, dewpoint: 18.2, slp: 1012.4, windDir: 140, rawMsg: "AAXX 15034 59287 11583 81404 10238 20182 40124 58003" },
+                { id: "47662", lat: 35.67, lon: 139.65, temp: 16.4, dewpoint: 10.1, slp: 1018.2, windDir: 40, rawMsg: "AAXX 15034 47662 11583 80404 10164 20101 40182" },
+                { id: "07149", lat: 48.85, lon: 2.35, temp: 12.0, dewpoint: 8.5, slp: 1021.0, windDir: 220, rawMsg: "AAXX 15034 07149 11583 82204 10120 20085 40210" },
+                { id: "72502", lat: 40.71, lon: -74.00, temp: 18.5, dewpoint: 12.0, slp: 1009.8, windDir: 280, rawMsg: "AAXX 15034 72502 11583 82804 10185 20120 40098" },
+                { id: "94768", lat: -33.86, lon: 151.20, temp: 21.0, dewpoint: 15.3, slp: 1016.5, windDir: 180, rawMsg: "AAXX 15034 94768 11583 81804 10210 20153 40165" }
+            ];
 
-            <!-- Sea Level Pressure / SLP in hPa (NE Corner) -->
-            <div style="position: absolute; top: 5px; right: 0; color: darkblue;">1012.4</div>
-            
-            <!-- GTS Station Center Marker (Red circle) -->
-            <div style="position: absolute; top: 25px; left: 25px; width: 8px; height: 8px; background-color: #e74c3c; border: 1px solid black; border-radius: 50%;"></div>
-            
-            <!-- Wind Barb -->
-            <div style="position: absolute; top: 28px; left: 29px; width: 2px; height: 25px; background-color: black; transform-origin: top center; transform: rotate(140deg); border-radius: 1px;">
-                <div style="width: 8px; height: 2px; background-color: black; position: absolute; bottom: 0; right: 0;"></div>
-            </div>
-            
-            <!-- WMO Station ID (Right) -->
-            <div style="position: absolute; top: 25px; left: 38px; font-size: 8px; color: #333;">59287</div>
-        </div>`,
-        "iconSize": [60, 60],
-        "iconAnchor": [30, 30],
-        "className": "empty",
-    });
+            // Clear existing GTS markers before re-rendering
+            gtsLayerGroup.clearLayers();
 
-    var popup_gts_59287 = L.popup({"maxWidth": "100%"});
-    var html_gts_59287 = $(`
-        <div style="width: 100.0%; height: 100.0%;">
-            <strong>GTS SYNOP Observation:</strong><br/>
-            <code>AAXX 15034 59287 11583 81404 10238 20182 40124 58003</code>
-        </div>
-    `)[0];
+            // Iterate over all global observations and add markers
+            globalGTSData.forEach(station => {
+                var marker = L.marker([station.lat, station.lon]);
+                
+                // Assign icon
+                marker.setIcon(createGTSStationIcon(station));
 
-    popup_gts_59287.setContent(html_gts_59287);
-    marker_gts_59287.bindPopup(popup_gts_59287);
-    marker_gts_59287.setIcon(div_icon_gts_59287);
+                // Assign popup with raw GTS/SYNOP payload
+                var popupContent = `
+                    <div style="width: 100%;">
+                        <strong>WMO Station ${station.id}:</strong><br/>
+                        <code>${station.rawMsg || 'No raw data available'}</code>
+                    </div>
+                `;
+                marker.bindPopup(popupContent);
+
+                // Add to layer group
+                gtsLayerGroup.addLayer(marker);
+            });
+
+        } catch (error) {
+            console.error("Failed to load global GTS weather data:", error);
+        }
+    }
+
+    // Call dynamic fetch on page load
+    fetchGlobalGTSObservations();
 </script>
 </html>
