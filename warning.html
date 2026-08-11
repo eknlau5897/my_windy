@@ -2,11 +2,15 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>OpenStreetMap - Authenticated GeoJSON Upload</title>
+    <title>OpenStreetMap - Draw & Export GeoJSON</title>
 
     <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Leaflet Draw Plugin CSS & JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
     <style>
         html, body {
@@ -20,7 +24,7 @@
             height: 100%;
         }
 
-        /* Floating UI Panel */
+        /* UI Panel */
         .control-panel {
             position: absolute;
             top: 20px;
@@ -56,18 +60,18 @@
 
         .btn-primary { background-color: #3498db; }
         .btn-primary:hover { background-color: #2980b9; }
+
+        .btn-success { background-color: #2ecc71; }
+        .btn-success:hover { background-color: #27ae60; }
         
         .btn-danger { background-color: #e74c3c; }
         .btn-danger:hover { background-color: #c0392b; }
 
-        .btn-auth { background-color: #2ecc71; }
-        .btn-auth:hover { background-color: #27ae60; }
-
         input[type="file"] { display: none; }
 
-        /* Modal Overlay */
+        /* Modal Styling */
         .modal-overlay {
-            display: none; /* Hidden by default */
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
@@ -79,7 +83,6 @@
             align-items: center;
         }
 
-        /* Modal Content Box */
         .modal-box {
             background: white;
             padding: 25px 30px;
@@ -88,8 +91,6 @@
             box-shadow: 0 5px 20px rgba(0,0,0,0.3);
             text-align: center;
         }
-
-        .modal-box h3 { margin-top: 0; color: #2c3e50; }
 
         .input-field {
             width: 100%;
@@ -119,20 +120,22 @@
 </head>
 <body>
 
-    <!-- Map UI Control Panel -->
+    <!-- UI Panel -->
     <div class="control-panel">
-        <h4>GeoJSON Layer Manager 
+        <h4>GeoJSON Editor 
             <span id="auth-status" class="status-badge status-locked">Locked</span>
         </h4>
 
-        <!-- Login Trigger Button (Visible when logged out) -->
-        <button id="login-trigger-btn" class="btn btn-auth" onclick="openLoginModal()">🔒 Log In to Add GeoJSON</button>
+        <!-- Login Button -->
+        <button id="login-trigger-btn" class="btn btn-success" onclick="openLoginModal()">🔒 Log In to Draw / Upload</button>
 
-        <!-- GeoJSON Upload Controls (Hidden until authenticated) -->
+        <!-- Authorized Controls -->
         <div id="authenticated-controls" style="display: none;">
-            <label for="geojson-input" class="btn btn-primary">📂 Select GeoJSON File</label>
+            <label for="geojson-input" class="btn btn-primary">📂 Upload GeoJSON</label>
             <input type="file" id="geojson-input" accept=".geojson, .json" />
-            <button class="btn btn-danger" onclick="clearGeoJSON()">Clear Layers</button>
+            
+            <button class="btn btn-success" onclick="exportGeoJSON()">💾 Export Drawing to File</button>
+            <button class="btn btn-danger" onclick="clearMap()">Clear All Shapes</button>
             <button class="btn btn-danger" style="background-color: #7f8c8d; margin-top: 15px;" onclick="logout()">Log Out</button>
         </div>
     </div>
@@ -140,13 +143,13 @@
     <!-- Login Modal -->
     <div id="login-modal" class="modal-overlay">
         <div class="modal-box">
-            <h3>Authorization Required</h3>
-            <p style="font-size: 12px; color: #666;">Enter your credentials to upload map data.</p>
-            <input type="text" id="username" class="input-field" placeholder="Username" />
-            <input type="password" id="password" class="input-field" placeholder="Password" />
+            <h3>Authorization</h3>
+            <p style="font-size: 12px; color: #666;">Enter login details to enable drawing tools.</p>
+            <input type="text" id="username" class="input-field" placeholder="Username (admin)" />
+            <input type="password" id="password" class="input-field" placeholder="Password (map123)" />
             <div id="error-message" class="error-msg">Invalid credentials.</div>
             
-            <button class="btn btn-auth" style="margin-top: 12px;" onclick="attemptLogin()">Submit Login</button>
+            <button class="btn btn-success" style="margin-top: 12px;" onclick="attemptLogin()">Log In</button>
             <button class="btn btn-danger" style="background-color: #95a5a6;" onclick="closeLoginModal()">Cancel</button>
         </div>
     </div>
@@ -155,15 +158,43 @@
     <div id="map"></div>
 
 <script>
-    // 1. Initialize Leaflet Map
+    // 1. Initialize Map
     var map = L.map('map').setView([22.3193, 114.1694], 10);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    var geojsonLayerGroup = L.layerGroup().addTo(map);
+    // FeatureGroup to hold drawn shapes
+    var drawnItems = new L.FeatureGroup().addTo(map);
+
+    // Initialize Draw Control (Disabled until logged in)
+    var drawControl = new L.Control.Draw({
+        edit: {
+            featureGroup: drawnItems
+        },
+        draw: {
+            polygon: {
+                allowIntersection: false,
+                showArea: true,
+                shapeOptions: { color: '#e74c3c' }
+            },
+            rectangle: {
+                shapeOptions: { color: '#3498db' }
+            },
+            polyline: true,
+            circle: true,
+            marker: true,
+            circlemarker: false
+        }
+    });
+
+    // Capture drawn shapes and add them to layer group
+    map.on(L.Draw.Event.CREATED, function (e) {
+        var layer = e.layer;
+        drawnItems.addLayer(layer);
+    });
 
     // 2. Authentication Logic
     const DEMO_USER = "admin";
@@ -181,11 +212,17 @@
             authStatus.className = "status-badge status-unlocked";
             loginBtn.style.display = "none";
             authControls.style.display = "block";
+            
+            // Enable Drawing Toolbar on Map
+            map.addControl(drawControl);
         } else {
             authStatus.textContent = "Locked";
             authStatus.className = "status-badge status-locked";
             loginBtn.style.display = "block";
             authControls.style.display = "none";
+            
+            // Remove Drawing Toolbar
+            map.removeControl(drawControl);
         }
     }
 
@@ -202,12 +239,10 @@
         var user = document.getElementById("username").value;
         var pass = document.getElementById("password").value;
 
-        // Credentials verification (Replace demo check with your API endpoint if needed)
         if (user === DEMO_USER && pass === DEMO_PASS) {
             sessionStorage.setItem("geojson_auth", "true");
             closeLoginModal();
             checkAuthState();
-            // Clear input fields
             document.getElementById("username").value = "";
             document.getElementById("password").value = "";
         } else {
@@ -217,64 +252,59 @@
 
     function logout() {
         sessionStorage.removeItem("geojson_auth");
-        clearGeoJSON();
+        clearMap();
         checkAuthState();
     }
 
-    // 3. GeoJSON File Handling
+    // 3. Upload File to Map
     document.getElementById('geojson-input').addEventListener('change', function (event) {
-        // Enforce login check before reading file
-        if (sessionStorage.getItem("geojson_auth") !== "true") {
-            alert("Unauthorized attempt. Please log in first.");
-            return;
-        }
+        if (sessionStorage.getItem("geojson_auth") !== "true") return;
 
         var file = event.target.files[0];
         if (!file) return;
 
         var reader = new FileReader();
-
         reader.onload = function (e) {
             try {
-                var geojsonData = JSON.parse(e.target.result);
-
-                geojsonLayerGroup.clearLayers();
-
-                var newLayer = L.geoJSON(geojsonData, {
-                    style: {
-                        color: "#2980b9",
-                        weight: 3,
-                        fillColor: "#3498db",
-                        fillOpacity: 0.4
-                    },
-                    onEachFeature: function (feature, layer) {
-                        if (feature.properties) {
-                            var popup = "<strong>Properties:</strong><br/>";
-                            for (var k in feature.properties) {
-                                popup += k + ": " + feature.properties[k] + "<br/>";
-                            }
-                            layer.bindPopup(popup);
-                        }
-                    }
+                var data = JSON.parse(e.target.result);
+                var geoLayer = L.geoJSON(data);
+                
+                geoLayer.eachLayer(function(layer) {
+                    drawnItems.addLayer(layer);
                 });
 
-                geojsonLayerGroup.addLayer(newLayer);
-                map.fitBounds(newLayer.getBounds());
-
+                map.fitBounds(drawnItems.getBounds());
             } catch (err) {
-                alert("Invalid GeoJSON file formatting.");
+                alert("Invalid GeoJSON file.");
             }
         };
-
         reader.readAsText(file);
     });
 
-    function clearGeoJSON() {
-        geojsonLayerGroup.clearLayers();
+    // 4. Export Map Drawings to GeoJSON File
+    function exportGeoJSON() {
+        var data = drawnItems.toGeoJSON();
+        if (data.features.length === 0) {
+            alert("No shapes to export. Draw something on the map first!");
+            return;
+        }
+
+        var jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+        var downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", jsonString);
+        downloadAnchor.setAttribute("download", "custom_map_area.geojson");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    // 5. Clear All Drawn Shapes
+    function clearMap() {
+        drawnItems.clearLayers();
         document.getElementById('geojson-input').value = "";
     }
 
-    // Initialize Auth state on load
+    // Initialize Auth state on page load
     checkAuthState();
 </script>
 
