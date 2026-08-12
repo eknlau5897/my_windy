@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Secure GeoJSON Editor with Custom Colors</title>
+    <title>Secure GeoJSON Editor with Persistence</title>
 
     <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
@@ -214,6 +214,33 @@
     var drawnItems = new L.FeatureGroup().addTo(map);
     var drawControl = null;
 
+    // --- PERSISTENCE LOGIC ---
+    function saveDrawingState() {
+        var data = drawnItems.toGeoJSON();
+        localStorage.setItem("saved_geojson_drawings", JSON.stringify(data));
+    }
+
+    function loadSavedDrawings() {
+        var savedData = localStorage.getItem("saved_geojson_drawings");
+        if (!savedData) return;
+
+        try {
+            var data = JSON.parse(savedData);
+            drawnItems.clearLayers();
+            
+            L.geoJSON(data, {
+                style: getActiveStyle(),
+                pointToLayer: function (feature, latlng) {
+                    return L.marker(latlng);
+                }
+            }).eachLayer(function(layer) {
+                drawnItems.addLayer(layer);
+            });
+        } catch (e) {
+            console.error("Error loading saved drawings:", e);
+        }
+    }
+
     // 2. Dynamic Drawing Styling
     function getActiveStyle() {
         return {
@@ -225,14 +252,12 @@
     }
 
     function updateDrawOptions() {
-        // Remove existing control if present
         if (drawControl) {
             map.removeControl(drawControl);
         }
 
         var currentStyle = getActiveStyle();
         
-        // Re-create the drawing control with active colors
         drawControl = new L.Control.Draw({
             edit: { featureGroup: drawnItems },
             draw: {
@@ -248,13 +273,22 @@
         map.addControl(drawControl);
     }
 
+    // Save drawings on Creation, Editing, or Deleting
     map.on(L.Draw.Event.CREATED, function (e) {
         var layer = e.layer;
         drawnItems.addLayer(layer);
+        saveDrawingState();
+    });
+
+    map.on(L.Draw.Event.EDITED, function () {
+        saveDrawingState();
+    });
+
+    map.on(L.Draw.Event.DELETED, function () {
+        saveDrawingState();
     });
 
     // 3. OBFUSCATED BASE64 AUTHENTICATION
-    // Password "map123" reversed -> "321pam" -> Base64 -> "MzIxcGFt"
     const OBFUSCATED_SECRET = "MzIxcGFt";
 
     function decodeSecret(obfuscated) {
@@ -275,7 +309,6 @@
             loginBtn.style.display = "none";
             authControls.style.display = "block";
             
-            // Show the toolbar on unlocking
             updateDrawOptions();
         } else {
             authStatus.textContent = "Locked";
@@ -283,7 +316,6 @@
             loginBtn.style.display = "block";
             authControls.style.display = "none";
             
-            // Hide the toolbar when locked
             if (drawControl) {
                 map.removeControl(drawControl);
                 drawControl = null;
@@ -315,7 +347,6 @@
         }
     }
 
-    // Allow pressing "Enter" key in password box to submit login
     document.getElementById("password-input").addEventListener("keyup", function(event) {
         if (event.key === "Enter") {
             attemptLogin();
@@ -324,7 +355,6 @@
 
     function logout() {
         sessionStorage.removeItem("geojson_auth");
-        clearMap();
         checkAuthState();
     }
 
@@ -340,7 +370,10 @@
             try {
                 var data = JSON.parse(e.target.result);
                 var geoLayer = L.geoJSON(data, {
-                    style: getActiveStyle()
+                    style: getActiveStyle(),
+                    pointToLayer: function (feature, latlng) {
+                        return L.marker(latlng);
+                    }
                 });
                 
                 geoLayer.eachLayer(function(layer) {
@@ -348,6 +381,7 @@
                 });
 
                 map.fitBounds(drawnItems.getBounds());
+                saveDrawingState(); // Save uploaded GeoJSON to storage
             } catch (err) {
                 alert("Invalid GeoJSON file format.");
             }
@@ -374,9 +408,12 @@
 
     function clearMap() {
         drawnItems.clearLayers();
+        localStorage.removeItem("saved_geojson_drawings"); // Clear saved storage
         document.getElementById('geojson-input').value = "";
     }
 
+    // Initialize application state and load existing drawings on page load
+    loadSavedDrawings();
     checkAuthState();
 </script>
 
