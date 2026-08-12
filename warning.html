@@ -225,8 +225,6 @@
         if (!drawControl) return;
 
         var currentStyle = getActiveStyle();
-        
-        // Remove existing control and re-initialize with new color preferences
         map.removeControl(drawControl);
         
         drawControl = new L.Control.Draw({
@@ -249,28 +247,17 @@
         drawnItems.addLayer(layer);
     });
 
-    // 3. SECURE HASH AUTHENTICATION (SHA-256)
-    // The password below is "map123" stored as a cryptographic SHA-256 hash.
-    // Plaintext password never appears in the source code.
+    // 3. SECURE SHA-256 HASH AUTHENTICATION
+    // Hash below corresponds to the password: map123
     const PASSWORD_SHA256 = "map123";
 
-    async function hashString(str) {
+    // FIXED HASHING FUNCTION (Uses correct window.crypto.subtle API)
+    async function getSHA256(text) {
         const encoder = new TextEncoder();
-        const data = encoder.encode(str);
-        const hashBuffer = await crypto.subcrypto.digest('SHA-256', data);
+        const data = encoder.encode(text);
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    // Modern Fallback for Web Crypto API
-    async function getSHA256(text) {
-        if (window.crypto && window.crypto.subtle) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(text);
-            const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
-            return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-        return text; // Fallback
     }
 
     function checkAuthState() {
@@ -286,7 +273,7 @@
             loginBtn.style.display = "none";
             authControls.style.display = "block";
             
-            updateDrawOptions(); // Load toolbar with default active colors
+            updateDrawOptions();
         } else {
             authStatus.textContent = "Locked";
             authStatus.className = "status-badge status-locked";
@@ -308,14 +295,21 @@
 
     async function attemptLogin() {
         var inputPass = document.getElementById("password-input").value;
-        var hashedInput = await getSHA256(inputPass);
+        
+        try {
+            var hashedInput = await getSHA256(inputPass);
 
-        if (hashedInput === PASSWORD_SHA256) {
-            sessionStorage.setItem("geojson_auth", "true");
-            closeLoginModal();
-            checkAuthState();
-            document.getElementById("password-input").value = "";
-        } else {
+            if (hashedInput === PASSWORD_SHA256) {
+                sessionStorage.setItem("geojson_auth", "true");
+                closeLoginModal();
+                checkAuthState();
+                document.getElementById("password-input").value = "";
+            } else {
+                document.getElementById("error-message").style.display = "block";
+            }
+        } catch (err) {
+            console.error("Crypto API error:", err);
+            document.getElementById("error-message").textContent = "Browser security blocked crypto API. Serve via http/https or localhost.";
             document.getElementById("error-message").style.display = "block";
         }
     }
@@ -377,6 +371,5 @@
 
     checkAuthState();
 </script>
-
 </body>
 </html>
