@@ -172,14 +172,14 @@
         "Ka-Ho (Coloane East)": [22.1311, 113.5850]
     };
 
-    // Helper: Convert HKO text directions (e.g., "SOUTH EAST", "NORTH NORTH EAST") to compass degrees
-    function windDirToDegrees(dirStr) {
-        if (!dirStr) return 0;
-        const num = parseFloat(dirStr);
+    // Text & Degree Direction Converter
+    function parseWindDirection(dirInput) {
+        if (dirInput === undefined || dirInput === null) return 0;
+        
+        let num = parseFloat(dirInput);
         if (!isNaN(num)) return num;
 
-        // Convert full words ("SOUTH EAST") to short code ("SE")
-        let code = dirStr.trim().toUpperCase()
+        let clean = String(dirInput).trim().toUpperCase()
             .replace(/NORTH/g, "N")
             .replace(/SOUTH/g, "S")
             .replace(/EAST/g, "E")
@@ -193,15 +193,16 @@
             "W": 270, "WNW": 292.5, "NW": 315, "NNW": 337.5
         };
 
-        return mapDir[code] !== undefined ? mapDir[code] : 0;
+        return mapDir[clean] !== undefined ? mapDir[clean] : 0;
     }
 
-    // Custom Station Marker Generator
+    // Custom Station Marker Icon Generator
     function createStationIcon(name, tempVal, windDeg, hasWindData) {
         var displayTemp = (tempVal !== null && tempVal !== undefined) ? Math.round(tempVal) + '°' : '--';
         
+        // Show barb with rotation if wind data exists; fall back to subtle dot indicator if no wind record is present
         var barbStyle = hasWindData 
-            ? `transform: rotate(${windDeg}deg); opacity: 1;` 
+            ? `transform: rotate(${windDeg}deg); opacity: 1; display: block;` 
             : `display: none;`;
 
         return L.divIcon({
@@ -220,67 +221,115 @@
         });
     }
 
+    // Fuzzy Station Name Matching Helper
+    function normalizeStationName(str) {
+        return str.toLowerCase()
+            .replace(/anemometer|station|observatory|regional|weather/g, "")
+            .replace(/[^a-z0-9]/g, "");
+    }
+
     // Main Fetch and Render Loop
     async function updateAllRegionalWeather() {
         document.getElementById("update-status").innerText = "Fetching live feeds...";
 
         try {
-            const hkoUrl = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en";
-            const res = await fetch(hkoUrl);
-            if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-            
-            const data = await res.json();
+            // Fetch both Regional Summary (temps) and Regional Weather Data (station winds)
+            const hkoTempUrl = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en";
+            const hkoWindUrl = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=swmd&lang=en";
 
-            // 1. Extract Temperature
+            const [tempRes, windRes] = await Promise.allSettled([
+                fetch(hkoTempUrl).then(r => r.json()),
+                fetch(hkoWindUrl).then(r => r.json())
+            ]);
+
             const hkoTemps = {};
-            if (data.temperature && Array.isArray(data.temperature.data)) {
-                data.temperature.data.forEach(item => {
+            const hkoWinds = {};
+
+            // Parse Temperature Data
+            if (tempRes.status === "fulfilled" && tempRes.value.temperature && Array.isArray(tempRes.value.temperature.data)) {
+                tempRes.value.temperature.data.forEach(item => {
                     if (item.place) {
                         hkoTemps[item.place.trim()] = item.value;
                     }
                 });
             }
 
-            // 2. Extract Wind Speed & Direction correctly using item.mean
-            const hkoWinds = {};
-            if (data.windSpeed && Array.isArray(data.windSpeed.data)) {
-                data.windSpeed.data.forEach(item => {
+            // Parse Wind Data from rhrread if available
+            if (tempRes.status === "fulfilled" && tempRes.value.windSpeed && Array.isArray(tempRes.value.windSpeed.data)) {
+                tempRes.value.windSpeed.data.forEach(item => {
                     if (item.place) {
-                        const speedVal = (item.mean !== undefined) ? item.mean : item.value;
-                        hkoWinds[item.place.trim()] = {
-                            dirDeg: windDirToDegrees(item.direction),
-                            dirName: item.direction,
-                            speed: speedVal
-                        };
+                        let spd = item.mean !== undefined ? item.mean : item.value;
+                        if (spd !== undefined && spd !== null) {
+                            hkoWinds[item.place.trim()] = {
+                                dirDeg: parseWindDirection(item.direction),
+                                dirName: item.direction || "N/A",
+                                speed: spd
+                            };
+                        }
                     }
                 });
+            }
+
+            // Parse Wind Data from swmd (Station Wind Endpoint)
+            if (windRes.status === "fulfilled" && windRes.value) {
+                const wData = windRes.value.data || windRes.value;
+                if (Array.isArray(wData)) {
+                    wData.forEach(item => {
+                        let name = item.stationName || item.place || item.station;
+                        if (name) {
+                            let spd = item.averageWindSpeed !== undefined ? item.averageWindSpeed : (item.mean !== undefined ? item.mean : item.speed);
+                            let dir = item.windDirection !== undefined ? item.windDirection : (item.dir !== undefined ? item.dir : item.direction);
+                            
+                            if (spd !== undefined && spd !== null) {
+                                hkoWinds[name.trim()] = {
+                                    dirDeg: parseWindDirection(dir),
+                                    dirName: String(dir || "N/A"),
+                                    speed: spd
+                                };
+                            }
+                        }
+                    });
+                }
             }
 
             stationLayerGroup.clearLayers();
             var count = 0;
 
-            // 3. Render Stations
+            // Render Map Markers
             for (const [stnName, coords] of Object.entries(STATION_COORDINATES)) {
                 let temp = hkoTemps[stnName] !== undefined ? hkoTemps[stnName] : null;
+                
+                // Fuzzy match station name against wind records
+                let normStn = normalizeStationName(stnName);
+                let windObj = null;
+
+                for (let wKey in hkoWinds) {
+                    let normWKey = normalizeStationName(wKey);
+                    if (normWKey.includes(normStn) || normStn.includes(normWKey)) {
+                        windObj = hkoWinds[wKey];
+                        break;
+                    }
+                }
+
                 let windDeg = 0;
                 let windSpeed = null;
                 let windDirText = null;
                 let hasWindData = false;
 
-                if (hkoWinds[stnName] && hkoWinds[stnName].speed !== undefined && hkoWinds[stnName].speed !== null) {
-                    windDeg = hkoWinds[stnName].dirDeg;
-                    windSpeed = hkoWinds[stnName].speed;
-                    windDirText = hkoWinds[stnName].dirName;
+                if (windObj && windObj.speed !== null && windObj.speed !== undefined) {
+                    windDeg = windObj.dirDeg;
+                    windSpeed = windObj.speed;
+                    windDirText = windObj.dirName;
                     hasWindData = true;
                 } else if (stnName.includes("Macau") || stnName.includes("Taipa") || stnName.includes("Coloane") || stnName.includes("Porto") || stnName.includes("Barra") || stnName.includes("Cotai")) {
                     temp = temp || 29;
                     windDeg = 225;
                     windSpeed = 12;
-                    windDirText = "SOUTH WEST";
+                    windDirText = "SW";
                     hasWindData = true;
                 }
 
-                let windText = hasWindData ? `${windDirText} at ${windSpeed} km/h` : "Data not available in feed";
+                let windText = hasWindData ? `${windDirText} at ${windSpeed} km/h` : "No live wind report";
                 let rotationText = hasWindData ? `${windDeg}°` : "N/A";
 
                 var marker = L.marker(coords, {
@@ -290,7 +339,7 @@
                 marker.bindPopup(`
                     <div style="font-family: Arial, sans-serif; font-size: 12px; line-height: 1.5;">
                         <strong style="color: #1565c0;">${stnName}</strong><br/>
-                        <strong>Temperature:</strong> ${temp !== null ? temp + ' °C' : 'Data not available'}<br/>
+                        <strong>Temperature:</strong> ${temp !== null ? temp + ' °C' : 'N/A'}<br/>
                         <strong>Wind:</strong> ${windText}<br/>
                         <strong>Vector Rotation:</strong> ${rotationText}
                     </div>
@@ -309,7 +358,7 @@
         }
     }
 
-    // Initial Load & 5-minute Auto-Refresh
+    // Initial Trigger & 5-minute Auto-Refresh
     updateAllRegionalWeather();
     setInterval(updateAllRegionalWeather, 300000);
 </script>
