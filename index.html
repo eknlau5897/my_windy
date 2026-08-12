@@ -1,156 +1,88 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <title>Global NOAA METAR Weather Network</title>
-    
-    <!-- Leaflet & Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
-    
-    <!-- Leaflet MarkerCluster Plugin -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"/>
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <style>
-        html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
-        #map { position: absolute; top: 0; bottom: 0; right: 0; left: 0; }
-        
-        #update-status {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 10px 16px;
-            border-radius: 6px;
-            font-family: Arial, sans-serif;
-            font-size: 13px;
-            font-weight: bold;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-            border-left: 5px solid #3498db;
-        }
-
-        .marker-cluster-small { background-color: rgba(231, 76, 60, 0.6); }
-        .marker-cluster-small div { background-color: rgba(231, 76, 60, 0.8); color: white; }
-        .marker-cluster-medium { background-color: rgba(230, 126, 34, 0.6); }
-        .marker-cluster-medium div { background-color: rgba(230, 126, 34, 0.8); color: white; }
-        .marker-cluster-large { background-color: rgba(41, 128, 185, 0.6); }
-        .marker-cluster-large div { background-color: rgba(41, 128, 185, 0.8); color: white; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Leaflet NOAA METAR Bounding Box Example</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; width: 100%; margin: 0; }
+    body { margin: 0; padding: 0; }
+  </style>
 </head>
 <body>
-    <div id="update-status">Connecting to NOAA METAR API via Proxy...</div>
-    <div id="map"></div>
 
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    var map = L.map("map", {
-        center: [22.3, 113.8],
-        zoom: 5,
-        crs: L.CRS.EPSG3857,
-        preferCanvas: true
-    });
+  // Initialize map centered over the US
+  const map = L.map('map').setView([39.8283, -98.5795], 5);
 
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-        minZoom: 2,
-        maxZoom: 18,
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-    }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
 
-    var gtsClusterGroup = L.markerClusterGroup({
-        chunkedLoading: true,
-        maxClusterRadius: 40,
-        disableClusteringAtZoom: 8
-    });
-    map.addLayer(gtsClusterGroup);
+  // Layer group to keep track of METAR markers
+  const stationLayerGroup = L.layerGroup().addTo(map);
 
-    // Dynamic Station Plot Icon
-    function createStationIcon(obs) {
-        var temp = obs.temp !== null && obs.temp !== undefined ? Math.round(obs.temp) : '--';
-        var dewpoint = obs.dewp !== null && obs.dewp !== undefined ? Math.round(obs.dewp) : '--';
-        var pressure = obs.altim !== null && obs.altim !== undefined ? Math.round(obs.altim) : '--';
-        var windDir = obs.wdir || 0;
-        var stationId = obs.icaoId || 'METAR';
+  let fetchTimeout = null;
 
-        return L.divIcon({
-            "html": `
-            <div style="position: relative; width: 60px; height: 60px; font-family: Arial, sans-serif; font-weight: bold; font-size: 10px;">
-                <div style="position: absolute; top: 5px; left: 0; color: #b71c1c;">${temp}</div>
-                <div style="position: absolute; bottom: 5px; left: 0; color: #1b5e20;">${dewpoint}</div>
-                <div style="position: absolute; top: 5px; right: 0; color: #0d47a1;">${pressure}</div>
-                <div style="position: absolute; top: 25px; left: 25px; width: 8px; height: 8px; background-color: #e74c3c; border: 1px solid black; border-radius: 50%;"></div>
-                <div style="position: absolute; top: 28px; left: 29px; width: 2px; height: 22px; background-color: black; transform-origin: top center; transform: rotate(${windDir}deg); border-radius: 1px;">
-                    <div style="width: 7px; height: 2px; background-color: black; position: absolute; bottom: 0; right: 0;"></div>
-                </div>
-                <div style="position: absolute; top: 25px; left: 36px; font-size: 8px; color: #222;">${stationId}</div>
-            </div>`,
-            "iconSize": [60, 60],
-            "iconAnchor": [30, 30],
-            "className": "gts-station-icon"
-        });
-    }
+  // Function to fetch METARs inside current viewport
+  async function fetchMetarsInBounds() {
+    const bounds = map.getBounds();
+    const south = bounds.getSouth().toFixed(4);
+    const west = bounds.getWest().toFixed(4);
+    const north = bounds.getNorth().toFixed(4);
+    const east = bounds.getEast().toFixed(4);
 
-    async function fetchNOAAMetarWithFallback() {
-        // Broad global bounding box or station query
-        const rawTargetUrl = `https://aviationweather.gov/api/data/metar?format=json`;
-        
-        // Wrap through CORS Proxy to bypass browser blocked fetch policy
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(rawTargetUrl)}`;
+    // NOAA AWC API bbox format: minLat,minLon,maxLat,maxLon
+    const url = `https://aviationweather.gov/api/data/metar?bbox=${south},${west},${north},${east}&format=geojson`;
 
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error(`Proxy status error: ${response.status}`);
-        return await response.json();
-    }
+    try {
+      const response = await fetch(url);
+      if (!response.ok) return;
 
-    async function updateNOAAMap() {
-        document.getElementById("update-status").innerText = "Downloading global NOAA observations...";
+      const geojsonData = await response.json();
 
-        try {
-            const stations = await fetchNOAAMetarWithFallback();
-            gtsClusterGroup.clearLayers();
+      // Clear previous markers
+      stationLayerGroup.clearLayers();
 
-            var markersList = [];
-            stations.forEach(obs => {
-                if (obs.lat === undefined || obs.lon === undefined || obs.lat === null || obs.lon === null) return;
+      // Add new station markers
+      L.geoJSON(geojsonData, {
+        onEachFeature: (feature, layer) => {
+          const props = feature.properties;
+          const name = props.name || props.icaoId || 'Unknown Station';
+          const temp = props.temp != null ? `${props.temp}°C` : 'N/A';
+          const rawReport = props.rawOb || 'No raw report available';
 
-                var marker = L.marker([obs.lat, obs.lon], {
-                    icon: createStationIcon(obs)
-                });
-
-                var popupContent = `
-                    <div style="font-family: monospace; font-size: 12px; line-height: 1.5;">
-                        <strong>Station:</strong> ${obs.name || obs.icaoId}<br/>
-                        <strong>ICAO ID:</strong> ${obs.icaoId}<br/>
-                        <strong>Temp:</strong> ${obs.temp}°C | <strong>Dewpt:</strong> ${obs.dewp}°C<br/>
-                        <strong>Altimeter:</strong> ${obs.altim} hPa<br/>
-                        <strong>Wind:</strong> ${obs.wdir || 0}° at ${obs.wspd || 0} kts<br/>
-                        <strong>Raw METAR:</strong><br/>
-                        <code style="word-break: break-all; background:#f4f4f4; padding:3px; display:block; border-radius:3px;">${obs.rawOb}</code>
-                    </div>
-                `;
-
-                marker.bindPopup(popupContent);
-                markersList.push(marker);
-            });
-
-            gtsClusterGroup.addLayers(markersList);
-
-            const now = new Date();
-            document.getElementById("update-status").innerText = `NOAA Live | ${markersList.length} Stations Loaded | ${now.toLocaleTimeString()}`;
-
-        } catch (error) {
-            console.error("NOAA Fetch Error:", error);
-            document.getElementById("update-status").innerText = "Proxy / CORS Connection Error.";
+          layer.bindPopup(`
+            <strong>${name}</strong> (${props.icaoId})<br/>
+            <b>Temp:</b> ${temp}<br/>
+            <b>Observation:</b> <code>${rawReport}</code>
+          `);
         }
+      }).addTo(stationLayerGroup);
+
+    } catch (error) {
+      console.error('Error fetching NOAA METAR data:', error);
     }
+  }
 
-    // Initial Execution
-    updateNOAAMap();
+  // Debounce wrapper to prevent redundant API calls during fast movement
+  function onMapMoveEnd() {
+    clearTimeout(fetchTimeout);
+    fetchTimeout = setTimeout(() => {
+      fetchMetarsInBounds();
+    }, 300); // 300ms delay
+  }
 
-    // Auto Refresh every 5 minutes
-    setInterval(updateNOAAMap, 300000);
+  // Bind the event listener
+  map.on('moveend', onMapMoveEnd);
+
+  // Initial fetch on page load
+  fetchMetarsInBounds();
 </script>
+
 </body>
 </html>
