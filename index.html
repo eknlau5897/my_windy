@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <title>Global NOAA METAR Weather Network (All Stations)</title>
+    <title>Global NOAA METAR Weather Network</title>
     
     <!-- Leaflet & Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
@@ -30,7 +30,7 @@
             font-size: 13px;
             font-weight: bold;
             box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-            border-left: 5px solid #27ae60;
+            border-left: 5px solid #3498db;
         }
 
         .marker-cluster-small { background-color: rgba(231, 76, 60, 0.6); }
@@ -42,7 +42,7 @@
     </style>
 </head>
 <body>
-    <div id="update-status">Downloading global METAR station network...</div>
+    <div id="update-status">Connecting to NOAA METAR API via Proxy...</div>
     <div id="map"></div>
 
 <script>
@@ -59,16 +59,14 @@
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
     }).addTo(map);
 
-    // Optimized clustering parameters for handling thousands of markers simultaneously
     var gtsClusterGroup = L.markerClusterGroup({
-        chunkedLoading: true,      // Loads markers asynchronously in chunks to keep rendering fast
-        chunkInterval: 100,
-        chunkDelay: 10,
-        maxClusterRadius: 50,
-        disableClusteringAtZoom: 9
+        chunkedLoading: true,
+        maxClusterRadius: 40,
+        disableClusteringAtZoom: 8
     });
     map.addLayer(gtsClusterGroup);
 
+    // Dynamic Station Plot Icon
     function createStationIcon(obs) {
         var temp = obs.temp !== null && obs.temp !== undefined ? Math.round(obs.temp) : '--';
         var dewpoint = obs.dewp !== null && obs.dewp !== undefined ? Math.round(obs.dewp) : '--';
@@ -79,19 +77,13 @@
         return L.divIcon({
             "html": `
             <div style="position: relative; width: 60px; height: 60px; font-family: Arial, sans-serif; font-weight: bold; font-size: 10px;">
-                <!-- Temp (NW) -->
                 <div style="position: absolute; top: 5px; left: 0; color: #b71c1c;">${temp}</div>
-                <!-- Dewpoint (SW) -->
                 <div style="position: absolute; bottom: 5px; left: 0; color: #1b5e20;">${dewpoint}</div>
-                <!-- Altimeter/Pressure (NE) -->
                 <div style="position: absolute; top: 5px; right: 0; color: #0d47a1;">${pressure}</div>
-                <!-- Center Station Dot -->
                 <div style="position: absolute; top: 25px; left: 25px; width: 8px; height: 8px; background-color: #e74c3c; border: 1px solid black; border-radius: 50%;"></div>
-                <!-- Wind Barb Direction Indicator -->
                 <div style="position: absolute; top: 28px; left: 29px; width: 2px; height: 22px; background-color: black; transform-origin: top center; transform: rotate(${windDir}deg); border-radius: 1px;">
                     <div style="width: 7px; height: 2px; background-color: black; position: absolute; bottom: 0; right: 0;"></div>
                 </div>
-                <!-- ICAO Identifier -->
                 <div style="position: absolute; top: 25px; left: 36px; font-size: 8px; color: #222;">${stationId}</div>
             </div>`,
             "iconSize": [60, 60],
@@ -100,22 +92,27 @@
         });
     }
 
-    async function updateAllGlobalStations() {
-        document.getElementById("update-status").innerText = "Fetching all active global METAR stations...";
+    async function fetchNOAAMetarWithFallback() {
+        // Broad global bounding box or station query
+        const rawTargetUrl = `https://aviationweather.gov/api/data/metar?format=json`;
+        
+        // Wrap through CORS Proxy to bypass browser blocked fetch policy
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(rawTargetUrl)}`;
+
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error(`Proxy status error: ${response.status}`);
+        return await response.json();
+    }
+
+    async function updateNOAAMap() {
+        document.getElementById("update-status").innerText = "Downloading global NOAA observations...";
 
         try {
-            // Omit 'ids=' to query NOAA's entire worldwide station database
-            const apiUrl = `https://aviationweather.gov/api/data/metar?format=json`;
-
-            const response = await fetch(apiUrl);
-            if (!response.ok) throw new Error(`NOAA API status ${response.status}`);
-            
-            const stations = await response.json();
+            const stations = await fetchNOAAMetarWithFallback();
             gtsClusterGroup.clearLayers();
 
             var markersList = [];
             stations.forEach(obs => {
-                // Ensure valid coordinates exist before rendering
                 if (obs.lat === undefined || obs.lon === undefined || obs.lat === null || obs.lon === null) return;
 
                 var marker = L.marker([obs.lat, obs.lon], {
@@ -126,8 +123,6 @@
                     <div style="font-family: monospace; font-size: 12px; line-height: 1.5;">
                         <strong>Station:</strong> ${obs.name || obs.icaoId}<br/>
                         <strong>ICAO ID:</strong> ${obs.icaoId}<br/>
-                        <strong>Coordinates:</strong> ${obs.lat.toFixed(2)}°, ${obs.lon.toFixed(2)}°<br/>
-                        <strong>Report Time:</strong> ${obs.receiptTime || 'Recent'}<br/>
                         <strong>Temp:</strong> ${obs.temp}°C | <strong>Dewpt:</strong> ${obs.dewp}°C<br/>
                         <strong>Altimeter:</strong> ${obs.altim} hPa<br/>
                         <strong>Wind:</strong> ${obs.wdir || 0}° at ${obs.wspd || 0} kts<br/>
@@ -140,23 +135,22 @@
                 markersList.push(marker);
             });
 
-            // Perform a bulk insertion to minimize UI lag
             gtsClusterGroup.addLayers(markersList);
 
             const now = new Date();
-            document.getElementById("update-status").innerText = `Loaded ${markersList.length} Stations | ${now.toLocaleTimeString()}`;
+            document.getElementById("update-status").innerText = `NOAA Live | ${markersList.length} Stations Loaded | ${now.toLocaleTimeString()}`;
 
         } catch (error) {
             console.error("NOAA Fetch Error:", error);
-            document.getElementById("update-status").innerText = "Error loading global METAR feed.";
+            document.getElementById("update-status").innerText = "Proxy / CORS Connection Error.";
         }
     }
 
-    // Initial load
-    updateAllGlobalStations();
+    // Initial Execution
+    updateNOAAMap();
 
-    // Auto-refresh all stations every 10 minutes
-    setInterval(updateAllGlobalStations, 600000);
+    // Auto Refresh every 5 minutes
+    setInterval(updateNOAAMap, 300000);
 </script>
 </body>
 </html>
