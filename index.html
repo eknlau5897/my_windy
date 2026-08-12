@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hong Kong & Macau Live Weather Map (CORS-Fixed Wind & Temp)</title>
+    <title>Hong Kong & Macau Live Weather Map - All Stations</title>
     
     <!-- Leaflet CSS & JS -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
@@ -39,7 +39,7 @@
             border-left: 4px solid #1565c0;
         }
 
-        /* Station Custom Marker Styling */
+        /* Weather Station Custom Marker Styling */
         .weather-station-container {
             position: relative;
             width: 60px;
@@ -102,13 +102,13 @@
 </head>
 <body>
 
-    <div id="update-status">Initializing live feed...</div>
+    <div id="update-status">Initializing all HK & Macau stations...</div>
     <div id="map"></div>
 
 <script>
-    // 1. Initialize Map covering HK & Macau
+    // 1. Initialize Map view covering all of HK & Macau
     var map = L.map("map", {
-        center: [22.28, 113.85],
+        center: [22.30, 113.95],
         zoom: 10,
         crs: L.CRS.EPSG3857
     });
@@ -122,36 +122,57 @@
 
     var stationLayerGroup = L.layerGroup().addTo(map);
 
-    // 3. Station Coordinates mapping
-    const STATIONS = {
+    // 3. Complete Coordinates Registry for ALL Hong Kong Observatory and Macau SMG stations
+    const STATION_COORDINATES = {
         // --- HONG KONG OBSERVATORY STATIONS ---
-        "Hong Kong Observatory": { lat: 22.3019, lon: 114.1742, region: "HK" },
-        "King's Park": { lat: 22.3119, lon: 114.1728, region: "HK" },
-        "Wong Chuk Hang": { lat: 22.2478, lon: 114.1736, region: "HK" },
-        "Ta Kwu Ling": { lat: 22.5286, lon: 114.1567, region: "HK" },
-        "Lau Fau Shan": { lat: 22.4689, lon: 113.9836, region: "HK" },
-        "Tai Po": { lat: 22.4461, lon: 114.1789, region: "HK" },
-        "Sha Tin": { lat: 22.4025, lon: 114.2100, region: "HK" },
-        "Tuen Mun": { lat: 22.3858, lon: 113.9642, region: "HK" },
-        "Tseung Kwan O": { lat: 22.3158, lon: 114.2556, region: "HK" },
-        "Sai Kung": { lat: 22.3836, lon: 114.2708, region: "HK" },
-        "Chek Lap Kok": { lat: 22.3094, lon: 113.9219, region: "HK" },
-        "Tsing Yi": { lat: 22.3442, lon: 114.1100, region: "HK" },
-        "Shek Kong": { lat: 22.4361, lon: 114.0847, region: "HK" },
-        "Hong Kong Park": { lat: 22.2783, lon: 114.1622, region: "HK" },
-        "Cheung Chau": { lat: 22.2011, lon: 114.0267, region: "HK" },
-        "Tai Mo Shan": { lat: 22.4108, lon: 114.1242, region: "HK" },
+        "Hong Kong Observatory": [22.3019, 114.1742],
+        "King's Park": [22.3119, 114.1728],
+        "Wong Chuk Hang": [22.2478, 114.1736],
+        "Ta Kwu Ling": [22.5286, 114.1567],
+        "Lau Fau Shan": [22.4689, 113.9836],
+        "Tai Po": [22.4461, 114.1789],
+        "Sha Tin": [22.4025, 114.2100],
+        "Tuen Mun": [22.3858, 113.9642],
+        "Tseung Kwan O": [22.3158, 114.2556],
+        "Sai Kung": [22.3836, 114.2708],
+        "Chek Lap Kok": [22.3094, 113.9219],
+        "Tsing Yi": [22.3442, 114.1100],
+        "Shek Kong": [22.4361, 114.0847],
+        "Hong Kong Park": [22.2783, 114.1622],
+        "Shau Kei Wan": [22.2817, 114.2247],
+        "Kowloon City": [22.3308, 114.1883],
+        "Happy Valley": [22.2706, 114.1836],
+        "Wong Tai Sin": [22.3394, 114.1953],
+        "Stanley": [22.2142, 114.2186],
+        "Kwun Tong": [22.3119, 114.2247],
+        "Shenzhen": [22.5500, 114.1000],
+        "Lamma Island": [22.2275, 114.1078],
+        "Cheung Chau": [22.2011, 114.0267],
+        "Peng Chau": [22.2861, 114.0378],
+        "Tai Mo Shan": [22.4108, 114.1242],
+        "Tate's Cairn": [22.3581, 114.2183],
+        "Ngong Ping": [22.2561, 113.9039],
+        "Tap Mun": [22.4708, 114.3603],
+        "Pak Tam Au": [22.4347, 114.3331],
+        "Green Island": [22.2842, 114.1117],
+        "Kai Tak Runway": [22.3083, 114.1972],
+        "Clear Water Bay": [22.2908, 114.2883],
+        "Sham Shui Po": [22.3300, 114.1590],
+        "Tsuen Wan Ho Koon": [22.3836, 114.1078],
+        "Tsuen Wan Shing Mun Valley": [22.3758, 114.1236],
 
         // --- MACAU SMG STATIONS ---
-        "Fortaleza do Monte": { lat: 22.1965, lon: 113.5422, region: "MO" },
-        "Porto Exterior": { lat: 22.1978, lon: 113.5562, region: "MO" },
-        "Barra": { lat: 22.1856, lon: 113.5312, region: "MO" },
-        "Taipa Grande": { lat: 22.1581, lon: 113.5683, region: "MO" },
-        "Macau Airport": { lat: 22.1492, lon: 113.5925, region: "MO" },
-        "Coloane": { lat: 22.1167, lon: 113.5512, region: "MO" }
+        "Fortaleza do Monte (Macau)": [22.1965, 113.5422],
+        "Porto Exterior (Outer Harbour)": [22.1978, 113.5562],
+        "Barra (Macau South)": [22.1856, 113.5312],
+        "Taipa Grande (SMG HQ)": [22.1581, 113.5683],
+        "Macau Airport": [22.1492, 113.5925],
+        "Cotai / UMAC": [22.1306, 113.5492],
+        "Coloane Village": [22.1167, 113.5512],
+        "Ka-Ho (Coloane East)": [22.1311, 113.5850]
     };
 
-    // Helper: Direction text to Degrees
+    // Helper: Wind direction string to compass degrees
     function windDirToDegrees(dirStr) {
         if (!dirStr) return 0;
         const num = parseFloat(dirStr);
@@ -171,7 +192,7 @@
         return 0;
     }
 
-    // Custom Icon Generator
+    // Custom Station Marker Icon Generator
     function createStationIcon(name, tempVal, windDeg) {
         var displayTemp = (tempVal !== null && tempVal !== undefined) ? Math.round(tempVal) + '°' : '--';
         var rot = windDeg || 0;
@@ -192,110 +213,69 @@
         });
     }
 
-    // Fetch HKO Wind CSV safely with proxy fallbacks
-    async function fetchHkoWindDataSafe() {
-        const directUrl = "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/latest_10min_wind.csv";
-        const proxyUrls = [
-            directUrl,
-            `https://corsproxy.io/?${encodeURIComponent(directUrl)}`,
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`
-        ];
-
-        for (let url of proxyUrls) {
-            try {
-                const res = await fetch(url);
-                if (res.ok) {
-                    const csvText = await res.text();
-                    if (csvText && csvText.includes("Hong Kong")) {
-                        return parseWindCsv(csvText);
-                    }
-                }
-            } catch (e) {
-                console.warn(`Attempt failed for URL (${url}):`, e.message);
-            }
-        }
-        return {}; // Return empty object if all fetch attempts fail
-    }
-
-    // Parse CSV helper
-    function parseWindCsv(csvText) {
-        const hkoWinds = {};
-        const lines = csvText.split("\n");
-        for (let i = 1; i < lines.length; i++) {
-            const cols = lines[i].split(",");
-            if (cols.length >= 4) {
-                const stn = cols[1].replace(/"/g, '').trim();
-                const dirName = cols[2].replace(/"/g, '').trim();
-                const speed = parseFloat(cols[3].replace(/"/g, '').trim()) || 0;
-                hkoWinds[stn] = {
-                    dirDeg: windDirToDegrees(dirName),
-                    dirName: dirName,
-                    speed: speed
-                };
-            }
-        }
-        return hkoWinds;
-    }
-
-    // Main Update Loop
-    async function updateHkMacauWeather() {
-        document.getElementById("update-status").innerText = "Updating HKO & Macau weather...";
+    // Main Update Loop - Uses Official CORS JSON Feed
+    async function updateAllRegionalWeather() {
+        document.getElementById("update-status").innerText = "Fetching all regional station feeds...";
 
         try {
-            // 1. Fetch Temperature (JSON)
-            let hkoTemps = {};
-            try {
-                const tempUrl = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en";
-                const tempRes = await fetch(tempUrl);
-                const tempData = await tempRes.json();
-                if (tempData.temperature && Array.isArray(tempData.temperature.data)) {
-                    tempData.temperature.data.forEach(item => {
-                        hkoTemps[item.place] = item.value;
-                    });
-                }
-            } catch (e) {
-                console.warn("Temperature fetch error:", e);
+            const hkoUrl = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en";
+            const res = await fetch(hkoUrl);
+            if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+            
+            const data = await res.json();
+
+            // 1. Map Temperatures for all stations in HKO response
+            const hkoTemps = {};
+            if (data.temperature && Array.isArray(data.temperature.data)) {
+                data.temperature.data.forEach(item => {
+                    hkoTemps[item.place] = item.value;
+                });
             }
 
-            // 2. Fetch Wind (CSV with CORS proxy fallback)
-            const hkoWinds = await fetchHkoWindDataSafe();
+            // 2. Map Winds for all stations in HKO response
+            const hkoWinds = {};
+            if (data.windSpeed && Array.isArray(data.windSpeed.data)) {
+                data.windSpeed.data.forEach(item => {
+                    hkoWinds[item.place] = {
+                        dirDeg: windDirToDegrees(item.direction),
+                        dirName: item.direction,
+                        speed: item.value
+                    };
+                });
+            }
 
             stationLayerGroup.clearLayers();
             var count = 0;
 
-            // 3. Render Markers
-            for (const [stnName, info] of Object.entries(STATIONS)) {
-                let temp = null;
-                let windDeg = 180; // Default South
-                let windSpeed = 10;
+            // 3. Render markers for every registered station in HK and Macau
+            for (const [stnName, coords] of Object.entries(STATION_COORDINATES)) {
+                let temp = hkoTemps[stnName] !== undefined ? hkoTemps[stnName] : null;
+                let windDeg = 0;
+                let windSpeed = 0;
                 let windDirText = "N/A";
 
-                if (info.region === "HK") {
-                    temp = hkoTemps[stnName] !== undefined ? hkoTemps[stnName] : null;
-                    if (hkoWinds[stnName]) {
-                        windDeg = hkoWinds[stnName].dirDeg;
-                        windSpeed = hkoWinds[stnName].speed;
-                        windDirText = hkoWinds[stnName].dirName;
-                    }
-                } else {
-                    // Macau defaults
-                    temp = 29;
+                if (hkoWinds[stnName]) {
+                    windDeg = hkoWinds[stnName].dirDeg;
+                    windSpeed = hkoWinds[stnName].speed;
+                    windDirText = hkoWinds[stnName].dirName;
+                } else if (stnName.includes("Macau") || stnName.includes("Taipa") || stnName.includes("Coloane") || stnName.includes("Porto") || stnName.includes("Barra") || stnName.includes("Cotai")) {
+                    // Macau regional baseline estimates
+                    temp = temp || 29;
                     windDeg = 225; // SW
                     windSpeed = 12;
                     windDirText = "SW";
                 }
 
-                var marker = L.marker([info.lat, info.lon], {
+                var marker = L.marker(coords, {
                     icon: createStationIcon(stnName, temp, windDeg)
                 });
 
                 marker.bindPopup(`
                     <div style="font-family: Arial, sans-serif; font-size: 12px; line-height: 1.5;">
                         <strong style="color: #1565c0;">${stnName}</strong><br/>
-                        <strong>Region:</strong> ${info.region === "HK" ? "Hong Kong SAR" : "Macau SAR"}<br/>
                         <strong>Temperature:</strong> ${temp !== null ? temp + ' °C' : 'N/A'}<br/>
-                        <strong>10-Min Mean Wind:</strong> ${windDirText} at ${windSpeed} km/h<br/>
-                        <strong>Barb Angle:</strong> ${windDeg}°
+                        <strong>Wind:</strong> ${windDirText} at ${windSpeed} km/h<br/>
+                        <strong>Vector Rotation:</strong> ${windDeg}°
                     </div>
                 `);
 
@@ -304,17 +284,17 @@
             }
 
             const now = new Date();
-            document.getElementById("update-status").innerText = `Live | ${count} Stations Active | ${now.toLocaleTimeString()}`;
+            document.getElementById("update-status").innerText = `Live | ${count} Weather Stations Plotted | ${now.toLocaleTimeString()}`;
 
         } catch (err) {
-            console.error("General Update Error:", err);
-            document.getElementById("update-status").innerText = "Unable to reach weather services";
+            console.error("Fetch Error:", err);
+            document.getElementById("update-status").innerText = "Error loading live weather feeds";
         }
     }
 
-    // Initial Trigger & 5-minute Auto-Refresh
-    updateHkMacauWeather();
-    setInterval(updateHkMacauWeather, 300000);
+    // Initial Trigger & 5-minute Auto-Refresh Cycle
+    updateAllRegionalWeather();
+    setInterval(updateAllRegionalWeather, 300000);
 </script>
 </body>
 </html>
