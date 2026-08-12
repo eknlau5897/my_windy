@@ -2,34 +2,37 @@
 <html>
 <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <title>Global GTS Weather Station Network</title>
+    <title>Global NOAA METAR Weather Network (All Stations)</title>
     
     <!-- Leaflet & Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
     
-    <!-- Leaflet MarkerCluster Plugin for High-Performance Rendering -->
+    <!-- Leaflet MarkerCluster Plugin -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"/>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <style>
-        html, body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-        #map {
+        html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; right: 0; left: 0; }
+        
+        #update-status {
             position: absolute;
-            top: 0;
-            bottom: 0;
-            right: 0;
-            left: 0;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+            border-left: 5px solid #27ae60;
         }
-        /* Styling for clustered station counts */
+
         .marker-cluster-small { background-color: rgba(231, 76, 60, 0.6); }
         .marker-cluster-small div { background-color: rgba(231, 76, 60, 0.8); color: white; }
         .marker-cluster-medium { background-color: rgba(230, 126, 34, 0.6); }
@@ -39,63 +42,57 @@
     </style>
 </head>
 <body>
+    <div id="update-status">Downloading global METAR station network...</div>
     <div id="map"></div>
 
 <script>
-    // Initialize map focused around the Pearl River Delta / Greater China region
     var map = L.map("map", {
         center: [22.3, 113.8],
-        zoom: 7,
+        zoom: 5,
         crs: L.CRS.EPSG3857,
         preferCanvas: true
     });
 
-    // Basemap Layer
     L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
         minZoom: 2,
         maxZoom: 18,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
     }).addTo(map);
 
-    // Initialize MarkerClusterGroup to handle thousands of global stations efficiently
+    // Optimized clustering parameters for handling thousands of markers simultaneously
     var gtsClusterGroup = L.markerClusterGroup({
-        chunkedLoading: true,      // Load in batches to prevent UI freezing
-        maxClusterRadius: 40,      // Cluster radius in pixels
-        disableClusteringAtZoom: 8 // Show individual station plots when zooming in
+        chunkedLoading: true,      // Loads markers asynchronously in chunks to keep rendering fast
+        chunkInterval: 100,
+        chunkDelay: 10,
+        maxClusterRadius: 50,
+        disableClusteringAtZoom: 9
     });
-
     map.addLayer(gtsClusterGroup);
 
-    // Dynamic Station Plot Icon Generator
-    function createGTSStationIcon(station) {
-        var temp = station.temp !== null && station.temp !== undefined ? station.temp.toFixed(1) : '--';
-        var dewpoint = station.dewpoint !== null && station.dewpoint !== undefined ? station.dewpoint.toFixed(1) : '--';
-        var pressure = station.slp !== null && station.slp !== undefined ? station.slp.toFixed(1) : '--';
-        var windDir = station.windDir || 0;
-        var stationId = station.id || 'SYNOP';
+    function createStationIcon(obs) {
+        var temp = obs.temp !== null && obs.temp !== undefined ? Math.round(obs.temp) : '--';
+        var dewpoint = obs.dewp !== null && obs.dewp !== undefined ? Math.round(obs.dewp) : '--';
+        var pressure = obs.altim !== null && obs.altim !== undefined ? Math.round(obs.altim) : '--';
+        var windDir = obs.wdir || 0;
+        var stationId = obs.icaoId || 'METAR';
 
         return L.divIcon({
             "html": `
             <div style="position: relative; width: 60px; height: 60px; font-family: Arial, sans-serif; font-weight: bold; font-size: 10px;">
-                <!-- Temperature (NW) -->
+                <!-- Temp (NW) -->
                 <div style="position: absolute; top: 5px; left: 0; color: #b71c1c;">${temp}</div>
-                
                 <!-- Dewpoint (SW) -->
                 <div style="position: absolute; bottom: 5px; left: 0; color: #1b5e20;">${dewpoint}</div>
-
-                <!-- SLP Pressure (NE) -->
+                <!-- Altimeter/Pressure (NE) -->
                 <div style="position: absolute; top: 5px; right: 0; color: #0d47a1;">${pressure}</div>
-                
-                <!-- GTS Station Node (Red Center) -->
+                <!-- Center Station Dot -->
                 <div style="position: absolute; top: 25px; left: 25px; width: 8px; height: 8px; background-color: #e74c3c; border: 1px solid black; border-radius: 50%;"></div>
-                
-                <!-- Wind Vector Barb -->
-                <div style="position: absolute; top: 28px; left: 29px; width: 2px; height: 25px; background-color: black; transform-origin: top center; transform: rotate(${windDir}deg); border-radius: 1px;">
-                    <div style="width: 8px; height: 2px; background-color: black; position: absolute; bottom: 0; right: 0;"></div>
+                <!-- Wind Barb Direction Indicator -->
+                <div style="position: absolute; top: 28px; left: 29px; width: 2px; height: 22px; background-color: black; transform-origin: top center; transform: rotate(${windDir}deg); border-radius: 1px;">
+                    <div style="width: 7px; height: 2px; background-color: black; position: absolute; bottom: 0; right: 0;"></div>
                 </div>
-                
-                <!-- WMO Station Number (Right) -->
-                <div style="position: absolute; top: 25px; left: 38px; font-size: 8px; color: #222;">${stationId}</div>
+                <!-- ICAO Identifier -->
+                <div style="position: absolute; top: 25px; left: 36px; font-size: 8px; color: #222;">${stationId}</div>
             </div>`,
             "iconSize": [60, 60],
             "iconAnchor": [30, 30],
@@ -103,26 +100,39 @@
         });
     }
 
-    // Load Live Global GTS/SYNOP Dataset
-    async function loadAllGlobalGTSStations() {
-        try {
-            const allStations = await fetchGlobalStationsDataset();
-            var markersList = [];
+    async function updateAllGlobalStations() {
+        document.getElementById("update-status").innerText = "Fetching all active global METAR stations...";
 
-            allStations.forEach(station => {
-                var marker = L.marker([station.lat, station.lon], {
-                    icon: createGTSStationIcon(station)
+        try {
+            // Omit 'ids=' to query NOAA's entire worldwide station database
+            const apiUrl = `https://aviationweather.gov/api/data/metar?format=json`;
+
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error(`NOAA API status ${response.status}`);
+            
+            const stations = await response.json();
+            gtsClusterGroup.clearLayers();
+
+            var markersList = [];
+            stations.forEach(obs => {
+                // Ensure valid coordinates exist before rendering
+                if (obs.lat === undefined || obs.lon === undefined || obs.lat === null || obs.lon === null) return;
+
+                var marker = L.marker([obs.lat, obs.lon], {
+                    icon: createStationIcon(obs)
                 });
 
                 var popupContent = `
-                    <div style="font-family: monospace; font-size: 12px; line-height: 1.4;">
-                        <strong>Station Name:</strong> ${station.name || 'WMO Station'}<br/>
-                        <strong>WMO ID:</strong> ${station.id}<br/>
-                        <strong>Location:</strong> ${station.lat.toFixed(4)}°, ${station.lon.toFixed(4)}°<br/>
-                        <strong>Temp:</strong> ${station.temp}°C | <strong>Dewpt:</strong> ${station.dewpoint}°C<br/>
-                        <strong>Pressure:</strong> ${station.slp} hPa<br/>
-                        <strong>Raw GTS/SYNOP:</strong><br/>
-                        <code>${station.rawMsg}</code>
+                    <div style="font-family: monospace; font-size: 12px; line-height: 1.5;">
+                        <strong>Station:</strong> ${obs.name || obs.icaoId}<br/>
+                        <strong>ICAO ID:</strong> ${obs.icaoId}<br/>
+                        <strong>Coordinates:</strong> ${obs.lat.toFixed(2)}°, ${obs.lon.toFixed(2)}°<br/>
+                        <strong>Report Time:</strong> ${obs.receiptTime || 'Recent'}<br/>
+                        <strong>Temp:</strong> ${obs.temp}°C | <strong>Dewpt:</strong> ${obs.dewp}°C<br/>
+                        <strong>Altimeter:</strong> ${obs.altim} hPa<br/>
+                        <strong>Wind:</strong> ${obs.wdir || 0}° at ${obs.wspd || 0} kts<br/>
+                        <strong>Raw METAR:</strong><br/>
+                        <code style="word-break: break-all; background:#f4f4f4; padding:3px; display:block; border-radius:3px;">${obs.rawOb}</code>
                     </div>
                 `;
 
@@ -130,72 +140,23 @@
                 markersList.push(marker);
             });
 
-            // Bulk add markers into cluster group
+            // Perform a bulk insertion to minimize UI lag
             gtsClusterGroup.addLayers(markersList);
 
+            const now = new Date();
+            document.getElementById("update-status").innerText = `Loaded ${markersList.length} Stations | ${now.toLocaleTimeString()}`;
+
         } catch (error) {
-            console.error("Error loading global GTS stations:", error);
+            console.error("NOAA Fetch Error:", error);
+            document.getElementById("update-status").innerText = "Error loading global METAR feed.";
         }
     }
 
-    // Dataset function explicitly incorporating Hong Kong, Macau, and the global grid
-    async function fetchGlobalStationsDataset() {
-        // Priority regional stations with official WMO station numbers
-        const priorityStations = [
-            {
-                id: "45005",
-                name: "Hong Kong Observatory",
-                lat: 22.3022,
-                lon: 114.1742,
-                temp: 26.2,
-                dewpoint: 21.5,
-                slp: 1011.8,
-                windDir: 110,
-                rawMsg: "AAXX 12004 45005 11583 81104 10262 20215 40118 58002"
-            },
-            {
-                id: "45011",
-                name: "Macau Taipa Grande Observatory",
-                lat: 22.1578,
-                lon: 113.5586,
-                temp: 25.8,
-                dewpoint: 22.0,
-                slp: 1012.1,
-                windDir: 130,
-                rawMsg: "AAXX 12004 45011 11583 81304 10258 20220 40121 58003"
-            }
-        ];
+    // Initial load
+    updateAllGlobalStations();
 
-        const gridStations = [];
-        let idCounter = 10000;
-
-        // Generate additional global network observations across the world map
-        for (let lat = -60; lat <= 70; lat += 3) {
-            for (let lon = -180; lon <= 180; lon += 4) {
-                // Keep points off exact HK/Macau coordinates to prevent overlap collisions
-                if (Math.abs(lat - 22.3) < 2 && Math.abs(lon - 114.0) < 2) continue;
-
-                if (Math.sin(lat) * Math.cos(lon) > -0.2) {
-                    gridStations.push({
-                        id: (idCounter++).toString(),
-                        name: "WMO Surface Station",
-                        lat: lat + (Math.random() - 0.5),
-                        lon: lon + (Math.random() - 0.5),
-                        temp: parseFloat((15 + Math.sin(lat) * 15 + Math.random() * 5).toFixed(1)),
-                        dewpoint: parseFloat((8 + Math.sin(lat) * 10 + Math.random() * 3).toFixed(1)),
-                        slp: parseFloat((1013.2 + (Math.random() - 0.5) * 20).toFixed(1)),
-                        windDir: Math.floor(Math.random() * 360),
-                        rawMsg: `AAXX 12004 ${idCounter} 11583 8${Math.floor(Math.random()*360)}04 10${Math.floor(Math.random()*30)} 40132`
-                    });
-                }
-            }
-        }
-
-        return [...priorityStations, ...gridStations];
-    }
-
-    // Execute Global Load
-    loadAllGlobalGTSStations();
+    // Auto-refresh all stations every 10 minutes
+    setInterval(updateAllGlobalStations, 600000);
 </script>
 </body>
 </html>
