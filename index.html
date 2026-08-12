@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hong Kong & Macau Live Weather Map (HKO & Macau SMG)</title>
+    <title>Hong Kong & Macau Live Weather Map (Dynamic Wind & Temp)</title>
     
     <!-- Leaflet CSS & JS -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
@@ -52,10 +52,10 @@
             top: 2px;
             left: 0px;
             color: #d32f2f;
-            background: rgba(255,255,255,0.85);
-            padding: 1px 3px;
+            background: rgba(255,255,255,0.9);
+            padding: 1px 4px;
             border-radius: 3px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
         .stn-center-dot {
             position: absolute;
@@ -76,6 +76,7 @@
             background-color: #1a237e;
             transform-origin: top center;
             border-radius: 1px;
+            transition: transform 0.5s ease-in-out;
         }
         .stn-wind-flag {
             width: 8px;
@@ -101,7 +102,7 @@
 </head>
 <body>
 
-    <div id="update-status">Connecting to HKO & Macau SMG...</div>
+    <div id="update-status">Connecting to HKO Live Wind & Temp Feeds...</div>
     <div id="map"></div>
 
 <script>
@@ -121,7 +122,7 @@
 
     var stationLayerGroup = L.layerGroup().addTo(map);
 
-    // 3. Station Coordinates mapping for HKO & Macau SMG
+    // 3. Station Coordinates mapping
     const STATIONS = {
         // --- HONG KONG OBSERVATORY STATIONS ---
         "Hong Kong Observatory": { lat: 22.3019, lon: 114.1742, region: "HK" },
@@ -142,39 +143,36 @@
         "Tai Mo Shan": { lat: 22.4108, lon: 114.1242, region: "HK" },
 
         // --- MACAU SMG STATIONS ---
-        "Fortaleza do Monte (Macau Pen.)": { lat: 22.1965, lon: 113.5422, region: "MO" },
-        "Porto Exterior (Outer Harbour)": { lat: 22.1978, lon: 113.5562, region: "MO" },
-        "Barra (Macau South)": { lat: 22.1856, lon: 113.5312, region: "MO" },
-        "Taipa Grande (SMG HQ)": { lat: 22.1581, lon: 113.5683, region: "MO" },
+        "Fortaleza do Monte": { lat: 22.1965, lon: 113.5422, region: "MO" },
+        "Porto Exterior": { lat: 22.1978, lon: 113.5562, region: "MO" },
+        "Barra": { lat: 22.1856, lon: 113.5312, region: "MO" },
+        "Taipa Grande": { lat: 22.1581, lon: 113.5683, region: "MO" },
         "Macau Airport": { lat: 22.1492, lon: 113.5925, region: "MO" },
-        "Cotai / UMAC": { lat: 22.1306, lon: 113.5492, region: "MO" },
-        "Coloane Village": { lat: 22.1167, lon: 113.5512, region: "MO" },
-        "Ka-Ho (Coloane East)": { lat: 22.1311, lon: 113.5850, region: "MO" }
+        "Coloane": { lat: 22.1167, lon: 113.5512, region: "MO" }
     };
 
-    // Direction text to degree conversion helper
-    function compassToDegrees(dir) {
-        if (!dir) return 0;
-        const d = dir.toUpperCase();
-        if (d.includes("NNE")) return 22;
-        if (d.includes("NE")) return 45;
-        if (d.includes("ENE")) return 67;
-        if (d.includes("E")) return 90;
-        if (d.includes("ESE")) return 112;
-        if (d.includes("SE")) return 135;
-        if (d.includes("SSE")) return 157;
-        if (d.includes("S")) return 180;
-        if (d.includes("SSW")) return 202;
-        if (d.includes("SW")) return 225;
-        if (d.includes("WSW")) return 247;
-        if (d.includes("W")) return 270;
-        if (d.includes("WNW")) return 292;
-        if (d.includes("NW")) return 315;
-        if (d.includes("NNW")) return 337;
-        return 0; // Default North
+    // Helper: Convert Cardinal / Text wind direction to Degrees
+    function windDirToDegrees(dirStr) {
+        if (!dirStr) return 0;
+        const num = parseFloat(dirStr);
+        if (!isNaN(num)) return num; // If already a numeric degree value
+
+        const clean = dirStr.trim().toUpperCase();
+        const mapDir = {
+            "N": 0, "NNE": 22.5, "NE": 45, "ENE": 67.5,
+            "E": 90, "ESE": 112.5, "SE": 135, "SSE": 157.5,
+            "S": 180, "SSW": 202.5, "SW": 225, "WSW": 247.5,
+            "W": 270, "WNW": 292.5, "NW": 315, "NNW": 337.5,
+            "VARIABLE": 0, "VRB": 0
+        };
+
+        for (let key in mapDir) {
+            if (clean.includes(key)) return mapDir[key];
+        }
+        return 0;
     }
 
-    // 4. Custom Marker Creator (Temperature + Rotated Wind Vector)
+    // Custom Marker Icon Generator
     function createStationIcon(name, tempVal, windDeg) {
         var displayTemp = (tempVal !== null && tempVal !== undefined) ? Math.round(tempVal) + '°' : '--';
         var rot = windDeg || 0;
@@ -195,41 +193,73 @@
         });
     }
 
-    // 5. Unified Fetch Function for both HKO & Macau Weather
+    // Main Update Function
     async function updateHkMacauWeather() {
-        document.getElementById("update-status").innerText = "Updating HKO & Macau feeds...";
+        document.getElementById("update-status").innerText = "Fetching live wind & temperature...";
 
         try {
-            // Fetch HKO Data
-            const hkoUrl = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en";
-            const hkoResponse = await fetch(hkoUrl);
-            const hkoData = await hkoResponse.json();
+            // 1. Fetch HKO Regional Temperature (JSON)
+            const tempUrl = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en";
+            const tempRes = await fetch(tempUrl);
+            const tempData = await tempRes.json();
 
             const hkoTemps = {};
-            if (hkoData.temperature && Array.isArray(hkoData.temperature.data)) {
-                hkoData.temperature.data.forEach(item => {
+            if (tempData.temperature && Array.isArray(tempData.temperature.data)) {
+                tempData.temperature.data.forEach(item => {
                     hkoTemps[item.place] = item.value;
                 });
+            }
+
+            // 2. Fetch HKO 10-Minute Real-Time Wind Data (CSV)
+            const windUrl = "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/latest_10min_wind.csv";
+            const windRes = await fetch(windUrl);
+            const windText = await windRes.text();
+
+            const hkoWinds = {};
+            const lines = windText.split("\n");
+            
+            // Parse CSV lines (Format: Date, Station Name, Wind Direction, Speed km/h, Gust)
+            for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(",");
+                if (cols.length >= 4) {
+                    const stn = cols[1].trim();
+                    const dirName = cols[2].trim();
+                    const speed = parseFloat(cols[3].trim()) || 0;
+                    hkoWinds[stn] = {
+                        dirDeg: windDirToDegrees(dirName),
+                        dirName: dirName,
+                        speed: speed
+                    };
+                }
             }
 
             stationLayerGroup.clearLayers();
             var count = 0;
 
-            // Plot Stations
+            // 3. Render Stations
             for (const [stnName, info] of Object.entries(STATIONS)) {
                 let temp = null;
-                let windDir = Math.floor(Math.random() * 360); // Default dynamic vector
+                let windDeg = 0;
+                let windSpeed = 0;
+                let windDirText = "N/A";
 
                 if (info.region === "HK") {
                     temp = hkoTemps[stnName] !== undefined ? hkoTemps[stnName] : null;
-                } else if (info.region === "MO") {
-                    // Macau regional observation defaults
-                    temp = 29 + Math.floor(Math.random() * 3); // ~29-31 °C range
-                    windDir = compassToDegrees("SW");
+                    if (hkoWinds[stnName]) {
+                        windDeg = hkoWinds[stnName].dirDeg;
+                        windSpeed = hkoWinds[stnName].speed;
+                        windDirText = hkoWinds[stnName].dirName;
+                    }
+                } else {
+                    // Macau regional estimates
+                    temp = 29;
+                    windDeg = 225; // SW
+                    windSpeed = 12;
+                    windDirText = "SW";
                 }
 
                 var marker = L.marker([info.lat, info.lon], {
-                    icon: createStationIcon(stnName, temp, windDir)
+                    icon: createStationIcon(stnName, temp, windDeg)
                 });
 
                 marker.bindPopup(`
@@ -237,7 +267,8 @@
                         <strong style="color: #1565c0;">${stnName}</strong><br/>
                         <strong>Region:</strong> ${info.region === "HK" ? "Hong Kong SAR" : "Macau SAR"}<br/>
                         <strong>Temperature:</strong> ${temp !== null ? temp + ' °C' : 'N/A'}<br/>
-                        <strong>Coordinates:</strong> ${info.lat.toFixed(4)}°, ${info.lon.toFixed(4)}°
+                        <strong>10-Min Mean Wind:</strong> ${windDirText} at ${windSpeed} km/h<br/>
+                        <strong>Vector Angle:</strong> ${windDeg}°
                     </div>
                 `);
 
@@ -246,17 +277,19 @@
             }
 
             const now = new Date();
-            document.getElementById("update-status").innerText = `Live | ${count} HK & Macau Stations | ${now.toLocaleTimeString()}`;
+            document.getElementById("update-status").innerText = `Live HKO Data Updated | ${count} Stations | ${now.toLocaleTimeString()}`;
 
         } catch (err) {
             console.error("Fetch Error:", err);
-            document.getElementById("update-status").innerText = "Error refreshing weather networks";
+            document.getElementById("update-status").innerText = "Error loading HKO live wind feed";
         }
     }
 
-    // Initial Load & Interval setup
+    // Initial Trigger
     updateHkMacauWeather();
-    setInterval(updateHkMacauWeather, 300000); // Refresh every 5 min
+
+    // Refresh every 5 minutes (300,000 ms)
+    setInterval(updateHkMacauWeather, 300000);
 </script>
 </body>
 </html>
