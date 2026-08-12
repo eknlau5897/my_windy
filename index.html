@@ -1,88 +1,232 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Leaflet NOAA METAR Bounding Box Example</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    #map { height: 100vh; width: 100%; margin: 0; }
-    body { margin: 0; padding: 0; }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NOAA NWS Live METAR Map</title>
+    
+    <!-- Leaflet & Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    
+    <!-- Leaflet MarkerCluster Plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"/>
+
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            left: 0;
+        }
+        #update-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            border-left: 4px solid #0d47a1;
+        }
+
+        /* Cluster Styling */
+        .marker-cluster-small { background-color: rgba(231, 76, 60, 0.6); }
+        .marker-cluster-small div { background-color: rgba(231, 76, 60, 0.8); color: white; }
+        .marker-cluster-medium { background-color: rgba(230, 126, 34, 0.6); }
+        .marker-cluster-medium div { background-color: rgba(230, 126, 34, 0.8); color: white; }
+        .marker-cluster-large { background-color: rgba(41, 128, 185, 0.6); }
+        .marker-cluster-large div { background-color: rgba(41, 128, 185, 0.8); color: white; }
+    </style>
 </head>
 <body>
 
-<div id="map"></div>
+    <div id="update-status">Initializing map...</div>
+    <div id="map"></div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // Initialize map centered over the US
-  const map = L.map('map').setView([39.8283, -98.5795], 5);
+    // 1. Initialize Leaflet Map (Centered over US where NWS API coverage is densest)
+    var map = L.map("map", {
+        center: [22.3,114.17],
+        zoom: 5,
+        crs: L.CRS.EPSG3857,
+        preferCanvas: true
+    });
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap contributors'
-  }).addTo(map);
+    // 2. Basemap Layer
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+        minZoom: 2,
+        maxZoom: 18,
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    }).addTo(map);
 
-  // Layer group to keep track of METAR markers
-  const stationLayerGroup = L.layerGroup().addTo(map);
+    // 3. Setup Marker Cluster Group
+    var metarClusterGroup = L.markerClusterGroup({
+        chunkedLoading: true,
+        maxClusterRadius: 40,
+        disableClusteringAtZoom: 9
+    });
+    map.addLayer(metarClusterGroup);
 
-  let fetchTimeout = null;
+    // 4. Custom Icon for Station Rendering
+    function createStationIcon(stationId, temp) {
+        var displayTemp = temp !== null && temp !== undefined ? Math.round(temp) + '°' : '--';
 
-  // Function to fetch METARs inside current viewport
-  async function fetchMetarsInBounds() {
-    const bounds = map.getBounds();
-    const south = bounds.getSouth().toFixed(4);
-    const west = bounds.getWest().toFixed(4);
-    const north = bounds.getNorth().toFixed(4);
-    const east = bounds.getEast().toFixed(4);
-
-    // NOAA AWC API bbox format: minLat,minLon,maxLat,maxLon
-    const url = `https://aviationweather.gov/api/data/metar?bbox=${south},${west},${north},${east}&format=geojson`;
-
-    try {
-      const response = await fetch(url);
-      if (!response.ok) return;
-
-      const geojsonData = await response.json();
-
-      // Clear previous markers
-      stationLayerGroup.clearLayers();
-
-      // Add new station markers
-      L.geoJSON(geojsonData, {
-        onEachFeature: (feature, layer) => {
-          const props = feature.properties;
-          const name = props.name || props.icaoId || 'Unknown Station';
-          const temp = props.temp != null ? `${props.temp}°C` : 'N/A';
-          const rawReport = props.rawOb || 'No raw report available';
-
-          layer.bindPopup(`
-            <strong>${name}</strong> (${props.icaoId})<br/>
-            <b>Temp:</b> ${temp}<br/>
-            <b>Observation:</b> <code>${rawReport}</code>
-          `);
-        }
-      }).addTo(stationLayerGroup);
-
-    } catch (error) {
-      console.error('Error fetching NOAA METAR data:', error);
+        return L.divIcon({
+            "html": `
+            <div style="position: relative; width: 50px; height: 50px; font-family: Arial, sans-serif; font-weight: bold; font-size: 10px;">
+                <!-- Temp -->
+                <div style="position: absolute; top: 0; left: 0; color: #b71c1c;">${displayTemp}</div>
+                <!-- Center Dot -->
+                <div style="position: absolute; top: 20px; left: 20px; width: 8px; height: 8px; background-color: #0d47a1; border: 1px solid white; border-radius: 50%;"></div>
+                <!-- ICAO ID -->
+                <div style="position: absolute; top: 20px; left: 30px; font-size: 9px; color: #222;">${stationId}</div>
+            </div>`,
+            "iconSize": [50, 50],
+            "iconAnchor": [24, 24],
+            "className": "metar-station-icon"
+        });
     }
-  }
 
-  // Debounce wrapper to prevent redundant API calls during fast movement
-  function onMapMoveEnd() {
-    clearTimeout(fetchTimeout);
-    fetchTimeout = setTimeout(() => {
-      fetchMetarsInBounds();
-    }, 300); // 300ms delay
-  }
+    // Cache to store station details and avoid redundant calls
+    const stationCache = new Map();
 
-  // Bind the event listener
-  map.on('moveend', onMapMoveEnd);
+    // 5. Fetch Station Observations dynamically inside visible bounding box
+    async function fetchNwsMetarInBounds() {
+        // Prevent fetching if zoomed out too far (avoids huge API payloads)
+        if (map.getZoom() < 5) {
+            document.getElementById("update-status").innerText = "Zoom in closer to view METAR stations";
+            return;
+        }
 
-  // Initial fetch on page load
-  fetchMetarsInBounds();
+        document.getElementById("update-status").innerText = "Fetching NOAA stations...";
+
+        const bounds = map.getBounds();
+        // NWS API BBOX Format: minLon,minLat,maxLon,maxLat
+        const bbox = `${bounds.getWest().toFixed(4)},${bounds.getSouth().toFixed(4)},${bounds.getEast().toFixed(4)},${bounds.getNorth().toFixed(4)}`;
+        const url = `https://api.weather.gov/stations?bbox=${bbox}&limit=200`;
+
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    "Accept": "application/geo+json"
+                }
+            });
+
+            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+
+            const geojson = await response.json();
+            const stations = geojson.features || [];
+
+            metarClusterGroup.clearLayers();
+            var markersList = [];
+
+            stations.forEach(stn => {
+                const props = stn.properties;
+                const coords = stn.geometry.coordinates; // [lon, lat]
+                const stationId = props.stationIdentifier;
+
+                if (!coords || coords.length < 2) return;
+
+                // Create basic station marker
+                var marker = L.marker([coords[1], coords[0]], {
+                    icon: createStationIcon(stationId, null)
+                });
+
+                // Attach click listener to load live observation on demand
+                marker.bindPopup(`
+                    <div style="font-family: Arial, sans-serif; font-size: 12px; line-height: 1.4;">
+                        <strong>Station:</strong> ${props.name}<br/>
+                        <strong>ICAO ID:</strong> ${stationId}<br/>
+                        <strong>Elevation:</strong> ${props.elevation && props.elevation.value ? Math.round(props.elevation.value) + ' m' : 'N/A'}<br/>
+                        <hr style="margin: 5px 0; border: 0; border-top: 1px solid #ccc;"/>
+                        <div id="pop-${stationId}"><em>Loading latest observation...</em></div>
+                    </div>
+                `);
+
+                marker.on('click', () => fetchLatestObservation(stationId));
+                markersList.push(marker);
+            });
+
+            metarClusterGroup.addLayers(markersList);
+
+            const now = new Date();
+            document.getElementById("update-status").innerText = `NOAA NWS | ${markersList.length} Stations Active | ${now.toLocaleTimeString()}`;
+
+        } catch (error) {
+            console.error("NWS Fetch Error:", error);
+            document.getElementById("update-status").innerText = "Error requesting NWS station data";
+        }
+    }
+
+    // 6. Fetch detailed METAR observation when a station marker is clicked
+    async function fetchLatestObservation(stationId) {
+        const popupDiv = document.getElementById(`pop-${stationId}`);
+        if (!popupDiv) return;
+
+        const url = `https://api.weather.gov/stations/${stationId}/observations/latest`;
+
+        try {
+            const response = await fetch(url, {
+                headers: { "Accept": "application/geo+json" }
+            });
+
+            if (!response.ok) {
+                popupDiv.innerHTML = `<em>No current METAR available.</em>`;
+                return;
+            }
+
+            const data = await response.json();
+            const obs = data.properties;
+
+            const tempC = obs.temperature && obs.temperature.value !== null ? obs.temperature.value.toFixed(1) : 'N/A';
+            const dewC = obs.dewpoint && obs.dewpoint.value !== null ? obs.dewpoint.value.toFixed(1) : 'N/A';
+            const windSpeed = obs.windSpeed && obs.windSpeed.value !== null ? Math.round(obs.windSpeed.value) : '0';
+            const windDir = obs.windDirection && obs.windDirection.value !== null ? obs.windDirection.value : 'VRB';
+            const rawMetar = obs.rawMessage || 'N/A';
+
+            popupDiv.innerHTML = `
+                <b>Temp:</b> ${tempC} °C | <b>Dewpt:</b> ${dewC} °C<br/>
+                <b>Wind:</b> ${windDir}° at ${windSpeed} km/h<br/>
+                <b>Raw METAR:</b><br/>
+                <code style="display:block; background:#f4f4f4; padding:4px; margin-top:3px; border-radius:3px; word-break:break-all;">${rawMetar}</code>
+            `;
+        } catch (err) {
+            popupDiv.innerHTML = `<em>Failed to load observation details.</em>`;
+        }
+    }
+
+    // 7. Debounce Map Movement to prevent API rate spikes
+    let moveTimeout = null;
+    function onMapMoveEnd() {
+        clearTimeout(moveTimeout);
+        moveTimeout = setTimeout(() => {
+            fetchNwsMetarInBounds();
+        }, 400);
+    }
+
+    // 8. Event Listeners & Initialization
+    map.on("moveend", onMapMoveEnd);
+
+    // Initial Load
+    fetchNwsMetarInBounds();
+
+    // Auto-refresh map bounds every 5 minutes
+    setInterval(fetchNwsMetarInBounds, 300000);
 </script>
-
 </body>
 </html>
