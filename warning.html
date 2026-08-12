@@ -188,7 +188,10 @@
         <div class="modal-box">
             <h3>Authorization</h3>
             <p style="font-size: 12px; color: #666;">Enter password to unlock editor tools.</p>
+            
+            <!-- Masked Password Field (Displays dots/asterisks when typing) -->
             <input type="password" id="password-input" class="input-field" placeholder="Enter Password" />
+            
             <div id="error-message" class="error-msg">Incorrect password.</div>
             
             <button class="btn btn-success" style="margin-top: 12px;" onclick="attemptLogin()">Unlock Editor</button>
@@ -247,17 +250,13 @@
         drawnItems.addLayer(layer);
     });
 
-    // 3. SECURE SHA-256 HASH AUTHENTICATION
-    // Hash below corresponds to the password: map123
-    const PASSWORD_SHA256 = "map123";
+    // 3. OBFUSCATED BASE64 AUTHENTICATION
+    // Password "map123" is reversed to "321pam", then Base64 encoded as "MzIxcGFt"
+    const OBFUSCATED_SECRET = "MzIxcGFt";
 
-    // FIXED HASHING FUNCTION (Uses correct window.crypto.subtle API)
-    async function getSHA256(text) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(text);
-        const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    function decodeSecret(obfuscated) {
+        var decoded = atob(obfuscated);
+        return decoded.split('').reverse().join('');
     }
 
     function checkAuthState() {
@@ -286,33 +285,34 @@
 
     function openLoginModal() {
         document.getElementById("login-modal").style.display = "flex";
+        document.getElementById("password-input").focus();
     }
 
     function closeLoginModal() {
         document.getElementById("login-modal").style.display = "none";
         document.getElementById("error-message").style.display = "none";
+        document.getElementById("password-input").value = "";
     }
 
-    async function attemptLogin() {
+    function attemptLogin() {
         var inputPass = document.getElementById("password-input").value;
-        
-        try {
-            var hashedInput = await getSHA256(inputPass);
+        var realPassword = decodeSecret(OBFUSCATED_SECRET);
 
-            if (hashedInput === PASSWORD_SHA256) {
-                sessionStorage.setItem("geojson_auth", "true");
-                closeLoginModal();
-                checkAuthState();
-                document.getElementById("password-input").value = "";
-            } else {
-                document.getElementById("error-message").style.display = "block";
-            }
-        } catch (err) {
-            console.error("Crypto API error:", err);
-            document.getElementById("error-message").textContent = "Browser security blocked crypto API. Serve via http/https or localhost.";
+        if (inputPass === realPassword) {
+            sessionStorage.setItem("geojson_auth", "true");
+            closeLoginModal();
+            checkAuthState();
+        } else {
             document.getElementById("error-message").style.display = "block";
         }
     }
+
+    // Allow pressing "Enter" key in password box to submit login
+    document.getElementById("password-input").addEventListener("keyup", function(event) {
+        if (event.key === "Enter") {
+            attemptLogin();
+        }
+    });
 
     function logout() {
         sessionStorage.removeItem("geojson_auth");
@@ -371,5 +371,6 @@
 
     checkAuthState();
 </script>
+
 </body>
 </html>
