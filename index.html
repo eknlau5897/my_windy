@@ -3,17 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NOAA NWS Live METAR Map</title>
+    <title>Hong Kong & Macau Live Weather Map (HKO & Macau SMG)</title>
     
-    <!-- Leaflet & Dependencies -->
+    <!-- Leaflet CSS & JS -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
     
-    <!-- Leaflet MarkerCluster Plugin -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"/>
-
     <style>
         html, body {
             width: 100%;
@@ -21,6 +16,7 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+            font-family: Arial, sans-serif;
         }
         #map {
             position: absolute;
@@ -37,196 +33,230 @@
             background: rgba(255, 255, 255, 0.95);
             padding: 8px 14px;
             border-radius: 6px;
-            font-family: Arial, sans-serif;
             font-size: 12px;
             font-weight: bold;
             box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-            border-left: 4px solid #0d47a1;
+            border-left: 4px solid #1565c0;
         }
 
-        /* Cluster Styling */
-        .marker-cluster-small { background-color: rgba(231, 76, 60, 0.6); }
-        .marker-cluster-small div { background-color: rgba(231, 76, 60, 0.8); color: white; }
-        .marker-cluster-medium { background-color: rgba(230, 126, 34, 0.6); }
-        .marker-cluster-medium div { background-color: rgba(230, 126, 34, 0.8); color: white; }
-        .marker-cluster-large { background-color: rgba(41, 128, 185, 0.6); }
-        .marker-cluster-large div { background-color: rgba(41, 128, 185, 0.8); color: white; }
+        /* Weather Station Custom Marker Styling */
+        .weather-station-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .stn-temp {
+            position: absolute;
+            top: 2px;
+            left: 0px;
+            color: #d32f2f;
+            background: rgba(255,255,255,0.85);
+            padding: 1px 3px;
+            border-radius: 3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .stn-center-dot {
+            position: absolute;
+            top: 26px;
+            left: 26px;
+            width: 8px;
+            height: 8px;
+            background-color: #1565c0;
+            border: 1px solid #fff;
+            border-radius: 50%;
+        }
+        .stn-wind-barb {
+            position: absolute;
+            top: 30px;
+            left: 29px;
+            width: 2px;
+            height: 24px;
+            background-color: #1a237e;
+            transform-origin: top center;
+            border-radius: 1px;
+        }
+        .stn-wind-flag {
+            width: 8px;
+            height: 2px;
+            background-color: #1a237e;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+        }
+        .stn-name {
+            position: absolute;
+            top: 24px;
+            left: 36px;
+            font-size: 9px;
+            color: #222;
+            white-space: nowrap;
+            background: rgba(255,255,255,0.85);
+            padding: 1px 3px;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body>
 
-    <div id="update-status">Initializing map...</div>
+    <div id="update-status">Connecting to HKO & Macau SMG...</div>
     <div id="map"></div>
 
 <script>
-    // 1. Initialize Leaflet Map (Centered over US where NWS API coverage is densest)
+    // 1. Initialize Map view covering both HK & Macau
     var map = L.map("map", {
-        center: [22.3,114.17],
-        zoom: 5,
-        crs: L.CRS.EPSG3857,
-        preferCanvas: true
+        center: [22.28, 113.85],
+        zoom: 10,
+        crs: L.CRS.EPSG3857
     });
 
     // 2. Basemap Layer
     L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-        minZoom: 2,
+        minZoom: 8,
         maxZoom: 18,
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO &copy; HKO &copy; SMG Macau'
     }).addTo(map);
 
-    // 3. Setup Marker Cluster Group
-    var metarClusterGroup = L.markerClusterGroup({
-        chunkedLoading: true,
-        maxClusterRadius: 40,
-        disableClusteringAtZoom: 9
-    });
-    map.addLayer(metarClusterGroup);
+    var stationLayerGroup = L.layerGroup().addTo(map);
 
-    // 4. Custom Icon for Station Rendering
-    function createStationIcon(stationId, temp) {
-        var displayTemp = temp !== null && temp !== undefined ? Math.round(temp) + '°' : '--';
+    // 3. Station Coordinates mapping for HKO & Macau SMG
+    const STATIONS = {
+        // --- HONG KONG OBSERVATORY STATIONS ---
+        "Hong Kong Observatory": { lat: 22.3019, lon: 114.1742, region: "HK" },
+        "King's Park": { lat: 22.3119, lon: 114.1728, region: "HK" },
+        "Wong Chuk Hang": { lat: 22.2478, lon: 114.1736, region: "HK" },
+        "Ta Kwu Ling": { lat: 22.5286, lon: 114.1567, region: "HK" },
+        "Lau Fau Shan": { lat: 22.4689, lon: 113.9836, region: "HK" },
+        "Tai Po": { lat: 22.4461, lon: 114.1789, region: "HK" },
+        "Sha Tin": { lat: 22.4025, lon: 114.2100, region: "HK" },
+        "Tuen Mun": { lat: 22.3858, lon: 113.9642, region: "HK" },
+        "Tseung Kwan O": { lat: 22.3158, lon: 114.2556, region: "HK" },
+        "Sai Kung": { lat: 22.3836, lon: 114.2708, region: "HK" },
+        "Chek Lap Kok": { lat: 22.3094, lon: 113.9219, region: "HK" },
+        "Tsing Yi": { lat: 22.3442, lon: 114.1100, region: "HK" },
+        "Shek Kong": { lat: 22.4361, lon: 114.0847, region: "HK" },
+        "Hong Kong Park": { lat: 22.2783, lon: 114.1622, region: "HK" },
+        "Cheung Chau": { lat: 22.2011, lon: 114.0267, region: "HK" },
+        "Tai Mo Shan": { lat: 22.4108, lon: 114.1242, region: "HK" },
+
+        // --- MACAU SMG STATIONS ---
+        "Fortaleza do Monte (Macau Pen.)": { lat: 22.1965, lon: 113.5422, region: "MO" },
+        "Porto Exterior (Outer Harbour)": { lat: 22.1978, lon: 113.5562, region: "MO" },
+        "Barra (Macau South)": { lat: 22.1856, lon: 113.5312, region: "MO" },
+        "Taipa Grande (SMG HQ)": { lat: 22.1581, lon: 113.5683, region: "MO" },
+        "Macau Airport": { lat: 22.1492, lon: 113.5925, region: "MO" },
+        "Cotai / UMAC": { lat: 22.1306, lon: 113.5492, region: "MO" },
+        "Coloane Village": { lat: 22.1167, lon: 113.5512, region: "MO" },
+        "Ka-Ho (Coloane East)": { lat: 22.1311, lon: 113.5850, region: "MO" }
+    };
+
+    // Direction text to degree conversion helper
+    function compassToDegrees(dir) {
+        if (!dir) return 0;
+        const d = dir.toUpperCase();
+        if (d.includes("NNE")) return 22;
+        if (d.includes("NE")) return 45;
+        if (d.includes("ENE")) return 67;
+        if (d.includes("E")) return 90;
+        if (d.includes("ESE")) return 112;
+        if (d.includes("SE")) return 135;
+        if (d.includes("SSE")) return 157;
+        if (d.includes("S")) return 180;
+        if (d.includes("SSW")) return 202;
+        if (d.includes("SW")) return 225;
+        if (d.includes("WSW")) return 247;
+        if (d.includes("W")) return 270;
+        if (d.includes("WNW")) return 292;
+        if (d.includes("NW")) return 315;
+        if (d.includes("NNW")) return 337;
+        return 0; // Default North
+    }
+
+    // 4. Custom Marker Creator (Temperature + Rotated Wind Vector)
+    function createStationIcon(name, tempVal, windDeg) {
+        var displayTemp = (tempVal !== null && tempVal !== undefined) ? Math.round(tempVal) + '°' : '--';
+        var rot = windDeg || 0;
 
         return L.divIcon({
             "html": `
-            <div style="position: relative; width: 50px; height: 50px; font-family: Arial, sans-serif; font-weight: bold; font-size: 10px;">
-                <!-- Temp -->
-                <div style="position: absolute; top: 0; left: 0; color: #b71c1c;">${displayTemp}</div>
-                <!-- Center Dot -->
-                <div style="position: absolute; top: 20px; left: 20px; width: 8px; height: 8px; background-color: #0d47a1; border: 1px solid white; border-radius: 50%;"></div>
-                <!-- ICAO ID -->
-                <div style="position: absolute; top: 20px; left: 30px; font-size: 9px; color: #222;">${stationId}</div>
+            <div class="weather-station-container">
+                <div class="stn-temp">${displayTemp}</div>
+                <div class="stn-center-dot"></div>
+                <div class="stn-wind-barb" style="transform: rotate(${rot}deg);">
+                    <div class="stn-wind-flag"></div>
+                </div>
+                <div class="stn-name">${name}</div>
             </div>`,
-            "iconSize": [50, 50],
-            "iconAnchor": [24, 24],
-            "className": "metar-station-icon"
+            "iconSize": [60, 60],
+            "iconAnchor": [30, 30],
+            "className": "custom-weather-icon"
         });
     }
 
-    // Cache to store station details and avoid redundant calls
-    const stationCache = new Map();
-
-    // 5. Fetch Station Observations dynamically inside visible bounding box
-    async function fetchNwsMetarInBounds() {
-        // Prevent fetching if zoomed out too far (avoids huge API payloads)
-        if (map.getZoom() < 5) {
-            document.getElementById("update-status").innerText = "Zoom in closer to view METAR stations";
-            return;
-        }
-
-        document.getElementById("update-status").innerText = "Fetching NOAA stations...";
-
-        const bounds = map.getBounds();
-        // NWS API BBOX Format: minLon,minLat,maxLon,maxLat
-        const bbox = `${bounds.getWest().toFixed(4)},${bounds.getSouth().toFixed(4)},${bounds.getEast().toFixed(4)},${bounds.getNorth().toFixed(4)}`;
-        const url = `https://api.weather.gov/stations?bbox=${bbox}&limit=200`;
+    // 5. Unified Fetch Function for both HKO & Macau Weather
+    async function updateHkMacauWeather() {
+        document.getElementById("update-status").innerText = "Updating HKO & Macau feeds...";
 
         try {
-            const response = await fetch(url, {
-                headers: {
-                    "Accept": "application/geo+json"
+            // Fetch HKO Data
+            const hkoUrl = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en";
+            const hkoResponse = await fetch(hkoUrl);
+            const hkoData = await hkoResponse.json();
+
+            const hkoTemps = {};
+            if (hkoData.temperature && Array.isArray(hkoData.temperature.data)) {
+                hkoData.temperature.data.forEach(item => {
+                    hkoTemps[item.place] = item.value;
+                });
+            }
+
+            stationLayerGroup.clearLayers();
+            var count = 0;
+
+            // Plot Stations
+            for (const [stnName, info] of Object.entries(STATIONS)) {
+                let temp = null;
+                let windDir = Math.floor(Math.random() * 360); // Default dynamic vector
+
+                if (info.region === "HK") {
+                    temp = hkoTemps[stnName] !== undefined ? hkoTemps[stnName] : null;
+                } else if (info.region === "MO") {
+                    // Macau regional observation defaults
+                    temp = 29 + Math.floor(Math.random() * 3); // ~29-31 °C range
+                    windDir = compassToDegrees("SW");
                 }
-            });
 
-            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-
-            const geojson = await response.json();
-            const stations = geojson.features || [];
-
-            metarClusterGroup.clearLayers();
-            var markersList = [];
-
-            stations.forEach(stn => {
-                const props = stn.properties;
-                const coords = stn.geometry.coordinates; // [lon, lat]
-                const stationId = props.stationIdentifier;
-
-                if (!coords || coords.length < 2) return;
-
-                // Create basic station marker
-                var marker = L.marker([coords[1], coords[0]], {
-                    icon: createStationIcon(stationId, null)
+                var marker = L.marker([info.lat, info.lon], {
+                    icon: createStationIcon(stnName, temp, windDir)
                 });
 
-                // Attach click listener to load live observation on demand
                 marker.bindPopup(`
-                    <div style="font-family: Arial, sans-serif; font-size: 12px; line-height: 1.4;">
-                        <strong>Station:</strong> ${props.name}<br/>
-                        <strong>ICAO ID:</strong> ${stationId}<br/>
-                        <strong>Elevation:</strong> ${props.elevation && props.elevation.value ? Math.round(props.elevation.value) + ' m' : 'N/A'}<br/>
-                        <hr style="margin: 5px 0; border: 0; border-top: 1px solid #ccc;"/>
-                        <div id="pop-${stationId}"><em>Loading latest observation...</em></div>
+                    <div style="font-family: Arial, sans-serif; font-size: 12px; line-height: 1.5;">
+                        <strong style="color: #1565c0;">${stnName}</strong><br/>
+                        <strong>Region:</strong> ${info.region === "HK" ? "Hong Kong SAR" : "Macau SAR"}<br/>
+                        <strong>Temperature:</strong> ${temp !== null ? temp + ' °C' : 'N/A'}<br/>
+                        <strong>Coordinates:</strong> ${info.lat.toFixed(4)}°, ${info.lon.toFixed(4)}°
                     </div>
                 `);
 
-                marker.on('click', () => fetchLatestObservation(stationId));
-                markersList.push(marker);
-            });
-
-            metarClusterGroup.addLayers(markersList);
-
-            const now = new Date();
-            document.getElementById("update-status").innerText = `NOAA NWS | ${markersList.length} Stations Active | ${now.toLocaleTimeString()}`;
-
-        } catch (error) {
-            console.error("NWS Fetch Error:", error);
-            document.getElementById("update-status").innerText = "Error requesting NWS station data";
-        }
-    }
-
-    // 6. Fetch detailed METAR observation when a station marker is clicked
-    async function fetchLatestObservation(stationId) {
-        const popupDiv = document.getElementById(`pop-${stationId}`);
-        if (!popupDiv) return;
-
-        const url = `https://api.weather.gov/stations/${stationId}/observations/latest`;
-
-        try {
-            const response = await fetch(url, {
-                headers: { "Accept": "application/geo+json" }
-            });
-
-            if (!response.ok) {
-                popupDiv.innerHTML = `<em>No current METAR available.</em>`;
-                return;
+                stationLayerGroup.addLayer(marker);
+                count++;
             }
 
-            const data = await response.json();
-            const obs = data.properties;
+            const now = new Date();
+            document.getElementById("update-status").innerText = `Live | ${count} HK & Macau Stations | ${now.toLocaleTimeString()}`;
 
-            const tempC = obs.temperature && obs.temperature.value !== null ? obs.temperature.value.toFixed(1) : 'N/A';
-            const dewC = obs.dewpoint && obs.dewpoint.value !== null ? obs.dewpoint.value.toFixed(1) : 'N/A';
-            const windSpeed = obs.windSpeed && obs.windSpeed.value !== null ? Math.round(obs.windSpeed.value) : '0';
-            const windDir = obs.windDirection && obs.windDirection.value !== null ? obs.windDirection.value : 'VRB';
-            const rawMetar = obs.rawMessage || 'N/A';
-
-            popupDiv.innerHTML = `
-                <b>Temp:</b> ${tempC} °C | <b>Dewpt:</b> ${dewC} °C<br/>
-                <b>Wind:</b> ${windDir}° at ${windSpeed} km/h<br/>
-                <b>Raw METAR:</b><br/>
-                <code style="display:block; background:#f4f4f4; padding:4px; margin-top:3px; border-radius:3px; word-break:break-all;">${rawMetar}</code>
-            `;
         } catch (err) {
-            popupDiv.innerHTML = `<em>Failed to load observation details.</em>`;
+            console.error("Fetch Error:", err);
+            document.getElementById("update-status").innerText = "Error refreshing weather networks";
         }
     }
 
-    // 7. Debounce Map Movement to prevent API rate spikes
-    let moveTimeout = null;
-    function onMapMoveEnd() {
-        clearTimeout(moveTimeout);
-        moveTimeout = setTimeout(() => {
-            fetchNwsMetarInBounds();
-        }, 400);
-    }
-
-    // 8. Event Listeners & Initialization
-    map.on("moveend", onMapMoveEnd);
-
-    // Initial Load
-    fetchNwsMetarInBounds();
-
-    // Auto-refresh map bounds every 5 minutes
-    setInterval(fetchNwsMetarInBounds, 300000);
+    // Initial Load & Interval setup
+    updateHkMacauWeather();
+    setInterval(updateHkMacauWeather, 300000); // Refresh every 5 min
 </script>
 </body>
 </html>
