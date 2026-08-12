@@ -189,7 +189,7 @@
             <h3>Authorization</h3>
             <p style="font-size: 12px; color: #666;">Enter password to unlock editor tools.</p>
             
-            <!-- Masked Password Field (Displays dots/asterisks when typing) -->
+            <!-- Masked Password Field -->
             <input type="password" id="password-input" class="input-field" placeholder="Enter Password" />
             
             <div id="error-message" class="error-msg">Incorrect password.</div>
@@ -225,11 +225,14 @@
     }
 
     function updateDrawOptions() {
-        if (!drawControl) return;
+        // Remove existing control if present
+        if (drawControl) {
+            map.removeControl(drawControl);
+        }
 
         var currentStyle = getActiveStyle();
-        map.removeControl(drawControl);
         
+        // Re-create the drawing control with active colors
         drawControl = new L.Control.Draw({
             edit: { featureGroup: drawnItems },
             draw: {
@@ -251,7 +254,7 @@
     });
 
     // 3. OBFUSCATED BASE64 AUTHENTICATION
-    // Password "map123" is reversed to "321pam", then Base64 encoded as "MzIxcGFt"
+    // Password "map123" reversed -> "321pam" -> Base64 -> "MzIxcGFt"
     const OBFUSCATED_SECRET = "MzIxcGFt";
 
     function decodeSecret(obfuscated) {
@@ -272,6 +275,7 @@
             loginBtn.style.display = "none";
             authControls.style.display = "block";
             
+            // Show the toolbar on unlocking
             updateDrawOptions();
         } else {
             authStatus.textContent = "Locked";
@@ -279,7 +283,11 @@
             loginBtn.style.display = "block";
             authControls.style.display = "none";
             
-            if (drawControl) map.removeControl(drawControl);
+            // Hide the toolbar when locked
+            if (drawControl) {
+                map.removeControl(drawControl);
+                drawControl = null;
+            }
         }
     }
 
