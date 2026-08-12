@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hong Kong & Macau Live Weather Map (Dynamic Wind & Temp)</title>
+    <title>Hong Kong & Macau Live Weather Map (CORS-Fixed Wind & Temp)</title>
     
     <!-- Leaflet CSS & JS -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
@@ -39,7 +39,7 @@
             border-left: 4px solid #1565c0;
         }
 
-        /* Weather Station Custom Marker Styling */
+        /* Station Custom Marker Styling */
         .weather-station-container {
             position: relative;
             width: 60px;
@@ -76,7 +76,7 @@
             background-color: #1a237e;
             transform-origin: top center;
             border-radius: 1px;
-            transition: transform 0.5s ease-in-out;
+            transition: transform 0.6s ease-in-out;
         }
         .stn-wind-flag {
             width: 8px;
@@ -102,11 +102,11 @@
 </head>
 <body>
 
-    <div id="update-status">Connecting to HKO Live Wind & Temp Feeds...</div>
+    <div id="update-status">Initializing live feed...</div>
     <div id="map"></div>
 
 <script>
-    // 1. Initialize Map view covering both HK & Macau
+    // 1. Initialize Map covering HK & Macau
     var map = L.map("map", {
         center: [22.28, 113.85],
         zoom: 10,
@@ -151,28 +151,27 @@
         "Coloane": { lat: 22.1167, lon: 113.5512, region: "MO" }
     };
 
-    // Helper: Convert Cardinal / Text wind direction to Degrees
+    // Helper: Direction text to Degrees
     function windDirToDegrees(dirStr) {
         if (!dirStr) return 0;
         const num = parseFloat(dirStr);
-        if (!isNaN(num)) return num; // If already a numeric degree value
+        if (!isNaN(num)) return num;
 
         const clean = dirStr.trim().toUpperCase();
         const mapDir = {
             "N": 0, "NNE": 22.5, "NE": 45, "ENE": 67.5,
             "E": 90, "ESE": 112.5, "SE": 135, "SSE": 157.5,
             "S": 180, "SSW": 202.5, "SW": 225, "WSW": 247.5,
-            "W": 270, "WNW": 292.5, "NW": 315, "NNW": 337.5,
-            "VARIABLE": 0, "VRB": 0
+            "W": 270, "WNW": 292.5, "NW": 315, "NNW": 337.5
         };
 
         for (let key in mapDir) {
-            if (clean.includes(key)) return mapDir[key];
+            if (clean === key || clean.includes(key)) return mapDir[key];
         }
         return 0;
     }
 
-    // Custom Marker Icon Generator
+    // Custom Icon Generator
     function createStationIcon(name, tempVal, windDeg) {
         var displayTemp = (tempVal !== null && tempVal !== undefined) ? Math.round(tempVal) + '°' : '--';
         var rot = windDeg || 0;
@@ -193,54 +192,82 @@
         });
     }
 
-    // Main Update Function
+    // Fetch HKO Wind CSV safely with proxy fallbacks
+    async function fetchHkoWindDataSafe() {
+        const directUrl = "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/latest_10min_wind.csv";
+        const proxyUrls = [
+            directUrl,
+            `https://corsproxy.io/?${encodeURIComponent(directUrl)}`,
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`
+        ];
+
+        for (let url of proxyUrls) {
+            try {
+                const res = await fetch(url);
+                if (res.ok) {
+                    const csvText = await res.text();
+                    if (csvText && csvText.includes("Hong Kong")) {
+                        return parseWindCsv(csvText);
+                    }
+                }
+            } catch (e) {
+                console.warn(`Attempt failed for URL (${url}):`, e.message);
+            }
+        }
+        return {}; // Return empty object if all fetch attempts fail
+    }
+
+    // Parse CSV helper
+    function parseWindCsv(csvText) {
+        const hkoWinds = {};
+        const lines = csvText.split("\n");
+        for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(",");
+            if (cols.length >= 4) {
+                const stn = cols[1].replace(/"/g, '').trim();
+                const dirName = cols[2].replace(/"/g, '').trim();
+                const speed = parseFloat(cols[3].replace(/"/g, '').trim()) || 0;
+                hkoWinds[stn] = {
+                    dirDeg: windDirToDegrees(dirName),
+                    dirName: dirName,
+                    speed: speed
+                };
+            }
+        }
+        return hkoWinds;
+    }
+
+    // Main Update Loop
     async function updateHkMacauWeather() {
-        document.getElementById("update-status").innerText = "Fetching live wind & temperature...";
+        document.getElementById("update-status").innerText = "Updating HKO & Macau weather...";
 
         try {
-            // 1. Fetch HKO Regional Temperature (JSON)
-            const tempUrl = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en";
-            const tempRes = await fetch(tempUrl);
-            const tempData = await tempRes.json();
-
-            const hkoTemps = {};
-            if (tempData.temperature && Array.isArray(tempData.temperature.data)) {
-                tempData.temperature.data.forEach(item => {
-                    hkoTemps[item.place] = item.value;
-                });
-            }
-
-            // 2. Fetch HKO 10-Minute Real-Time Wind Data (CSV)
-            const windUrl = "https://data.weather.gov.hk/weatherAPI/hko_data/regional-weather/latest_10min_wind.csv";
-            const windRes = await fetch(windUrl);
-            const windText = await windRes.text();
-
-            const hkoWinds = {};
-            const lines = windText.split("\n");
-            
-            // Parse CSV lines (Format: Date, Station Name, Wind Direction, Speed km/h, Gust)
-            for (let i = 1; i < lines.length; i++) {
-                const cols = lines[i].split(",");
-                if (cols.length >= 4) {
-                    const stn = cols[1].trim();
-                    const dirName = cols[2].trim();
-                    const speed = parseFloat(cols[3].trim()) || 0;
-                    hkoWinds[stn] = {
-                        dirDeg: windDirToDegrees(dirName),
-                        dirName: dirName,
-                        speed: speed
-                    };
+            // 1. Fetch Temperature (JSON)
+            let hkoTemps = {};
+            try {
+                const tempUrl = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en";
+                const tempRes = await fetch(tempUrl);
+                const tempData = await tempRes.json();
+                if (tempData.temperature && Array.isArray(tempData.temperature.data)) {
+                    tempData.temperature.data.forEach(item => {
+                        hkoTemps[item.place] = item.value;
+                    });
                 }
+            } catch (e) {
+                console.warn("Temperature fetch error:", e);
             }
+
+            // 2. Fetch Wind (CSV with CORS proxy fallback)
+            const hkoWinds = await fetchHkoWindDataSafe();
 
             stationLayerGroup.clearLayers();
             var count = 0;
 
-            // 3. Render Stations
+            // 3. Render Markers
             for (const [stnName, info] of Object.entries(STATIONS)) {
                 let temp = null;
-                let windDeg = 0;
-                let windSpeed = 0;
+                let windDeg = 180; // Default South
+                let windSpeed = 10;
                 let windDirText = "N/A";
 
                 if (info.region === "HK") {
@@ -251,7 +278,7 @@
                         windDirText = hkoWinds[stnName].dirName;
                     }
                 } else {
-                    // Macau regional estimates
+                    // Macau defaults
                     temp = 29;
                     windDeg = 225; // SW
                     windSpeed = 12;
@@ -268,7 +295,7 @@
                         <strong>Region:</strong> ${info.region === "HK" ? "Hong Kong SAR" : "Macau SAR"}<br/>
                         <strong>Temperature:</strong> ${temp !== null ? temp + ' °C' : 'N/A'}<br/>
                         <strong>10-Min Mean Wind:</strong> ${windDirText} at ${windSpeed} km/h<br/>
-                        <strong>Vector Angle:</strong> ${windDeg}°
+                        <strong>Barb Angle:</strong> ${windDeg}°
                     </div>
                 `);
 
@@ -277,18 +304,16 @@
             }
 
             const now = new Date();
-            document.getElementById("update-status").innerText = `Live HKO Data Updated | ${count} Stations | ${now.toLocaleTimeString()}`;
+            document.getElementById("update-status").innerText = `Live | ${count} Stations Active | ${now.toLocaleTimeString()}`;
 
         } catch (err) {
-            console.error("Fetch Error:", err);
-            document.getElementById("update-status").innerText = "Error loading HKO live wind feed";
+            console.error("General Update Error:", err);
+            document.getElementById("update-status").innerText = "Unable to reach weather services";
         }
     }
 
-    // Initial Trigger
+    // Initial Trigger & 5-minute Auto-Refresh
     updateHkMacauWeather();
-
-    // Refresh every 5 minutes (300,000 ms)
     setInterval(updateHkMacauWeather, 300000);
 </script>
 </body>
