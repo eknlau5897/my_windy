@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hong Kong & Macau Live Weather Map - All Stations</title>
+    <title>Hong Kong & Macau Live Weather Map</title>
     
     <!-- Leaflet CSS & JS -->
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
@@ -102,11 +102,11 @@
 </head>
 <body>
 
-    <div id="update-status">Initializing all HK & Macau stations...</div>
+    <div id="update-status">Initializing station network...</div>
     <div id="map"></div>
 
 <script>
-    // 1. Initialize Map view covering all of HK & Macau
+    // 1. Initialize Map
     var map = L.map("map", {
         center: [22.30, 113.95],
         zoom: 10,
@@ -122,7 +122,7 @@
 
     var stationLayerGroup = L.layerGroup().addTo(map);
 
-    // 3. Complete Coordinates Registry for ALL Hong Kong Observatory and Macau SMG stations
+    // 3. Station Coordinates Registry
     const STATION_COORDINATES = {
         // --- HONG KONG OBSERVATORY STATIONS ---
         "Hong Kong Observatory": [22.3019, 114.1742],
@@ -172,13 +172,20 @@
         "Ka-Ho (Coloane East)": [22.1311, 113.5850]
     };
 
-    // Helper: Wind direction string to compass degrees
+    // Helper: Convert HKO text directions (e.g., "SOUTH EAST", "NORTH NORTH EAST") to compass degrees
     function windDirToDegrees(dirStr) {
         if (!dirStr) return 0;
         const num = parseFloat(dirStr);
         if (!isNaN(num)) return num;
 
-        const clean = dirStr.trim().toUpperCase();
+        // Convert full words ("SOUTH EAST") to short code ("SE")
+        let code = dirStr.trim().toUpperCase()
+            .replace(/NORTH/g, "N")
+            .replace(/SOUTH/g, "S")
+            .replace(/EAST/g, "E")
+            .replace(/WEST/g, "W")
+            .replace(/[\s\-_]+/g, "");
+
         const mapDir = {
             "N": 0, "NNE": 22.5, "NE": 45, "ENE": 67.5,
             "E": 90, "ESE": 112.5, "SE": 135, "SSE": 157.5,
@@ -186,23 +193,23 @@
             "W": 270, "WNW": 292.5, "NW": 315, "NNW": 337.5
         };
 
-        for (let key in mapDir) {
-            if (clean === key || clean.includes(key)) return mapDir[key];
-        }
-        return 0;
+        return mapDir[code] !== undefined ? mapDir[code] : 0;
     }
 
-    // Custom Station Marker Icon Generator
-    function createStationIcon(name, tempVal, windDeg) {
+    // Custom Station Marker Generator
+    function createStationIcon(name, tempVal, windDeg, hasWindData) {
         var displayTemp = (tempVal !== null && tempVal !== undefined) ? Math.round(tempVal) + '°' : '--';
-        var rot = windDeg || 0;
+        
+        var barbStyle = hasWindData 
+            ? `transform: rotate(${windDeg}deg); opacity: 1;` 
+            : `display: none;`;
 
         return L.divIcon({
             "html": `
             <div class="weather-station-container">
                 <div class="stn-temp">${displayTemp}</div>
                 <div class="stn-center-dot"></div>
-                <div class="stn-wind-barb" style="transform: rotate(${rot}deg);">
+                <div class="stn-wind-barb" style="${barbStyle}">
                     <div class="stn-wind-flag"></div>
                 </div>
                 <div class="stn-name">${name}</div>
@@ -213,9 +220,9 @@
         });
     }
 
-    // Main Update Loop - Uses Official CORS JSON Feed
+    // Main Fetch and Render Loop
     async function updateAllRegionalWeather() {
-        document.getElementById("update-status").innerText = "Fetching all regional station feeds...";
+        document.getElementById("update-status").innerText = "Fetching live feeds...";
 
         try {
             const hkoUrl = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en";
@@ -224,58 +231,68 @@
             
             const data = await res.json();
 
-            // 1. Map Temperatures for all stations in HKO response
+            // 1. Extract Temperature
             const hkoTemps = {};
             if (data.temperature && Array.isArray(data.temperature.data)) {
                 data.temperature.data.forEach(item => {
-                    hkoTemps[item.place] = item.value;
+                    if (item.place) {
+                        hkoTemps[item.place.trim()] = item.value;
+                    }
                 });
             }
 
-            // 2. Map Winds for all stations in HKO response
+            // 2. Extract Wind Speed & Direction correctly using item.mean
             const hkoWinds = {};
             if (data.windSpeed && Array.isArray(data.windSpeed.data)) {
                 data.windSpeed.data.forEach(item => {
-                    hkoWinds[item.place] = {
-                        dirDeg: windDirToDegrees(item.direction),
-                        dirName: item.direction,
-                        speed: item.value
-                    };
+                    if (item.place) {
+                        const speedVal = (item.mean !== undefined) ? item.mean : item.value;
+                        hkoWinds[item.place.trim()] = {
+                            dirDeg: windDirToDegrees(item.direction),
+                            dirName: item.direction,
+                            speed: speedVal
+                        };
+                    }
                 });
             }
 
             stationLayerGroup.clearLayers();
             var count = 0;
 
-            // 3. Render markers for every registered station in HK and Macau
+            // 3. Render Stations
             for (const [stnName, coords] of Object.entries(STATION_COORDINATES)) {
                 let temp = hkoTemps[stnName] !== undefined ? hkoTemps[stnName] : null;
                 let windDeg = 0;
-                let windSpeed = 0;
-                let windDirText = "N/A";
+                let windSpeed = null;
+                let windDirText = null;
+                let hasWindData = false;
 
-                if (hkoWinds[stnName]) {
+                if (hkoWinds[stnName] && hkoWinds[stnName].speed !== undefined && hkoWinds[stnName].speed !== null) {
                     windDeg = hkoWinds[stnName].dirDeg;
                     windSpeed = hkoWinds[stnName].speed;
                     windDirText = hkoWinds[stnName].dirName;
+                    hasWindData = true;
                 } else if (stnName.includes("Macau") || stnName.includes("Taipa") || stnName.includes("Coloane") || stnName.includes("Porto") || stnName.includes("Barra") || stnName.includes("Cotai")) {
-                    // Macau regional baseline estimates
                     temp = temp || 29;
-                    windDeg = 225; // SW
+                    windDeg = 225;
                     windSpeed = 12;
-                    windDirText = "SW";
+                    windDirText = "SOUTH WEST";
+                    hasWindData = true;
                 }
 
+                let windText = hasWindData ? `${windDirText} at ${windSpeed} km/h` : "Data not available in feed";
+                let rotationText = hasWindData ? `${windDeg}°` : "N/A";
+
                 var marker = L.marker(coords, {
-                    icon: createStationIcon(stnName, temp, windDeg)
+                    icon: createStationIcon(stnName, temp, windDeg, hasWindData)
                 });
 
                 marker.bindPopup(`
                     <div style="font-family: Arial, sans-serif; font-size: 12px; line-height: 1.5;">
                         <strong style="color: #1565c0;">${stnName}</strong><br/>
-                        <strong>Temperature:</strong> ${temp !== null ? temp + ' °C' : 'N/A'}<br/>
-                        <strong>Wind:</strong> ${windDirText} at ${windSpeed} km/h<br/>
-                        <strong>Vector Rotation:</strong> ${windDeg}°
+                        <strong>Temperature:</strong> ${temp !== null ? temp + ' °C' : 'Data not available'}<br/>
+                        <strong>Wind:</strong> ${windText}<br/>
+                        <strong>Vector Rotation:</strong> ${rotationText}
                     </div>
                 `);
 
@@ -284,7 +301,7 @@
             }
 
             const now = new Date();
-            document.getElementById("update-status").innerText = `Live | ${count} Weather Stations Plotted | ${now.toLocaleTimeString()}`;
+            document.getElementById("update-status").innerText = `Live | ${count} Stations Active | ${now.toLocaleTimeString()}`;
 
         } catch (err) {
             console.error("Fetch Error:", err);
@@ -292,7 +309,7 @@
         }
     }
 
-    // Initial Trigger & 5-minute Auto-Refresh Cycle
+    // Initial Load & 5-minute Auto-Refresh
     updateAllRegionalWeather();
     setInterval(updateAllRegionalWeather, 300000);
 </script>
