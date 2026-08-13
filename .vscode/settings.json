@@ -1,7 +1,7 @@
 {
-    "liveServer.settings.port": 5501,
+    "liveServer.settings.port": 3000,
     "remote.portsAttributes": {
-        "5501": {
+        "3000": {
             "protocol": "http",
             "onAutoForward": "ignore", "elevateIfNeeded": false 
         }
