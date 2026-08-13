@@ -230,18 +230,20 @@
     // Save layer styling directly into GeoJSON feature properties
     function saveDrawingState() {
         drawnItems.eachLayer(function(layer) {
-            if (!layer.feature) {
-                layer.feature = { type: "Feature", properties: {} };
-            } else if (!layer.feature.properties) {
-                layer.feature.properties = {};
-            }
+            // Only process leaf layers (shapes), avoiding group wrappers
+            if (typeof layer.toGeoJSON === 'function' && !layer.getLayers) {
+                if (!layer.feature) {
+                    layer.feature = { type: "Feature", properties: {} };
+                } else if (!layer.feature.properties) {
+                    layer.feature.properties = {};
+                }
 
-            // Extract style properties and assign to feature metadata
-            if (layer.options) {
-                layer.feature.properties.color = layer.options.color || document.getElementById('border-color').value;
-                layer.feature.properties.fillColor = layer.options.fillColor || document.getElementById('fill-color').value;
-                layer.feature.properties.fillOpacity = layer.options.fillOpacity !== undefined ? layer.options.fillOpacity : parseFloat(document.getElementById('fill-opacity').value);
-                layer.feature.properties.weight = layer.options.weight || 3;
+                if (layer.options) {
+                    layer.feature.properties.color = layer.options.color || document.getElementById('border-color').value;
+                    layer.feature.properties.fillColor = layer.options.fillColor || document.getElementById('fill-color').value;
+                    layer.feature.properties.fillOpacity = layer.options.fillOpacity !== undefined ? layer.options.fillOpacity : parseFloat(document.getElementById('fill-opacity').value);
+                    layer.feature.properties.weight = layer.options.weight || 3;
+                }
             }
         });
 
@@ -257,9 +259,8 @@
             var data = JSON.parse(savedData);
             drawnItems.clearLayers();
             
-            L.geoJSON(data, {
+            var tempGeoJSON = L.geoJSON(data, {
                 style: function(feature) {
-                    // Retain individual feature color styles stored in GeoJSON properties
                     return {
                         color: feature.properties?.color || document.getElementById('border-color').value,
                         fillColor: feature.properties?.fillColor || document.getElementById('fill-color').value,
@@ -270,8 +271,17 @@
                 pointToLayer: function (feature, latlng) {
                     return L.marker(latlng);
                 }
-            }).eachLayer(function(layer) {
-                drawnItems.addLayer(layer);
+            });
+
+            // Flatten layers: Extract leaf layers to avoid nested group bugs
+            tempGeoJSON.eachLayer(function(layer) {
+                if (layer.getLayers) {
+                    layer.eachLayer(function(childLayer) {
+                        drawnItems.addLayer(childLayer);
+                    });
+                } else {
+                    drawnItems.addLayer(layer);
+                }
             });
         } catch (e) {
             console.error("Error loading saved drawings:", e);
@@ -289,7 +299,6 @@
     }
 
     function updateDrawOptions() {
-        // Save selected color settings into localStorage
         var currentStyle = getActiveStyle();
         localStorage.setItem("saved_geojson_colors", JSON.stringify(currentStyle));
 
@@ -427,8 +436,13 @@
                     }
                 });
                 
+                // Flatten uploaded shapes into drawnItems
                 geoLayer.eachLayer(function(layer) {
-                    drawnItems.addLayer(layer);
+                    if (layer.getLayers) {
+                        layer.eachLayer(function(child) { drawnItems.addLayer(child); });
+                    } else {
+                        drawnItems.addLayer(layer);
+                    }
                 });
 
                 map.fitBounds(drawnItems.getBounds());
