@@ -214,8 +214,37 @@
     var drawnItems = new L.FeatureGroup().addTo(map);
     var drawControl = null;
 
-    // --- PERSISTENCE LOGIC ---
+    // Load persisted color settings if available
+    function loadSavedColorSettings() {
+        var savedColors = localStorage.getItem("saved_geojson_colors");
+        if (savedColors) {
+            try {
+                var colors = JSON.parse(savedColors);
+                if (colors.color) document.getElementById('border-color').value = colors.color;
+                if (colors.fillColor) document.getElementById('fill-color').value = colors.fillColor;
+                if (colors.fillOpacity) document.getElementById('fill-opacity').value = colors.fillOpacity;
+            } catch(e) {}
+        }
+    }
+
+    // Save layer styling directly into GeoJSON feature properties
     function saveDrawingState() {
+        drawnItems.eachLayer(function(layer) {
+            if (!layer.feature) {
+                layer.feature = { type: "Feature", properties: {} };
+            } else if (!layer.feature.properties) {
+                layer.feature.properties = {};
+            }
+
+            // Extract style properties and assign to feature metadata
+            if (layer.options) {
+                layer.feature.properties.color = layer.options.color || document.getElementById('border-color').value;
+                layer.feature.properties.fillColor = layer.options.fillColor || document.getElementById('fill-color').value;
+                layer.feature.properties.fillOpacity = layer.options.fillOpacity !== undefined ? layer.options.fillOpacity : parseFloat(document.getElementById('fill-opacity').value);
+                layer.feature.properties.weight = layer.options.weight || 3;
+            }
+        });
+
         var data = drawnItems.toGeoJSON();
         localStorage.setItem("saved_geojson_drawings", JSON.stringify(data));
     }
@@ -229,7 +258,15 @@
             drawnItems.clearLayers();
             
             L.geoJSON(data, {
-                style: getActiveStyle(),
+                style: function(feature) {
+                    // Retain individual feature color styles stored in GeoJSON properties
+                    return {
+                        color: feature.properties?.color || document.getElementById('border-color').value,
+                        fillColor: feature.properties?.fillColor || document.getElementById('fill-color').value,
+                        fillOpacity: feature.properties?.fillOpacity !== undefined ? feature.properties.fillOpacity : parseFloat(document.getElementById('fill-opacity').value),
+                        weight: feature.properties?.weight || 3
+                    };
+                },
                 pointToLayer: function (feature, latlng) {
                     return L.marker(latlng);
                 }
@@ -252,11 +289,13 @@
     }
 
     function updateDrawOptions() {
+        // Save selected color settings into localStorage
+        var currentStyle = getActiveStyle();
+        localStorage.setItem("saved_geojson_colors", JSON.stringify(currentStyle));
+
         if (drawControl) {
             map.removeControl(drawControl);
         }
-
-        var currentStyle = getActiveStyle();
         
         drawControl = new L.Control.Draw({
             edit: { featureGroup: drawnItems },
@@ -273,9 +312,14 @@
         map.addControl(drawControl);
     }
 
-    // Save drawings on Creation, Editing, or Deleting
+    // Attach current active style directly onto newly created layers
     map.on(L.Draw.Event.CREATED, function (e) {
         var layer = e.layer;
+        var style = getActiveStyle();
+        
+        layer.feature = layer.feature || { type: "Feature", properties: {} };
+        layer.feature.properties = Object.assign({}, layer.feature.properties, style);
+        
         drawnItems.addLayer(layer);
         saveDrawingState();
     });
@@ -370,7 +414,14 @@
             try {
                 var data = JSON.parse(e.target.result);
                 var geoLayer = L.geoJSON(data, {
-                    style: getActiveStyle(),
+                    style: function(feature) {
+                        return {
+                            color: feature.properties?.color || document.getElementById('border-color').value,
+                            fillColor: feature.properties?.fillColor || document.getElementById('fill-color').value,
+                            fillOpacity: feature.properties?.fillOpacity !== undefined ? feature.properties.fillOpacity : parseFloat(document.getElementById('fill-opacity').value),
+                            weight: feature.properties?.weight || 3
+                        };
+                    },
                     pointToLayer: function (feature, latlng) {
                         return L.marker(latlng);
                     }
@@ -381,7 +432,7 @@
                 });
 
                 map.fitBounds(drawnItems.getBounds());
-                saveDrawingState(); // Save uploaded GeoJSON to storage
+                saveDrawingState();
             } catch (err) {
                 alert("Invalid GeoJSON file format.");
             }
@@ -391,6 +442,7 @@
 
     // 5. Export GeoJSON
     function exportGeoJSON() {
+        saveDrawingState();
         var data = drawnItems.toGeoJSON();
         if (data.features.length === 0) {
             alert("No shapes to export. Draw something on the map first!");
@@ -408,11 +460,12 @@
 
     function clearMap() {
         drawnItems.clearLayers();
-        localStorage.removeItem("saved_geojson_drawings"); // Clear saved storage
+        localStorage.removeItem("saved_geojson_drawings");
         document.getElementById('geojson-input').value = "";
     }
 
-    // Initialize application state and load existing drawings on page load
+    // Initialize state, load saved color pickers & drawings on load
+    loadSavedColorSettings();
     loadSavedDrawings();
     checkAuthState();
 </script>
