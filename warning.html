@@ -214,7 +214,6 @@
     var drawnItems = new L.FeatureGroup().addTo(map);
     var drawControl = null;
 
-    // Load persisted color settings if available
     function loadSavedColorSettings() {
         var savedColors = localStorage.getItem("saved_geojson_colors");
         if (savedColors) {
@@ -227,10 +226,9 @@
         }
     }
 
-    // Save layer styling directly into GeoJSON feature properties
+    // Save layer styling & custom metadata (like Circle radius)
     function saveDrawingState() {
         drawnItems.eachLayer(function(layer) {
-            // Only process leaf layers (shapes), avoiding group wrappers
             if (typeof layer.toGeoJSON === 'function' && !layer.getLayers) {
                 if (!layer.feature) {
                     layer.feature = { type: "Feature", properties: {} };
@@ -238,17 +236,29 @@
                     layer.feature.properties = {};
                 }
 
+                // Preserve standard styling properties
                 if (layer.options) {
                     layer.feature.properties.color = layer.options.color || document.getElementById('border-color').value;
                     layer.feature.properties.fillColor = layer.options.fillColor || document.getElementById('fill-color').value;
                     layer.feature.properties.fillOpacity = layer.options.fillOpacity !== undefined ? layer.options.fillOpacity : parseFloat(document.getElementById('fill-opacity').value);
                     layer.feature.properties.weight = layer.options.weight || 3;
                 }
+
+                // Custom handling for Circle geometry persistence
+                if (layer instanceof L.Circle) {
+                    layer.feature.properties.isCircle = true;
+                    layer.feature.properties.radius = layer.getRadius();
+                }
             }
         });
 
-        var data = drawnItems.toGeoJSON();
-        localStorage.setItem("saved_geojson_drawings", JSON.stringify(data));
+        try {
+            var data = drawnItems.toGeoJSON();
+            localStorage.setItem("saved_geojson_drawings", JSON.stringify(data));
+        } catch (e) {
+            console.error("Storage Error:", e);
+            alert("Warning: Local storage capacity exceeded (limit ~5MB). Some drawings could not be autosaved.");
+        }
     }
 
     function loadSavedDrawings() {
@@ -269,11 +279,21 @@
                     };
                 },
                 pointToLayer: function (feature, latlng) {
+                    // Check if the saved point feature was originally a Circle
+                    if (feature.properties && feature.properties.isCircle) {
+                        return L.circle(latlng, {
+                            radius: feature.properties.radius,
+                            color: feature.properties.color || document.getElementById('border-color').value,
+                            fillColor: feature.properties.fillColor || document.getElementById('fill-color').value,
+                            fillOpacity: feature.properties.fillOpacity !== undefined ? feature.properties.fillOpacity : parseFloat(document.getElementById('fill-opacity').value),
+                            weight: feature.properties.weight || 3
+                        });
+                    }
                     return L.marker(latlng);
                 }
             });
 
-            // Flatten layers: Extract leaf layers to avoid nested group bugs
+            // Flatten layers properly to prevent layer nesting
             tempGeoJSON.eachLayer(function(layer) {
                 if (layer.getLayers) {
                     layer.eachLayer(function(childLayer) {
@@ -288,7 +308,6 @@
         }
     }
 
-    // 2. Dynamic Drawing Styling
     function getActiveStyle() {
         return {
             color: document.getElementById('border-color').value,
@@ -321,7 +340,6 @@
         map.addControl(drawControl);
     }
 
-    // Attach current active style directly onto newly created layers
     map.on(L.Draw.Event.CREATED, function (e) {
         var layer = e.layer;
         var style = getActiveStyle();
@@ -341,7 +359,7 @@
         saveDrawingState();
     });
 
-    // 3. OBFUSCATED BASE64 AUTHENTICATION
+    // Authentication
     const OBFUSCATED_SECRET = "MzIxcGFt";
 
     function decodeSecret(obfuscated) {
@@ -411,7 +429,7 @@
         checkAuthState();
     }
 
-    // 4. File Upload
+    // File Upload
     document.getElementById('geojson-input').addEventListener('change', function (event) {
         if (sessionStorage.getItem("geojson_auth") !== "true") return;
 
@@ -432,11 +450,19 @@
                         };
                     },
                     pointToLayer: function (feature, latlng) {
+                        if (feature.properties && feature.properties.isCircle) {
+                            return L.circle(latlng, {
+                                radius: feature.properties.radius,
+                                color: feature.properties.color || document.getElementById('border-color').value,
+                                fillColor: feature.properties.fillColor || document.getElementById('fill-color').value,
+                                fillOpacity: feature.properties.fillOpacity !== undefined ? feature.properties.fillOpacity : parseFloat(document.getElementById('fill-opacity').value),
+                                weight: feature.properties.weight || 3
+                            });
+                        }
                         return L.marker(latlng);
                     }
                 });
                 
-                // Flatten uploaded shapes into drawnItems
                 geoLayer.eachLayer(function(layer) {
                     if (layer.getLayers) {
                         layer.eachLayer(function(child) { drawnItems.addLayer(child); });
@@ -454,7 +480,7 @@
         reader.readAsText(file);
     });
 
-    // 5. Export GeoJSON
+    // Export
     function exportGeoJSON() {
         saveDrawingState();
         var data = drawnItems.toGeoJSON();
@@ -478,7 +504,7 @@
         document.getElementById('geojson-input').value = "";
     }
 
-    // Initialize state, load saved color pickers & drawings on load
+    // Init
     loadSavedColorSettings();
     loadSavedDrawings();
     checkAuthState();
