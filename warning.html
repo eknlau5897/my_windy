@@ -503,7 +503,14 @@
         localStorage.removeItem("saved_geojson_drawings");
         document.getElementById('geojson-input').value = "";
     }
-
+    fetch('https://your-localtunnel-url.loca.lt/api/shapes', {
+    method: 'GET',
+    headers: {
+        'Bypass-Tunnel-Reminder': 'true' // <--- ADD THIS HEADER
+        }
+    })
+    .then(response => response.json())
+    .then(data => console.log(data));
     // Init
     loadSavedColorSettings();
     loadSavedDrawings();
