@@ -279,7 +279,6 @@
                     };
                 },
                 pointToLayer: function (feature, latlng) {
-                    // Check if the saved point feature was originally a Circle
                     if (feature.properties && feature.properties.isCircle) {
                         return L.circle(latlng, {
                             radius: feature.properties.radius,
@@ -293,7 +292,6 @@
                 }
             });
 
-            // Flatten layers properly to prevent layer nesting
             tempGeoJSON.eachLayer(function(layer) {
                 if (layer.getLayers) {
                     layer.eachLayer(function(childLayer) {
@@ -503,17 +501,64 @@
         localStorage.removeItem("saved_geojson_drawings");
         document.getElementById('geojson-input').value = "";
     }
-    fetch('https://breezy-hornets-happen.loca.lt', {
-    method: 'GET',
-    headers: {
-        'Bypass-Tunnel-Reminder': 'true' // <--- ADD THIS HEADER
-        }
-    })
-    .then(response => response.json())
-    .then(data => console.log(data));
-    // Init
+
+    // 2. Fetch Map Shapes from Node.js / PostgreSQL Server
+    function loadRemoteShapes() {
+        const TUNNEL_URL = 'https://breezy-hornets-happen.loca.lt';
+
+        fetch(`${TUNNEL_URL}/api/shapes`, {
+            method: 'GET',
+            headers: {
+                'Bypass-Tunnel-Reminder': 'true' // <--- Bypasses Localtunnel warning page
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Network response failed');
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.features && data.features.length > 0) {
+                drawnItems.clearLayers();
+                
+                L.geoJSON(data, {
+                    style: function(feature) {
+                        return {
+                            color: feature.properties?.color || document.getElementById('border-color').value,
+                            fillColor: feature.properties?.fillColor || document.getElementById('fill-color').value,
+                            fillOpacity: feature.properties?.fillOpacity !== undefined ? feature.properties.fillOpacity : parseFloat(document.getElementById('fill-opacity').value),
+                            weight: feature.properties?.weight || 3
+                        };
+                    },
+                    pointToLayer: function (feature, latlng) {
+                        if (feature.properties && feature.properties.isCircle) {
+                            return L.circle(latlng, {
+                                radius: feature.properties.radius,
+                                color: feature.properties.color || document.getElementById('border-color').value,
+                                fillColor: feature.properties.fillColor || document.getElementById('fill-color').value,
+                                fillOpacity: feature.properties.fillOpacity !== undefined ? feature.properties.fillOpacity : parseFloat(document.getElementById('fill-opacity').value),
+                                weight: feature.properties.weight || 3
+                            });
+                        }
+                        return L.marker(latlng);
+                    }
+                }).eachLayer(function(layer) {
+                    if (layer.getLayers) {
+                        layer.eachLayer(function(child) { drawnItems.addLayer(child); });
+                    } else {
+                        drawnItems.addLayer(layer);
+                    }
+                });
+
+                console.log("Map shapes loaded from database successfully!");
+            }
+        })
+        .catch(err => console.error("Error fetching map shapes from server:", err));
+    }
+
+    // Initialize application state
     loadSavedColorSettings();
     loadSavedDrawings();
+    loadRemoteShapes();
     checkAuthState();
 </script>
 
