@@ -13,10 +13,10 @@ app.use(express.json({ limit: '10mb' })); // Allows large GeoJSON shapes
 // PostgreSQL Database Connection
 const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || '192.168.1.188',
     database: process.env.DB_NAME || 'spatial_db',
-    password: process.env.DB_PASSWORD || 'your_db_password',
-    port: process.env.DB_PORT || 5432,
+    password: process.env.DB_PASSWORD || 'Himawari8',
+    port: process.env.DB_PORT || 3000,
 });
 
 // Admin Password for saving/clearing map state
