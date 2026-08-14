@@ -226,7 +226,7 @@
         }
     }
 
-    // Save layer styling & custom metadata (like Circle radius)
+    // Save layer styling to LocalStorage AND PostgreSQL Database
     function saveDrawingState() {
         drawnItems.eachLayer(function(layer) {
             if (typeof layer.toGeoJSON === 'function' && !layer.getLayers) {
@@ -236,7 +236,7 @@
                     layer.feature.properties = {};
                 }
 
-                // Preserve standard styling properties
+                // Preserve styling properties
                 if (layer.options) {
                     layer.feature.properties.color = layer.options.color || document.getElementById('border-color').value;
                     layer.feature.properties.fillColor = layer.options.fillColor || document.getElementById('fill-color').value;
@@ -244,7 +244,7 @@
                     layer.feature.properties.weight = layer.options.weight || 3;
                 }
 
-                // Custom handling for Circle geometry persistence
+                // Circle handling
                 if (layer instanceof L.Circle) {
                     layer.feature.properties.isCircle = true;
                     layer.feature.properties.radius = layer.getRadius();
@@ -252,57 +252,16 @@
             }
         });
 
+        var data = drawnItems.toGeoJSON();
         try {
-            var data = drawnItems.toGeoJSON();
             localStorage.setItem("saved_geojson_drawings", JSON.stringify(data));
         } catch (e) {
             console.error("Storage Error:", e);
-            alert("Warning: Local storage capacity exceeded (limit ~5MB). Some drawings could not be autosaved.");
         }
-    }
 
-    function loadSavedDrawings() {
-        var savedData = localStorage.getItem("saved_geojson_drawings");
-        if (!savedData) return;
-
-        try {
-            var data = JSON.parse(savedData);
-            drawnItems.clearLayers();
-            
-            var tempGeoJSON = L.geoJSON(data, {
-                style: function(feature) {
-                    return {
-                        color: feature.properties?.color || document.getElementById('border-color').value,
-                        fillColor: feature.properties?.fillColor || document.getElementById('fill-color').value,
-                        fillOpacity: feature.properties?.fillOpacity !== undefined ? feature.properties.fillOpacity : parseFloat(document.getElementById('fill-opacity').value),
-                        weight: feature.properties?.weight || 3
-                    };
-                },
-                pointToLayer: function (feature, latlng) {
-                    if (feature.properties && feature.properties.isCircle) {
-                        return L.circle(latlng, {
-                            radius: feature.properties.radius,
-                            color: feature.properties.color || document.getElementById('border-color').value,
-                            fillColor: feature.properties.fillColor || document.getElementById('fill-color').value,
-                            fillOpacity: feature.properties.fillOpacity !== undefined ? feature.properties.fillOpacity : parseFloat(document.getElementById('fill-opacity').value),
-                            weight: feature.properties.weight || 3
-                        });
-                    }
-                    return L.marker(latlng);
-                }
-            });
-
-            tempGeoJSON.eachLayer(function(layer) {
-                if (layer.getLayers) {
-                    layer.eachLayer(function(childLayer) {
-                        drawnItems.addLayer(childLayer);
-                    });
-                } else {
-                    drawnItems.addLayer(layer);
-                }
-            });
-        } catch (e) {
-            console.error("Error loading saved drawings:", e);
+        // Send changes to PostgreSQL if authenticated
+        if (sessionStorage.getItem("geojson_auth") === "true") {
+            saveRemoteShapes(data);
         }
     }
 
@@ -500,20 +459,34 @@
         drawnItems.clearLayers();
         localStorage.removeItem("saved_geojson_drawings");
         document.getElementById('geojson-input').value = "";
+
+        if (sessionStorage.getItem("geojson_auth") === "true") {
+            const password = decodeSecret(OBFUSCATED_SECRET);
+            fetch('/api/shapes', {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${password}`,
+                    'Bypass-Tunnel-Reminder': 'true'
+                }
+            })
+            .then(res => res.json())
+            .then(res => console.log("Database cleared:", res))
+            .catch(err => console.error("Database clear error:", err));
+        }
     }
 
-    // 2. Fetch Map Shapes from Node.js / PostgreSQL Server
-    function loadRemoteShapes() {
-        const TUNNEL_URL = 'https://breezy-hornets-happen.loca.lt';
+    // 2. BACKEND API INTEGRATION (Using relative path /api/shapes)
 
-        fetch(`${TUNNEL_URL}/api/shapes`, {
+    // GET: Fetch map shapes from PostgreSQL on load
+    function loadRemoteShapes() {
+        fetch('/api/shapes', {
             method: 'GET',
             headers: {
-                'Bypass-Tunnel-Reminder': 'true' // <--- Bypasses Localtunnel warning page
+                'Bypass-Tunnel-Reminder': 'true' // Bypasses tunnel warnings
             }
         })
         .then(response => {
-            if (!response.ok) throw new Error('Network response failed');
+            if (!response.ok) throw new Error('Network error');
             return response.json();
         })
         .then(data => {
@@ -549,15 +522,32 @@
                     }
                 });
 
-                console.log("Map shapes loaded from database successfully!");
+                console.log("Map shapes successfully loaded from PostgreSQL!");
             }
         })
-        .catch(err => console.error("Error fetching map shapes from server:", err));
+        .catch(err => console.error("Database fetch error:", err));
+    }
+
+    // POST: Save drawn shapes to PostgreSQL
+    function saveRemoteShapes(geoJsonData) {
+        const password = decodeSecret(OBFUSCATED_SECRET);
+
+        fetch('/api/shapes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${password}`,
+                'Bypass-Tunnel-Reminder': 'true'
+            },
+            body: JSON.stringify(geoJsonData)
+        })
+        .then(res => res.json())
+        .then(res => console.log("Saved to database:", res))
+        .catch(err => console.error("Error saving to database:", err));
     }
 
     // Initialize application state
     loadSavedColorSettings();
-    loadSavedDrawings();
     loadRemoteShapes();
     checkAuthState();
 </script>
