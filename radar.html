@@ -29,6 +29,12 @@
         .buttons button:hover { background: #f5f5f5; }
         #mapid { position: absolute; top: 50px; left: 0; bottom: 0; right: 0; }
 
+        /* === ACCURATE RADAR COLOR CONVERSION === */
+        /* Uses Grayscale tile input to correctly map Intensity -> Green -> Yellow -> Red */
+        .radar-tiles {
+            filter: invert(1) hue-rotate(180deg) saturate(5) contrast(1.8) brightness(0.9);
+        }
+
         /* Styling for the Ring Distance Labels */
         .ring-label {
             background: rgba(255, 255, 255, 0.85);
@@ -120,71 +126,15 @@ RING_DISTANCES.forEach(function(distanceKm) {
     }).addTo(map);
 });
 
-// === CANVAS TILE RE-MAPPER (ACCURATE RADAR COLORS) ===
-L.CustomColorRadarLayer = L.TileLayer.extend({
-    createTile: function (coords, done) {
-        var tile = document.createElement('canvas');
-        tile.width = this.options.tileSize;
-        tile.height = this.options.tileSize;
-        var ctx = tile.getContext('2d');
-
-        var img = new Image();
-        img.crossOrigin = 'Anonymous';
-        
-        img.onload = function () {
-            ctx.drawImage(img, 0, 0);
-            var imgData = ctx.getImageData(0, 0, tile.width, tile.height);
-            var data = imgData.data;
-
-            // Loop through pixels and map tile brightness/blue hue to standard radar colors
-            for (var i = 0; i < data.length; i += 4) {
-                var alpha = data[i + 3];
-                if (alpha > 0) {
-                    var r = data[i];
-                    var g = data[i + 1];
-                    var b = data[i + 2];
-
-                    // Determine intensity level from blue channel brightness
-                    var intensity = b / 255;
-
-                    if (intensity < 0.25) {
-                        // Light Rain -> Green
-                        data[i] = 46;   data[i + 1] = 204; data[i + 2] = 113;
-                    } else if (intensity < 0.50) {
-                        // Moderate Rain -> Yellow
-                        data[i] = 241;  data[i + 1] = 196; data[i + 2] = 15;
-                    } else if (intensity < 0.75) {
-                        // Heavy Rain -> Orange
-                        data[i] = 230;  data[i + 1] = 126; data[i + 2] = 34;
-                    } else if (intensity < 0.90) {
-                        // Very Heavy -> Red
-                        data[i] = 231;  data[i + 1] = 76;  data[i + 2] = 60;
-                    } else {
-                        // Extreme Storm -> Purple
-                        data[i] = 142;  data[i + 1] = 68;  data[i + 2] = 173;
-                    }
-                }
-            }
-            ctx.putImageData(imgData, 0, 0);
-            done(null, tile);
-        };
-
-        img.onerror = function (error) {
-            done(error, tile);
-        };
-
-        img.src = this.getTileUrl(coords);
-        return tile;
-    }
-});
-
 // === LAYER MANAGEMENT ===
 function createRadarLayer(frame) {
-    return new L.CustomColorRadarLayer(apiData.host + frame.path + '/' + TILE_SIZE + '/{z}/{x}/{y}/2/1_1.png', {
+    // Note: Requesting Scheme '0' (Black & White linear scheme) so brightness scales cleanly
+    return new L.TileLayer(apiData.host + frame.path + '/' + TILE_SIZE + '/{z}/{x}/{y}/0/1_1.png', {
         tileSize: 256,
         opacity: 0.001,
         maxNativeZoom: 7,
-        maxZoom: 12
+        maxZoom: 12,
+        className: 'radar-tiles' // Applies clean color filter
     });
 }
 
