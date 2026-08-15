@@ -55,10 +55,9 @@
             right: 0;
         }
 
-        /* === OPTION 1: CSS COLOR SHIFT === */
-        /* Shifts Universal Blue -> Green -> Yellow -> Orange -> Red */
+        /* === CORRECTED RADAR COLOR FILTER (Green -> Yellow -> Red) === */
         .custom-radar-colors {
-            filter: hue-rotate(140deg) saturate(2.5) contrast(1.2);
+            filter: hue-rotate(200deg) saturate(3) brightness(0.9) contrast(1.5);
         }
 
         /* Styling for the Ring Distance Labels */
@@ -98,13 +97,13 @@
             height: 12px;
             width: 160px;
             border-radius: 3px;
-            /* Legend matching the CSS hue-rotated palette */
+            /* Legend matching Green -> Yellow -> Red -> Purple */
             background: linear-gradient(to right, 
-                #2ecc71, /* Light (Green) */
+                #2ecc71, /* Light Rain (Green) */
                 #f1c40f, /* Moderate (Yellow) */
                 #e67e22, /* Heavy (Orange) */
                 #e74c3c, /* Very Heavy (Red) */
-                #8e44ad  /* Severe (Purple) */
+                #8e44ad  /* Extreme (Purple) */
             );
             border: 1px solid #ccc;
         }
@@ -225,7 +224,7 @@ function createRadarLayer(frame) {
         opacity: 0.001,
         maxNativeZoom: 7,
         maxZoom: 12,
-        className: 'custom-radar-colors' // <--- APPLIES THE CSS COLOR SHIFT
+        className: 'custom-radar-colors' // <--- APPLIES THE COLOR FILTER
     });
 }
 
