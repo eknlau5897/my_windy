@@ -39,25 +39,44 @@
 
         /* === LEGEND MATCHED TO SCHEME 2 (NEXRAD) === */
         .radar-legend {
-            position: absolute; top: 65px; right: 15px; z-index: 1000;
-            background: rgba(255, 255, 255, 0.9); padding: 10px 12px;
-            border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            font-size: 12px; color: #333;
+            position: absolute; 
+            top: 65px; 
+            right: 15px; 
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9); 
+            padding: 10px 12px;
+            border-radius: 6px; 
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            font-size: 12px; 
+            color: #333;
         }
-        .radar-legend-title { font-weight: bold; margin-bottom: 6px; font-size: 11px; text-transform: uppercase; color: #555; }
+        .radar-legend-title { 
+            font-weight: bold; 
+            margin-bottom: 6px; 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            color: #555; 
+        }
         .gradient-bar {
-            height: 12px; width: 160px; border-radius: 3px;
-            /* Matches Map: Cyan (Light) -> Blue -> Green -> Yellow -> Red (Heavy) */
+            height: 12px; 
+            width: 160px; 
+            border-radius: 3px;
             background: linear-gradient(to right, 
-                #00d2ff, /* Cyan / Light Rain */
-                #00a8ff, /* Blue */
-                #2ecc71, /* Green / Moderate Rain */
-                #f1c40f, /* Yellow */
-                #e74c3c  /* Red / Heavy Storm Cores */
+            #1baee2, /* Light Rain */
+            #005588, /* Moderate-Light */
+            #ffea00, /* Moderate Rain */
+            #ff4400, /* Heavy Rain */
+            #ff77ff  /* Extreme Storms */
             );
             border: 1px solid #ccc;
         }
-        .gradient-labels { display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; color: #666; }
+        .gradient-labels { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-top: 4px; 
+            font-size: 10px; 
+            color: #666; 
+        }
     </style>
 </head>
 <body>
