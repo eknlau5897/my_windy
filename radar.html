@@ -29,12 +29,6 @@
         .buttons button:hover { background: #f5f5f5; }
         #mapid { position: absolute; top: 50px; left: 0; bottom: 0; right: 0; }
 
-        /* === ACCURATE RADAR COLOR CONVERSION === */
-        /* Uses Grayscale tile input to correctly map Intensity -> Green -> Yellow -> Red */
-        .radar-tiles {
-            filter: invert(1) hue-rotate(180deg) saturate(5) contrast(1.8) brightness(0.9);
-        }
-
         /* Styling for the Ring Distance Labels */
         .ring-label {
             background: rgba(255, 255, 255, 0.85);
@@ -43,7 +37,7 @@
             padding: 1px 4px; border-radius: 3px;
         }
 
-        /* Styling for the Radar Legend */
+        /* === LEGEND MATCHED TO SCHEME 2 (NEXRAD) === */
         .radar-legend {
             position: absolute; top: 65px; right: 15px; z-index: 1000;
             background: rgba(255, 255, 255, 0.9); padding: 10px 12px;
@@ -53,7 +47,14 @@
         .radar-legend-title { font-weight: bold; margin-bottom: 6px; font-size: 11px; text-transform: uppercase; color: #555; }
         .gradient-bar {
             height: 12px; width: 160px; border-radius: 3px;
-            background: linear-gradient(to right, #2ecc71, #f1c40f, #e67e22, #e74c3c, #8e44ad);
+            /* Matches Map: Cyan (Light) -> Blue -> Green -> Yellow -> Red (Heavy) */
+            background: linear-gradient(to right, 
+                #00d2ff, /* Cyan / Light Rain */
+                #00a8ff, /* Blue */
+                #2ecc71, /* Green / Moderate Rain */
+                #f1c40f, /* Yellow */
+                #e74c3c  /* Red / Heavy Storm Cores */
+            );
             border: 1px solid #ccc;
         }
         .gradient-labels { display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; color: #666; }
@@ -107,7 +108,7 @@ var layerCache = {};
 var map = L.map('mapid', { maxZoom: 12 }).setView(HK_COORDS, 6);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
+    attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
 // === ADD DISTANCE RINGS ===
@@ -128,13 +129,12 @@ RING_DISTANCES.forEach(function(distanceKm) {
 
 // === LAYER MANAGEMENT ===
 function createRadarLayer(frame) {
-    // Note: Requesting Scheme '0' (Black & White linear scheme) so brightness scales cleanly
-    return new L.TileLayer(apiData.host + frame.path + '/' + TILE_SIZE + '/{z}/{x}/{y}/0/1_1.png', {
+    // Scheme 2: Native Universal / NEXRAD radar tiles
+    return new L.TileLayer(apiData.host + frame.path + '/' + TILE_SIZE + '/{z}/{x}/{y}/2/1_1.png', {
         tileSize: 256,
-        opacity: 0.001,
+        opacity: RADAR_OPACITY,
         maxNativeZoom: 7,
-        maxZoom: 12,
-        className: 'radar-tiles' // Applies clean color filter
+        maxZoom: 12
     });
 }
 
