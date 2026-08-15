@@ -10,111 +10,47 @@
         body { margin: 0; font-family: sans-serif; }
         .controls {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            display: flex; align-items: center; justify-content: space-between;
             padding: 0 20px;
             background: white;
             z-index: 1000;
             box-sizing: border-box;
         }
-        .title {
-            font-weight: 400;
-            color: #333;
-        }
-        #timestamp {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-        }
-        .buttons {
-            display: flex;
-            gap: 8px;
-        }
+        .title { font-weight: 400; color: #333; }
+        #timestamp { font-size: 18px; font-weight: 600; color: #333; }
+        .buttons { display: flex; gap: 8px; }
         .buttons button {
-            width: 36px;
-            height: 36px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #fff;
-            cursor: pointer;
-            font-size: 16px;
+            width: 36px; height: 36px;
+            border: 1px solid #ddd; border-radius: 4px;
+            background: #fff; cursor: pointer; font-size: 16px;
         }
-        .buttons button:hover {
-            background: #f5f5f5;
-        }
-        #mapid {
-            position: absolute;
-            top: 50px;
-            left: 0;
-            bottom: 0;
-            right: 0;
-        }
-
-        /* === CORRECTED RADAR COLOR FILTER (Green -> Yellow -> Red) === */
-        .custom-radar-colors {
-            filter: hue-rotate(200deg) saturate(3) brightness(0.9) contrast(1.5);
-        }
+        .buttons button:hover { background: #f5f5f5; }
+        #mapid { position: absolute; top: 50px; left: 0; bottom: 0; right: 0; }
 
         /* Styling for the Ring Distance Labels */
         .ring-label {
             background: rgba(255, 255, 255, 0.85);
-            border: 1px solid #333;
-            color: #222;
-            font-weight: bold;
-            font-size: 11px;
-            padding: 1px 4px;
-            border-radius: 3px;
+            border: 1px solid #333; color: #222;
+            font-weight: bold; font-size: 11px;
+            padding: 1px 4px; border-radius: 3px;
         }
 
         /* Styling for the Radar Legend */
         .radar-legend {
-            position: absolute;
-            top: 65px;
-            right: 15px;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px 12px;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            font-size: 12px;
-            color: #333;
+            position: absolute; top: 65px; right: 15px; z-index: 1000;
+            background: rgba(255, 255, 255, 0.9); padding: 10px 12px;
+            border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            font-size: 12px; color: #333;
         }
-
-        .radar-legend-title {
-            font-weight: bold;
-            margin-bottom: 6px;
-            font-size: 11px;
-            text-transform: uppercase;
-            color: #555;
-        }
-
+        .radar-legend-title { font-weight: bold; margin-bottom: 6px; font-size: 11px; text-transform: uppercase; color: #555; }
         .gradient-bar {
-            height: 12px;
-            width: 160px;
-            border-radius: 3px;
-            /* Legend matching Green -> Yellow -> Red -> Purple */
-            background: linear-gradient(to right, 
-                #2ecc71, /* Light Rain (Green) */
-                #f1c40f, /* Moderate (Yellow) */
-                #e67e22, /* Heavy (Orange) */
-                #e74c3c, /* Very Heavy (Red) */
-                #8e44ad  /* Extreme (Purple) */
-            );
+            height: 12px; width: 160px; border-radius: 3px;
+            background: linear-gradient(to right, #2ecc71, #f1c40f, #e67e22, #e74c3c, #8e44ad);
             border: 1px solid #ccc;
         }
-
-        .gradient-labels {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 4px;
-            font-size: 10px;
-            color: #666;
-        }
+        .gradient-labels { display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; color: #666; }
     </style>
 </head>
 <body>
@@ -129,7 +65,6 @@
     </div>
 </div>
 
-<!-- Radar Legend Overlay -->
 <div class="radar-legend">
     <div class="radar-legend-title">Precipitation Intensity</div>
     <div class="gradient-bar"></div>
@@ -150,8 +85,8 @@ var ANIMATION_DELAY_MS = 500;
 var API_URL = "https://api.rainviewer.com/public/weather-maps.json";
 
 // === HONG KONG & DISTANCE RINGS SETUP ===
-var HK_COORDS = [22.3193, 114.1694]; // Hong Kong Center Coordinates
-var RING_DISTANCES = [100, 200, 400, 800]; // Distances in km
+var HK_COORDS = [22.3193, 114.1694];
+var RING_DISTANCES = [100, 200, 400, 800];
 
 // === STATE ===
 var apiData = {};
@@ -169,63 +104,99 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
 }).addTo(map);
 
-// === ADD HONG KONG DISTANCE RINGS ===
-L.circleMarker(HK_COORDS, {
-    radius: 5,
-    color: '#e74c3c',
-    fillColor: '#e74c3c',
-    fillOpacity: 1
-}).addTo(map).bindPopup("Hong Kong");
+// === ADD DISTANCE RINGS ===
+L.circleMarker(HK_COORDS, { radius: 5, color: '#e74c3c', fillColor: '#e74c3c', fillOpacity: 1 }).addTo(map).bindPopup("Hong Kong");
 
 RING_DISTANCES.forEach(function(distanceKm) {
-    var radiusMeters = distanceKm * 1000;
-
     L.circle(HK_COORDS, {
-        radius: radiusMeters,
-        color: '#34495e',
-        weight: 1.5,
-        dashArray: '6, 6',
-        fill: false,
-        interactive: false
+        radius: distanceKm * 1000,
+        color: '#34495e', weight: 1.5, dashArray: '6, 6', fill: false, interactive: false
     }).addTo(map);
 
     var labelLat = HK_COORDS[0] + (distanceKm / 111);
-
     L.marker([labelLat, HK_COORDS[1]], {
-        icon: L.divIcon({
-            className: 'ring-label',
-            html: distanceKm + ' km',
-            iconSize: [50, 18],
-            iconAnchor: [25, 9]
-        }),
+        icon: L.divIcon({ className: 'ring-label', html: distanceKm + ' km', iconSize: [50, 18], iconAnchor: [25, 9] }),
         interactive: false
     }).addTo(map);
 });
 
-// === UTILITIES ===
+// === CANVAS TILE RE-MAPPER (ACCURATE RADAR COLORS) ===
+L.CustomColorRadarLayer = L.TileLayer.extend({
+    createTile: function (coords, done) {
+        var tile = document.createElement('canvas');
+        tile.width = this.options.tileSize;
+        tile.height = this.options.tileSize;
+        var ctx = tile.getContext('2d');
+
+        var img = new Image();
+        img.crossOrigin = 'Anonymous';
+        
+        img.onload = function () {
+            ctx.drawImage(img, 0, 0);
+            var imgData = ctx.getImageData(0, 0, tile.width, tile.height);
+            var data = imgData.data;
+
+            // Loop through pixels and map tile brightness/blue hue to standard radar colors
+            for (var i = 0; i < data.length; i += 4) {
+                var alpha = data[i + 3];
+                if (alpha > 0) {
+                    var r = data[i];
+                    var g = data[i + 1];
+                    var b = data[i + 2];
+
+                    // Determine intensity level from blue channel brightness
+                    var intensity = b / 255;
+
+                    if (intensity < 0.25) {
+                        // Light Rain -> Green
+                        data[i] = 46;   data[i + 1] = 204; data[i + 2] = 113;
+                    } else if (intensity < 0.50) {
+                        // Moderate Rain -> Yellow
+                        data[i] = 241;  data[i + 1] = 196; data[i + 2] = 15;
+                    } else if (intensity < 0.75) {
+                        // Heavy Rain -> Orange
+                        data[i] = 230;  data[i + 1] = 126; data[i + 2] = 34;
+                    } else if (intensity < 0.90) {
+                        // Very Heavy -> Red
+                        data[i] = 231;  data[i + 1] = 76;  data[i + 2] = 60;
+                    } else {
+                        // Extreme Storm -> Purple
+                        data[i] = 142;  data[i + 1] = 68;  data[i + 2] = 173;
+                    }
+                }
+            }
+            ctx.putImageData(imgData, 0, 0);
+            done(null, tile);
+        };
+
+        img.onerror = function (error) {
+            done(error, tile);
+        };
+
+        img.src = this.getTileUrl(coords);
+        return tile;
+    }
+});
+
+// === LAYER MANAGEMENT ===
+function createRadarLayer(frame) {
+    return new L.CustomColorRadarLayer(apiData.host + frame.path + '/' + TILE_SIZE + '/{z}/{x}/{y}/2/1_1.png', {
+        tileSize: 256,
+        opacity: 0.001,
+        maxNativeZoom: 7,
+        maxZoom: 12
+    });
+}
+
+// === ANIMATION & UTILITIES ===
 function wrapPosition(position) {
-    while (position >= mapFrames.length) {
-        position -= mapFrames.length;
-    }
-    while (position < 0) {
-        position += mapFrames.length;
-    }
+    while (position >= mapFrames.length) position -= mapFrames.length;
+    while (position < 0) position += mapFrames.length;
     return position;
 }
 
 function formatTime(timestamp) {
     return new Date(timestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-// === LAYER MANAGEMENT ===
-function createRadarLayer(frame) {
-    return new L.TileLayer(apiData.host + frame.path + '/' + TILE_SIZE + '/{z}/{x}/{y}/2/1_1.png', {
-        tileSize: 256,
-        opacity: 0.001,
-        maxNativeZoom: 7,
-        maxZoom: 12,
-        className: 'custom-radar-colors' // <--- APPLIES THE COLOR FILTER
-    });
 }
 
 function clearLayerCache() {
@@ -238,7 +209,6 @@ function clearLayerCache() {
     }
 }
 
-// === ANIMATION CONTROL ===
 function stop() {
     if (animationTimer) {
         clearTimeout(animationTimer);
@@ -256,12 +226,9 @@ function play() {
 }
 
 function playStop() {
-    if (!stop()) {
-        play();
-    }
+    if (!stop()) play();
 }
 
-// === DISPLAY ===
 function updateTimestamp(frame) {
     document.getElementById("timestamp").innerHTML = formatTime(frame.time);
 }
@@ -277,52 +244,36 @@ function showFrame(position) {
     var oldLayer = currentLayer;
 
     if (layerCache[position]) {
-        if (oldLayer) {
-            oldLayer.setOpacity(0);
-        }
+        if (oldLayer) oldLayer.setOpacity(0);
         layerCache[position].setOpacity(RADAR_OPACITY);
         currentLayer = layerCache[position];
         animationPosition = position;
-
-        if (animationTimer) {
-            animationTimer = setTimeout(play, ANIMATION_DELAY_MS);
-        }
+        if (animationTimer) animationTimer = setTimeout(play, ANIMATION_DELAY_MS);
         return;
     }
 
     isLoading = true;
-
     var newLayer = createRadarLayer(frame);
 
     newLayer.on('load', function() {
         newLayer.setOpacity(RADAR_OPACITY);
-        if (oldLayer) {
-            oldLayer.setOpacity(0);
-        }
+        if (oldLayer) oldLayer.setOpacity(0);
         layerCache[position] = newLayer;
         currentLayer = newLayer;
         animationPosition = position;
         isLoading = false;
-
-        if (animationTimer) {
-            animationTimer = setTimeout(play, ANIMATION_DELAY_MS);
-        }
+        if (animationTimer) animationTimer = setTimeout(play, ANIMATION_DELAY_MS);
     });
 
     newLayer.addTo(map);
 }
 
-// === INITIALIZATION ===
 function initialize(api) {
     clearLayerCache();
     currentLayer = null;
     mapFrames = [];
     animationPosition = 0;
-
-    if (!api || !api.radar || !api.radar.past) {
-        return;
-    }
-
+    if (!api || !api.radar || !api.radar.past) return;
     mapFrames = api.radar.past;
     showFrame(mapFrames.length - 1);
 }
