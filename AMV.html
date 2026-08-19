@@ -86,7 +86,7 @@
         const map = L.map('map', {
             center: [15.0, 135.0],
             zoom: 4,
-            preferCanvas: true // Renders vector points smoothly on Canvas
+            preferCanvas: true // Renders vector points smoothly on HTML Canvas
         });
 
         // Dark Basemap
@@ -106,22 +106,24 @@
         let rawAMVData = [];
         let amvLayerGroup = L.layerGroup().addTo(map);
 
-        // 3. Fetch Live NOAA AMV Data Directly in HTML/JS
+        // 3. Fetch Live NOAA AMV Data via CORS Proxy Wrapper
         async function fetchLiveData() {
             const statusEl = document.getElementById('statusText');
             statusEl.innerText = "Fetching NOAA data...";
 
-            // Public NOAA CoastWatch / ERDDAP Open JSON API Endpoint
-            // Queries latitude, longitude, pressure, wind_speed, and wind_direction
-            const noaaApiUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&time>=now-2hours';
+            // Direct NOAA Endpoint querying recent 2 hours of data
+            const rawUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&time>=now-2hours';
+            
+            // Bypass CORS restriction by routing through CORS Proxy
+            const corsProxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(rawUrl);
 
             try {
-                const response = await fetch(noaaApiUrl);
-                if (!response.ok) throw new Error("API Network Response Failed");
+                const response = await fetch(corsProxyUrl);
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 
                 const data = await response.json();
                 
-                // Parse ERDDAP JSON Table format
+                // Parse ERDDAP JSON Rows array
                 const rows = data.table.rows;
                 rawAMVData = rows.map(row => ({
                     lat: row[0],
@@ -135,16 +137,17 @@
                 filterAndRender();
 
             } catch (error) {
-                console.warn("Public API endpoint busy or CORS blocked. Loading fallback live stream...", error);
-                // Fallback direct JSON fetch if main endpoint rate-limits
+                console.warn("Proxy/CORS fetch failed, attempting local data.json fallback...", error);
                 fetchFallbackJSON();
             }
         }
 
-        // Fallback Loader if NOAA API is busy
+        // Fallback Loader: Pulls local data.json if remote proxy fails
         async function fetchFallbackJSON() {
             try {
                 const res = await fetch('data.json?t=' + new Date().getTime());
+                if (!res.ok) throw new Error("Local data.json not found");
+                
                 const geojson = await res.json();
                 
                 rawAMVData = geojson.features.map(f => ({
@@ -159,10 +162,11 @@
                 filterAndRender();
             } catch(e) {
                 document.getElementById('statusText').innerText = "Fetch Error";
+                console.error("Failed to load both NOAA proxy data and local fallback:", e);
             }
         }
 
-        // 4. Render Points on Canvas Map with Pressure Filtering
+        // 4. Render Vector Points on Map Canvas with Altitude Filtering
         function filterAndRender() {
             amvLayerGroup.clearLayers();
 
@@ -184,9 +188,9 @@
                     count++;
 
                     // Color Scale based on Pressure Altitude
-                    let color = "#00ffff"; // High level
-                    if (p > 700) color = "#ff5500"; // Low level
-                    else if (p >= 400) color = "#ffff00"; // Mid level
+                    let color = "#00ffff"; // High level (<400 hPa)
+                    if (p > 700) color = "#ff5500"; // Low level (>700 hPa)
+                    else if (p >= 400) color = "#ffff00"; // Mid level (400-700 hPa)
 
                     const marker = L.circleMarker([pt.lat, pt.lon], {
                         radius: 4,
@@ -210,10 +214,10 @@
             document.getElementById('pointCount').innerText = count;
         }
 
-        // Fetch data automatically when page opens
+        // Execute on page load
         fetchLiveData();
 
-        // Auto refresh every 10 minutes (600,000 ms)
+        // Auto-refresh data every 10 minutes (600,000 ms)
         setInterval(fetchLiveData, 600000);
     </script>
 </body>
