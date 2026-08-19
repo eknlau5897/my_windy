@@ -1,1 +1,5406 @@
-{"type": "FeatureCollection", "updated_at": "2026-08-19T15:00:36Z", "features": []}
+{
+  "type": "FeatureCollection",
+  "updated_at": "2026-08-19T15:22:19Z",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 28.1,
+        "direction": 210,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.3,
+        "direction": 169,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 33.9,
+        "direction": 155,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 42.2,
+        "direction": 63,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 21.0,
+        "direction": 209,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 33.9,
+        "direction": 332,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 26.6,
+        "direction": 260,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 44.5,
+        "direction": 244,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 11.7,
+        "direction": 170,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 25.7,
+        "direction": 209,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 44.0,
+        "direction": 94,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 16.3,
+        "direction": 66,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 5.0,
+        "direction": 146,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 38.2,
+        "direction": 230,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 16.0,
+        "direction": 158,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 36.9,
+        "direction": 57,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 15.8,
+        "direction": 269,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          -30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 28.7,
+        "direction": 80,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.5,
+        "direction": 163,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 13.1,
+        "direction": 189,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 15.7,
+        "direction": 226,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 40.5,
+        "direction": 30,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 27.3,
+        "direction": 258,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 26.1,
+        "direction": 20,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 11.7,
+        "direction": 311,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 21.3,
+        "direction": 117,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 43.9,
+        "direction": 165,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 17.0,
+        "direction": 295,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 42.1,
+        "direction": 119,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 38.1,
+        "direction": 80,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 27.8,
+        "direction": 61,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.1,
+        "direction": 316,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 11.0,
+        "direction": 305,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.0,
+        "direction": 307,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 21.0,
+        "direction": 260,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          -26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 23.6,
+        "direction": 179,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 16.2,
+        "direction": 315,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 41.0,
+        "direction": 233,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 41.3,
+        "direction": 39,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 37.5,
+        "direction": 195,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 40.7,
+        "direction": 252,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.0,
+        "direction": 211,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.9,
+        "direction": 287,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 14.2,
+        "direction": 310,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 16.6,
+        "direction": 278,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 19.2,
+        "direction": 151,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 41.4,
+        "direction": 217,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 35.2,
+        "direction": 132,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 36.8,
+        "direction": 168,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.0,
+        "direction": 190,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 11.2,
+        "direction": 182,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 34.2,
+        "direction": 162,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 41.0,
+        "direction": 163,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          -22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 21.5,
+        "direction": 165,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 10.6,
+        "direction": 241,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 39.5,
+        "direction": 357,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 25.4,
+        "direction": 138,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 35.3,
+        "direction": 207,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 40.7,
+        "direction": 0,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 6.6,
+        "direction": 322,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 13.3,
+        "direction": 192,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.2,
+        "direction": 138,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 39.8,
+        "direction": 289,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 5.2,
+        "direction": 130,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 25.7,
+        "direction": 81,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 23.6,
+        "direction": 78,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.3,
+        "direction": 224,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 24.4,
+        "direction": 102,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 40.6,
+        "direction": 323,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 16.4,
+        "direction": 83,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 35.2,
+        "direction": 255,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          -18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 27.5,
+        "direction": 94,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 42.3,
+        "direction": 233,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 29.1,
+        "direction": 76,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 16.5,
+        "direction": 249,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 13.4,
+        "direction": 245,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 28.9,
+        "direction": 263,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 10.2,
+        "direction": 69,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 25.5,
+        "direction": 144,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 32.6,
+        "direction": 330,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 22.6,
+        "direction": 72,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 10.7,
+        "direction": 81,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 11.9,
+        "direction": 177,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 31.9,
+        "direction": 212,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 32.1,
+        "direction": 199,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 5.5,
+        "direction": 226,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 22.1,
+        "direction": 163,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 18.5,
+        "direction": 240,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 42.5,
+        "direction": 162,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          -14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 8.3,
+        "direction": 71,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 31.6,
+        "direction": 118,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 32.3,
+        "direction": 154,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 41.0,
+        "direction": 278,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 23.3,
+        "direction": 74,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 20.4,
+        "direction": 360,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 5.8,
+        "direction": 329,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 10.3,
+        "direction": 39,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 43.2,
+        "direction": 128,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 26.6,
+        "direction": 223,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 24.7,
+        "direction": 311,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 44.1,
+        "direction": 38,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 24.8,
+        "direction": 309,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 14.3,
+        "direction": 108,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 6.8,
+        "direction": 4,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 20.6,
+        "direction": 153,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 40.5,
+        "direction": 110,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 27.6,
+        "direction": 338,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          -10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 30.8,
+        "direction": 110,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 38.4,
+        "direction": 341,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.8,
+        "direction": 223,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 43.3,
+        "direction": 258,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 44.3,
+        "direction": 200,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 27.0,
+        "direction": 237,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 22.9,
+        "direction": 267,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 11.7,
+        "direction": 239,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 10.2,
+        "direction": 196,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 26.6,
+        "direction": 78,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 38.4,
+        "direction": 284,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.5,
+        "direction": 308,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 22.4,
+        "direction": 218,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 19.7,
+        "direction": 188,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 36.0,
+        "direction": 161,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 18.4,
+        "direction": 182,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 29.1,
+        "direction": 178,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 24.0,
+        "direction": 204,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          -6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 9.1,
+        "direction": 201,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.5,
+        "direction": 236,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 11.5,
+        "direction": 178,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.2,
+        "direction": 286,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 43.9,
+        "direction": 168,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 38.9,
+        "direction": 187,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 23.3,
+        "direction": 235,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 25.5,
+        "direction": 340,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 23.5,
+        "direction": 42,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 17.3,
+        "direction": 129,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 31.2,
+        "direction": 61,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.1,
+        "direction": 289,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 37.9,
+        "direction": 333,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 16.3,
+        "direction": 146,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 40.2,
+        "direction": 32,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 37.0,
+        "direction": 271,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 34.9,
+        "direction": 45,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 20.2,
+        "direction": 34,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          -2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 5.2,
+        "direction": 114,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 34.7,
+        "direction": 216,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 6.8,
+        "direction": 4,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 24.7,
+        "direction": 74,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 13.3,
+        "direction": 148,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 21.5,
+        "direction": 39,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 41.3,
+        "direction": 102,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 15.0,
+        "direction": 71,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 19.2,
+        "direction": 83,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 15.5,
+        "direction": 157,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.8,
+        "direction": 124,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 14.3,
+        "direction": 294,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 28.5,
+        "direction": 340,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 5.2,
+        "direction": 24,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 43.3,
+        "direction": 215,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 26.3,
+        "direction": 257,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 17.8,
+        "direction": 190,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 39.0,
+        "direction": 76,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          2.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 15.6,
+        "direction": 307,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 20.5,
+        "direction": 199,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 32.9,
+        "direction": 38,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 26.6,
+        "direction": 100,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 29.6,
+        "direction": 195,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 10.5,
+        "direction": 324,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.4,
+        "direction": 256,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.6,
+        "direction": 196,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 36.4,
+        "direction": 297,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 16.4,
+        "direction": 144,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 35.9,
+        "direction": 148,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 33.4,
+        "direction": 99,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 10.7,
+        "direction": 216,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 38.8,
+        "direction": 53,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.8,
+        "direction": 9,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.2,
+        "direction": 226,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 44.8,
+        "direction": 59,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 32.6,
+        "direction": 29,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          6.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 19.3,
+        "direction": 44,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 36.1,
+        "direction": 180,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 37.5,
+        "direction": 5,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 26.3,
+        "direction": 351,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 39.4,
+        "direction": 283,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 33.1,
+        "direction": 82,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.3,
+        "direction": 213,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 29.3,
+        "direction": 93,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.2,
+        "direction": 114,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 30.4,
+        "direction": 59,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 25.0,
+        "direction": 312,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 33.0,
+        "direction": 267,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 20.2,
+        "direction": 160,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 27.3,
+        "direction": 320,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 13.1,
+        "direction": 285,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 29.9,
+        "direction": 111,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 41.0,
+        "direction": 115,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 19.8,
+        "direction": 227,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          10.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 29.8,
+        "direction": 133,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 43.7,
+        "direction": 201,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 16.8,
+        "direction": 348,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 37.6,
+        "direction": 333,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 36.7,
+        "direction": 283,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 6.6,
+        "direction": 81,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 33.9,
+        "direction": 95,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 41.1,
+        "direction": 351,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 21.0,
+        "direction": 334,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 36.7,
+        "direction": 196,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 45.0,
+        "direction": 66,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 9.0,
+        "direction": 350,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 35.2,
+        "direction": 241,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 13.4,
+        "direction": 207,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 22.4,
+        "direction": 152,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 30.9,
+        "direction": 338,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 39.8,
+        "direction": 12,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 21.1,
+        "direction": 162,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          14.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.5,
+        "direction": 59,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.9,
+        "direction": 47,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 15.6,
+        "direction": 213,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 32.5,
+        "direction": 104,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 42.0,
+        "direction": 96,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 10.6,
+        "direction": 123,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 35.6,
+        "direction": 331,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 36.2,
+        "direction": 94,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 24.1,
+        "direction": 243,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 33.5,
+        "direction": 6,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 25.0,
+        "direction": 276,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 40.3,
+        "direction": 252,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 9.6,
+        "direction": 146,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 21.8,
+        "direction": 71,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 15.0,
+        "direction": 44,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 30.2,
+        "direction": 339,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 35.8,
+        "direction": 211,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 17.8,
+        "direction": 132,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          18.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 9.7,
+        "direction": 243,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 11.3,
+        "direction": 234,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 13.3,
+        "direction": 191,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 23.7,
+        "direction": 51,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 16.8,
+        "direction": 267,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.2,
+        "direction": 207,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 5.6,
+        "direction": 142,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 26.5,
+        "direction": 10,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 13.1,
+        "direction": 321,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 40.5,
+        "direction": 282,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 42.7,
+        "direction": 331,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 42.0,
+        "direction": 292,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 24.8,
+        "direction": 311,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 33.4,
+        "direction": 302,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 37.5,
+        "direction": 211,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 5.1,
+        "direction": 88,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 41.9,
+        "direction": 97,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.5,
+        "direction": 1,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          22.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 23.0,
+        "direction": 234,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 22.2,
+        "direction": 203,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 32.4,
+        "direction": 292,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 42.4,
+        "direction": 262,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 20.9,
+        "direction": 330,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 25.3,
+        "direction": 184,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 10.6,
+        "direction": 27,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 15.0,
+        "direction": 335,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 34.3,
+        "direction": 134,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 19.6,
+        "direction": 28,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 23.1,
+        "direction": 65,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 41.5,
+        "direction": 120,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 38.5,
+        "direction": 335,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 10.8,
+        "direction": 194,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 20.8,
+        "direction": 102,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 22.1,
+        "direction": 135,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.0,
+        "direction": 358,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 30.2,
+        "direction": 108,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          26.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 39.6,
+        "direction": 236,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 25.6,
+        "direction": 310,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 5.6,
+        "direction": 173,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 20.7,
+        "direction": 165,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 8.1,
+        "direction": 216,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 18.7,
+        "direction": 74,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 11.2,
+        "direction": 47,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 36.6,
+        "direction": 134,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 24.7,
+        "direction": 247,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 16.5,
+        "direction": 243,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 13.1,
+        "direction": 227,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 24.9,
+        "direction": 13,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 15.8,
+        "direction": 134,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 18.2,
+        "direction": 287,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 24.2,
+        "direction": 258,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 9.0,
+        "direction": 130,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.2,
+        "direction": 137,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 23.0,
+        "direction": 139,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          30.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 9.0,
+        "direction": 120,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 40.4,
+        "direction": 290,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 42.4,
+        "direction": 215,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 43.4,
+        "direction": 122,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 9.1,
+        "direction": 348,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 42.9,
+        "direction": 343,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 41.0,
+        "direction": 108,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 20.0,
+        "direction": 145,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 26.4,
+        "direction": 183,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 35.8,
+        "direction": 23,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 10.7,
+        "direction": 291,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 26.2,
+        "direction": 106,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 25.4,
+        "direction": 198,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 28.7,
+        "direction": 139,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 8.1,
+        "direction": 268,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 22.6,
+        "direction": 289,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 24.3,
+        "direction": 301,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 39.2,
+        "direction": 316,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          34.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 38.1,
+        "direction": 236,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 14.7,
+        "direction": 276,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 20.0,
+        "direction": 89,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 15.8,
+        "direction": 119,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 38.5,
+        "direction": 145,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 43.2,
+        "direction": 339,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 26.5,
+        "direction": 252,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 23.9,
+        "direction": 222,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 23.1,
+        "direction": 11,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 8.6,
+        "direction": 27,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 19.8,
+        "direction": 94,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 14.1,
+        "direction": 355,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 17.5,
+        "direction": 213,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.2,
+        "direction": 281,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 38.8,
+        "direction": 162,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 35.8,
+        "direction": 252,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 27.1,
+        "direction": 36,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 31.0,
+        "direction": 298,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          38.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 16.5,
+        "direction": 358,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 7.4,
+        "direction": 306,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 22.5,
+        "direction": 65,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 41.3,
+        "direction": 151,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 25.5,
+        "direction": 96,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 5.2,
+        "direction": 66,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.8,
+        "direction": 292,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 13.1,
+        "direction": 113,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 18.6,
+        "direction": 159,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 13.0,
+        "direction": 67,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 44.7,
+        "direction": 66,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 10.8,
+        "direction": 353,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 6.3,
+        "direction": 23,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 12.5,
+        "direction": 272,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 25.6,
+        "direction": 112,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 37.4,
+        "direction": 309,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 19.6,
+        "direction": 249,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 6.3,
+        "direction": 252,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          42.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 24.5,
+        "direction": 152,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          90.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 15.0,
+        "direction": 316,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          95.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 5.1,
+        "direction": 156,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 23.0,
+        "direction": 111,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          105.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 29.6,
+        "direction": 119,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          110.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 38.0,
+        "direction": 314,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          115.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 40.6,
+        "direction": 163,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 31.3,
+        "direction": 93,
+        "pressure_hpa": 250
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          125.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 35.9,
+        "direction": 196,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          130.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 14.2,
+        "direction": 311,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          135.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 22.4,
+        "direction": 110,
+        "pressure_hpa": 500
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          140.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 33.4,
+        "direction": 0,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 27.6,
+        "direction": 273,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 31.3,
+        "direction": 17,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          155.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 36.4,
+        "direction": 292,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          160.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 29.6,
+        "direction": 110,
+        "pressure_hpa": 300
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          165.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 24.1,
+        "direction": 251,
+        "pressure_hpa": 850
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 34.3,
+        "direction": 18,
+        "pressure_hpa": 700
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.0,
+          46.0
+        ]
+      },
+      "properties": {
+        "speed_ms": 35.0,
+        "direction": 40,
+        "pressure_hpa": 300
+      }
+    }
+  ]
+}
