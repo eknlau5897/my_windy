@@ -1,43 +1,37 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Himawari AMV All-In-One Pipeline
-# 1. Self-extracts embedded Python BUFR parser
-# 2. Syncs local Git repository
-# 3. Downloads latest real JMA BUFR file from GISC
-# 4. Decodes BUFR to GeoJSON via Python
-# 5. Commits and Pushes updated data.json to GitHub
+# Himawari AMV Continuous Auto-Pipeline (Runs every 1800s / 30m)
 # ==============================================================================
 
-set -euo pipefail
+INTERVAL=1800  # Execution frequency in seconds (30 minutes)
 
-# Configuration
-OUTPUT_FILE="data.json"
-TEMP_BUFR="latest_amv.bin"
-PYTHON_SCRIPT=$(mktemp /tmp/parse_bufr.XXXXXX.py)
-BRANCH="main"                             # Change to 'master' if needed
-TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+# Function executing the single update & deployment pass
+run_pipeline() {
+    set -euo pipefail
 
-YEAR=$(date -u +"%Y")
-MONTH=$(date -u +"%m")
-DAY=$(date -u +"%d")
+    OUTPUT_FILE="data.json"
+    TEMP_BUFR="latest_amv.bin"
+    PYTHON_SCRIPT=$(mktemp /tmp/parse_bufr.XXXXXX.py)
+    BRANCH="main"
+    TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-GISC_BASE_URL="http://www.wis-jma.go.jp/cms/data/${YEAR}/${MONTH}/${DAY}"
-BUFR_HEADER="IUXA01"
+    YEAR=$(date -u +"%Y")
+    MONTH=$(date -u +"%m")
+    DAY=$(date -u +"%d")
 
-# Cleanup temporary python script on exit
-trap 'rm -f "${PYTHON_SCRIPT}" "${TEMP_BUFR}"' EXIT
+    GISC_BASE_URL="http://www.wis-jma.go.jp/cms/data/${YEAR}/${MONTH}/${DAY}"
+    BUFR_HEADER="IUXA01"
 
-echo "=================================================="
-echo " Starting JMA AMV Fetch & Deploy Pipeline"
-echo " Time: ${TIMESTAMP}"
-echo "=================================================="
+    # Clean temporary files on pass exit
+    trap 'rm -f "${PYTHON_SCRIPT}" "${TEMP_BUFR}"' EXIT
 
-# ------------------------------------------------------------------------------
-# STEP 1: Self-Extract Embedded Python Parser
-# ------------------------------------------------------------------------------
-echo "[1/5] Extracting embedded Python BUFR decoder..."
+    echo "=================================================="
+    echo " Starting JMA AMV Fetch & Deploy Pipeline"
+    echo " Time: ${TIMESTAMP}"
+    echo "=================================================="
 
-cat << 'EOF' > "${PYTHON_SCRIPT}"
+    # 1. Extract embedded Python parser
+    cat << 'EOF' > "${PYTHON_SCRIPT}"
 import sys
 import os
 import json
@@ -69,7 +63,6 @@ def parse_bufr_to_geojson(bufr_file_path, output_json_path):
                 for lat, lon, p, spd, direct in zip(lats, lons, pressures, speeds, directions):
                     p_hpa = int(p / 100) if p > 2000 else int(p)
 
-                    # Filter out missing/invalid observation data
                     if spd < 0 or spd > 150 or p_hpa < 50 or p_hpa > 1050:
                         continue
 
@@ -86,7 +79,7 @@ def parse_bufr_to_geojson(bufr_file_path, output_json_path):
                         }
                     })
 
-            except CodesInternalError as err:
+            except CodesInternalError:
                 pass
             finally:
                 codes_release(bufr_id)
@@ -109,54 +102,55 @@ if __name__ == "__main__":
     parse_bufr_to_geojson(sys.argv[1], sys.argv[2])
 EOF
 
-# ------------------------------------------------------------------------------
-# STEP 2: Git Sync
-# ------------------------------------------------------------------------------
-echo "[2/5] Syncing latest Git branch..."
-git pull origin "${BRANCH}" --rebase || echo "Warning: Git pull failed, continuing locally..."
+    # 2. Sync local repository
+    echo "[1/4] Syncing latest Git branch..."
+    git pull origin "${BRANCH}" --rebase || echo "Warning: Git pull failed, continuing..."
+
+    # 3. Download JMA GISC BUFR data
+    echo "[2/4] Fetching latest BUFR dataset from JMA GISC..."
+    LATEST_FILE_NAME=$(curl -s "${GISC_BASE_URL}/" | grep -oE "href=\"[^\"]*${BUFR_HEADER}[^\"]*\"" | cut -d'"' -f2 | tail -n 1 || true)
+
+    if [ -n "${LATEST_FILE_NAME}" ]; then
+        echo "      Targeting: ${LATEST_FILE_NAME}"
+        curl -s -o "${TEMP_BUFR}" "${GISC_BASE_URL}/${LATEST_FILE_NAME}"
+    else
+        echo "      Fallback download target..."
+        curl -s -o "${TEMP_BUFR}" "http://www.wis-jma.go.jp/cms/data/latest_amv.bin" || true
+    fi
+
+    # 4. Parse BUFR data
+    echo "[3/4] Parsing BUFR to GeoJSON via embedded Python..."
+    if [ -f "${TEMP_BUFR}" ] && [ -s "${TEMP_BUFR}" ]; then
+        python3 "${PYTHON_SCRIPT}" "${TEMP_BUFR}" "${OUTPUT_FILE}"
+    else
+        echo "Error: BUFR download failed."
+        return 1
+    fi
+
+    # 5. Commit and Deploy
+    echo "[4/4] Deploying to GitHub..."
+    git add "${OUTPUT_FILE}"
+
+    if git diff --staged --quiet; then
+        echo "      No changes detected in data.json."
+    else
+        git commit -m "Auto-deploy real JMA AMV data [${TIMESTAMP}]"
+        git push origin "${BRANCH}"
+        echo "      Pushed updates to remote repository."
+    fi
+
+    echo "=================================================="
+    echo " Execution Pass Finished Successfully!"
+    echo "=================================================="
+}
 
 # ------------------------------------------------------------------------------
-# STEP 3: Download Real Data from JMA GISC
+# Infinite Execution Loop (Every 1800s)
 # ------------------------------------------------------------------------------
-echo "[3/5] Fetching latest BUFR dataset from JMA GISC..."
+while true; do
+    run_pipeline || echo "Pipeline pass encountered an error, waiting for next run..."
 
-LATEST_FILE_NAME=$(curl -s "${GISC_BASE_URL}/" | grep -oE "href=\"[^\"]*${BUFR_HEADER}[^\"]*\"" | cut -d'"' -f2 | tail -n 1 || true)
-
-if [ -n "${LATEST_FILE_NAME}" ]; then
-    echo "      Targeting file: ${LATEST_FILE_NAME}"
-    curl -s -o "${TEMP_BUFR}" "${GISC_BASE_URL}/${LATEST_FILE_NAME}"
-else
-    echo "      Directory listing unavailable. Downloading fallback endpoint..."
-    curl -s -o "${TEMP_BUFR}" "http://www.wis-jma.go.jp/cms/data/latest_amv.bin" || true
-fi
-
-# ------------------------------------------------------------------------------
-# STEP 4: Parse BUFR to GeoJSON using Embedded Python
-# ------------------------------------------------------------------------------
-echo "[4/5] Running embedded Python parser..."
-
-if [ -f "${TEMP_BUFR}" ] && [ -s "${TEMP_BUFR}" ]; then
-    python3 "${PYTHON_SCRIPT}" "${TEMP_BUFR}" "${OUTPUT_FILE}"
-else
-    echo "Error: BUFR download failed or file is empty."
-    exit 1
-fi
-
-# ------------------------------------------------------------------------------
-# STEP 5: Git Stage, Commit, and Deploy
-# ------------------------------------------------------------------------------
-echo "[5/5] Deploying updates to GitHub Pages..."
-
-git add "${OUTPUT_FILE}"
-
-if git diff --staged --quiet; then
-    echo "      No change in dataset. Skipping commit."
-else
-    git commit -m "Auto-deploy real JMA AMV data [${TIMESTAMP}]"
-    git push origin "${BRANCH}"
-    echo "      Successfully pushed to GitHub."
-fi
-
-echo "=================================================="
-echo " Pipeline Complete!"
-echo "=================================================="
+    echo ""
+    echo "Sleeping for 1800 seconds (30 minutes) until next update..."
+    sleep ${INTERVAL}
+done
