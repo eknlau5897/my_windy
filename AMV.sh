@@ -37,7 +37,7 @@ OUTPUT_FILE = "data.json"
 # List of endpoints to try in order
 ENDPOINTS = [
     # 1. NOAA Primary Dataset Sliced Suffix
-    "https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&last3000",
+    "https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&last15000",
     # 2. NOAA Secondary Backup Dataset Suffix
     "https://coastwatch.pfeg.noaa.gov/erddap/tabledap/nesdisAMV.json?latitude,longitude,pressure,wind_speed,wind_direction&last1000"
 ]
