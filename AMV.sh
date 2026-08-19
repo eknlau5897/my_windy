@@ -24,26 +24,32 @@ run_pipeline() {
     echo "=================================================="
 
     # --------------------------------------------------------------------------
-    # 1. Embed and Extract Python Fetcher
+    # 1. Embed and Extract Python Fetcher (Fixed URL Querying)
     # --------------------------------------------------------------------------
     cat << 'EOF' > "${PYTHON_SCRIPT}"
 import sys
 import os
 import json
 import urllib.request
-from datetime import datetime, timezone
+import urllib.error
+from datetime import datetime, timezone, timedelta
 
 OUTPUT_FILE = "data.json"
 
 def fetch_noaa_amv():
     print("Fetching live satellite wind vectors from NOAA...")
-    
-    # Direct NOAA ERDDAP JSON API querying recent 2 hours of wind vector data
-    url = 'https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&time>=now-2hours'
-    
+
+    # Query last 1000 observations to guarantee non-empty payload and avoid 400 time errors
+    url = 'https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&orderByMax(%22time%22)'
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+        'Accept': 'application/json'
+    }
+
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=30) as response:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=45) as response:
             if response.status != 200:
                 print(f"Error: NOAA API returned HTTP {response.status}")
                 return False
@@ -51,14 +57,15 @@ def fetch_noaa_amv():
             raw_data = response.read().decode('utf-8')
             data = json.loads(raw_data)
 
-        rows = data['table']['rows']
-        features = []
+        rows = data.get('table', {}).get('rows', [])
+        print(f"Received {len(rows)} raw data points from NOAA.")
 
+        features = []
         for row in rows:
             lat, lon, pressure, speed, direction = row[0], row[1], row[2], row[3], row[4]
 
             # Filter missing or corrupt data points
-            if speed is None or speed < 0 or speed > 150 or pressure is None or lat is None or lon is None:
+            if None in (lat, lon, pressure, speed) or speed < 0 or speed > 150:
                 continue
 
             features.append({
@@ -69,7 +76,7 @@ def fetch_noaa_amv():
                 },
                 "properties": {
                     "speed_ms": round(float(speed), 1),
-                    "direction": int(direction) if direction else 0,
+                    "direction": int(direction) if direction is not None else 0,
                     "pressure_hpa": int(pressure)
                 }
             })
@@ -86,6 +93,9 @@ def fetch_noaa_amv():
         print(f" Successfully saved {len(features)} vector points into '{OUTPUT_FILE}'.")
         return True
 
+    except urllib.error.HTTPError as e:
+        print(f"HTTP Error querying NOAA: {e.code} {e.reason}")
+        return False
     except Exception as e:
         print(f"Error fetching NOAA data: {e}")
         return False
