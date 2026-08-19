@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Himawari Satellite & NOAA AMV GIS</title>
+    <title>Live Himawari Satellite & NOAA AMV GIS (Wind Barbs)</title>
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -45,6 +45,12 @@
         .btn-refresh:hover { background: #0369a1; }
 
         .status { margin-top: 10px; font-size: 11px; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
+
+        /* Remove default background/border from custom Leaflet DivIcons */
+        .wind-barb-icon {
+            background: transparent !important;
+            border: none !important;
+        }
     </style>
 </head>
 <body>
@@ -74,7 +80,7 @@
 
         <div class="status">
             <div>Status: <span id="statusText" style="color: #38bdf8;">Initializing...</span></div>
-            <div>Points: <strong id="pointCount" style="color: #fff;">0</strong></div>
+            <div>Observations: <strong id="pointCount" style="color: #fff;">0</strong></div>
         </div>
     </div>
 
@@ -82,11 +88,10 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // 1. Initialize Leaflet Map over Asia-Pacific / Himawari Coverage Area
+        // 1. Initialize Leaflet Map
         const map = L.map('map', {
             center: [15.0, 135.0],
-            zoom: 4,
-            preferCanvas: true // Renders vector points smoothly on HTML Canvas
+            zoom: 4
         });
 
         // Dark Basemap
@@ -94,7 +99,7 @@
             attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(map);
 
-        // 2. Add Live Himawari Satellite Imagery Layer (NOAA CoastWatch WMS)
+        // 2. Add Live Himawari Satellite Layer
         const himawariWMS = L.tileLayer.wms('https://coastwatch.noaa.gov/geoserver/wms', {
             layers: 'coastwatch:himawari9_ir',
             format: 'image/png',
@@ -106,15 +111,66 @@
         let rawAMVData = [];
         let amvLayerGroup = L.layerGroup().addTo(map);
 
-        // 3. Fetch Live NOAA AMV Data via CORS Proxy Wrapper
+        // 3. Helper: Generate Meteorological Wind Barb SVG
+        function createWindBarbSVG(speedMS, dirDeg, color) {
+            const knots = Math.round(speedMS * 1.94384);
+            
+            let k = knots;
+            let flags50 = Math.floor(k / 50);
+            k %= 50;
+            let lines10 = Math.floor(k / 10);
+            k %= 10;
+            let lines5 = Math.floor(k / 5);
+
+            let barbElements = '';
+            let yPos = 4; // Start near top end of the staff
+
+            // 50-knot Pennants (Solid Triangles)
+            for (let i = 0; i < flags50; i++) {
+                barbElements += `<polygon points="20,${yPos} 32,${yPos + 2} 20,${yPos + 6}" fill="${color}" />`;
+                yPos += 7;
+            }
+
+            // 10-knot Full Barbs
+            for (let i = 0; i < lines10; i++) {
+                barbElements += `<line x1="20" y1="${yPos}" x2="32" y2="${yPos - 4}" stroke="${color}" stroke-width="2" stroke-linecap="round" />`;
+                yPos += 5;
+            }
+
+            // 5-knot Half Barbs
+            for (let i = 0; i < lines5; i++) {
+                barbElements += `<line x1="20" y1="${yPos}" x2="26" y2="${yPos - 2}" stroke="${color}" stroke-width="2" stroke-linecap="round" />`;
+                yPos += 5;
+            }
+
+            // Calm Wind (< 3 Knots): Circle
+            if (knots < 3) {
+                return `
+                <svg width="40" height="40" viewBox="0 0 40 40">
+                    <circle cx="20" cy="20" r="4" fill="none" stroke="${color}" stroke-width="2" />
+                </svg>`;
+            }
+
+            // Rotated Container for Directional Alignment
+            return `
+            <div style="transform: rotate(${dirDeg}deg); transform-origin: center center; width: 40px; height: 40px;">
+                <svg width="40" height="40" viewBox="0 0 40 40">
+                    <!-- Base Dot -->
+                    <circle cx="20" cy="20" r="2.5" fill="${color}" />
+                    <!-- Main Staff -->
+                    <line x1="20" y1="20" x2="20" y2="4" stroke="${color}" stroke-width="2" stroke-linecap="round" />
+                    <!-- Pennants and Barbs -->
+                    ${barbElements}
+                </svg>
+            </div>`;
+        }
+
+        // 4. Fetch Live Data
         async function fetchLiveData() {
             const statusEl = document.getElementById('statusText');
             statusEl.innerText = "Fetching NOAA data...";
 
-            // Direct NOAA Endpoint querying recent 2 hours of data
-            const rawUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&time>=now-2hours';
-            
-            // Bypass CORS restriction by routing through CORS Proxy
+            const rawUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&last3000';
             const corsProxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(rawUrl);
 
             try {
@@ -122,9 +178,8 @@
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 
                 const data = await response.json();
-                
-                // Parse ERDDAP JSON Rows array
                 const rows = data.table.rows;
+                
                 rawAMVData = rows.map(row => ({
                     lat: row[0],
                     lon: row[1],
@@ -137,12 +192,12 @@
                 filterAndRender();
 
             } catch (error) {
-                console.warn("Proxy/CORS fetch failed, attempting local data.json fallback...", error);
+                console.warn("Proxy fetch failed, reading local fallback data.json...", error);
                 fetchFallbackJSON();
             }
         }
 
-        // Fallback Loader: Pulls local data.json if remote proxy fails
+        // Fallback Loader for local data.json
         async function fetchFallbackJSON() {
             try {
                 const res = await fetch('data.json?t=' + new Date().getTime());
@@ -162,11 +217,10 @@
                 filterAndRender();
             } catch(e) {
                 document.getElementById('statusText').innerText = "Fetch Error";
-                console.error("Failed to load both NOAA proxy data and local fallback:", e);
             }
         }
 
-        // 4. Render Vector Points on Map Canvas with Altitude Filtering
+        // 5. Render Wind Barbs on Map
         function filterAndRender() {
             amvLayerGroup.clearLayers();
 
@@ -187,23 +241,27 @@
                 if (show) {
                     count++;
 
-                    // Color Scale based on Pressure Altitude
+                    // Color Scale by Pressure Altitude
                     let color = "#00ffff"; // High level (<400 hPa)
                     if (p > 700) color = "#ff5500"; // Low level (>700 hPa)
                     else if (p >= 400) color = "#ffff00"; // Mid level (400-700 hPa)
 
-                    const marker = L.circleMarker([pt.lat, pt.lon], {
-                        radius: 4,
-                        fillColor: color,
-                        color: "#000",
-                        weight: 0.5,
-                        fillOpacity: 0.85
+                    const svgHtml = createWindBarbSVG(pt.speed, pt.direction, color);
+
+                    const icon = L.divIcon({
+                        html: svgHtml,
+                        className: 'wind-barb-icon',
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 20]
                     });
 
+                    const marker = L.marker([pt.lat, pt.lon], { icon: icon });
+                    const speedKnots = Math.round(pt.speed * 1.94384);
+
                     marker.bindPopup(`
-                        <strong>NOAA AMV Observation</strong><br/>
+                        <strong>Satellite Wind Observation</strong><br/>
                         <b>Pressure:</b> ${pt.pressure} hPa<br/>
-                        <b>Wind Speed:</b> ${pt.speed} m/s<br/>
+                        <b>Wind Speed:</b> ${pt.speed} m/s (${speedKnots} kts)<br/>
                         <b>Direction:</b> ${pt.direction}°
                     `);
 
@@ -214,10 +272,10 @@
             document.getElementById('pointCount').innerText = count;
         }
 
-        // Execute on page load
+        // Run on boot
         fetchLiveData();
 
-        // Auto-refresh data every 10 minutes (600,000 ms)
+        // Auto-refresh every 10 minutes
         setInterval(fetchLiveData, 600000);
     </script>
 </body>
