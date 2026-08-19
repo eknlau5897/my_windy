@@ -50,5 +50,5 @@ EOF
 
     echo "[${TIMESTAMP}] Successfully wrote '"${OUTPUT_FILE}"'"
     echo "Sleeping for 10 minutes..."
-    sleep 600
+    sleep 1800
 done
