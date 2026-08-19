@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Himawari Satellite & NOAA AMV GIS</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #0b0f19; color: #fff; }
+        #map { height: 100vh; width: 100vw; }
+
+        /* Floating UI Control Panel */
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 16px 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 250px;
+        }
+
+        .control-panel h3 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #38bdf8; letter-spacing: 0.5px; }
+        .filter-option { display: flex; align-items: center; justify-content: space-between; font-size: 13px; margin-bottom: 8px; cursor: pointer; }
+        
+        .badge { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+        .btn-refresh {
+            width: 100%;
+            background: #0284c7;
+            color: #fff;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .btn-refresh:hover { background: #0369a1; }
+
+        .status { margin-top: 10px; font-size: 11px; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <!-- UI Overlay Controls -->
+    <div class="control-panel">
+        <h3>Satellite Winds (AMV)</h3>
+        
+        <div id="filters">
+            <label class="filter-option">
+                <span><span class="badge" style="background: #00ffff;"></span> High (&lt; 400 hPa)</span>
+                <input type="checkbox" id="chkHigh" checked onchange="filterAndRender()">
+            </label>
+            <label class="filter-option">
+                <span><span class="badge" style="background: #ffff00;"></span> Mid (400 - 700 hPa)</span>
+                <input type="checkbox" id="chkMid" checked onchange="filterAndRender()">
+            </label>
+            <label class="filter-option">
+                <span><span class="badge" style="background: #ff5500;"></span> Low (&gt; 700 hPa)</span>
+                <input type="checkbox" id="chkLow" checked onchange="filterAndRender()">
+            </label>
+        </div>
+
+        <button class="btn-refresh" onclick="fetchLiveData()">Fetch Live Data</button>
+
+        <div class="status">
+            <div>Status: <span id="statusText" style="color: #38bdf8;">Initializing...</span></div>
+            <div>Points: <strong id="pointCount" style="color: #fff;">0</strong></div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // 1. Initialize Leaflet Map over Asia-Pacific / Himawari Coverage Area
+        const map = L.map('map', {
+            center: [15.0, 135.0],
+            zoom: 4,
+            preferCanvas: true // Renders vector points smoothly on Canvas
+        });
+
+        // Dark Basemap
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
+        }).addTo(map);
+
+        // 2. Add Live Himawari Satellite Imagery Layer (NOAA CoastWatch WMS)
+        const himawariWMS = L.tileLayer.wms('https://coastwatch.noaa.gov/geoserver/wms', {
+            layers: 'coastwatch:himawari9_ir',
+            format: 'image/png',
+            transparent: true,
+            opacity: 0.6,
+            version: '1.3.0'
+        }).addTo(map);
+
+        let rawAMVData = [];
+        let amvLayerGroup = L.layerGroup().addTo(map);
+
+        // 3. Fetch Live NOAA AMV Data Directly in HTML/JS
+        async function fetchLiveData() {
+            const statusEl = document.getElementById('statusText');
+            statusEl.innerText = "Fetching NOAA data...";
+
+            // Public NOAA CoastWatch / ERDDAP Open JSON API Endpoint
+            // Queries latitude, longitude, pressure, wind_speed, and wind_direction
+            const noaaApiUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&time>=now-2hours';
+
+            try {
+                const response = await fetch(noaaApiUrl);
+                if (!response.ok) throw new Error("API Network Response Failed");
+                
+                const data = await response.json();
+                
+                // Parse ERDDAP JSON Table format
+                const rows = data.table.rows;
+                rawAMVData = rows.map(row => ({
+                    lat: row[0],
+                    lon: row[1],
+                    pressure: row[2],
+                    speed: row[3],
+                    direction: row[4]
+                }));
+
+                statusEl.innerText = "Updated Live";
+                filterAndRender();
+
+            } catch (error) {
+                console.warn("Public API endpoint busy or CORS blocked. Loading fallback live stream...", error);
+                // Fallback direct JSON fetch if main endpoint rate-limits
+                fetchFallbackJSON();
+            }
+        }
+
+        // Fallback Loader if NOAA API is busy
+        async function fetchFallbackJSON() {
+            try {
+                const res = await fetch('data.json?t=' + new Date().getTime());
+                const geojson = await res.json();
+                
+                rawAMVData = geojson.features.map(f => ({
+                    lat: f.geometry.coordinates[1],
+                    lon: f.geometry.coordinates[0],
+                    pressure: f.properties.pressure_hpa,
+                    speed: f.properties.speed_ms,
+                    direction: f.properties.direction
+                }));
+
+                document.getElementById('statusText').innerText = "Loaded data.json";
+                filterAndRender();
+            } catch(e) {
+                document.getElementById('statusText').innerText = "Fetch Error";
+            }
+        }
+
+        // 4. Render Points on Canvas Map with Pressure Filtering
+        function filterAndRender() {
+            amvLayerGroup.clearLayers();
+
+            const showHigh = document.getElementById('chkHigh').checked; // < 400 hPa
+            const showMid = document.getElementById('chkMid').checked;   // 400-700 hPa
+            const showLow = document.getElementById('chkLow').checked;   // > 700 hPa
+
+            let count = 0;
+
+            rawAMVData.forEach(pt => {
+                const p = pt.pressure;
+                let show = false;
+
+                if (p < 400 && showHigh) show = true;
+                else if (p >= 400 && p <= 700 && showMid) show = true;
+                else if (p > 700 && showLow) show = true;
+
+                if (show) {
+                    count++;
+
+                    // Color Scale based on Pressure Altitude
+                    let color = "#00ffff"; // High level
+                    if (p > 700) color = "#ff5500"; // Low level
+                    else if (p >= 400) color = "#ffff00"; // Mid level
+
+                    const marker = L.circleMarker([pt.lat, pt.lon], {
+                        radius: 4,
+                        fillColor: color,
+                        color: "#000",
+                        weight: 0.5,
+                        fillOpacity: 0.85
+                    });
+
+                    marker.bindPopup(`
+                        <strong>NOAA AMV Observation</strong><br/>
+                        <b>Pressure:</b> ${pt.pressure} hPa<br/>
+                        <b>Wind Speed:</b> ${pt.speed} m/s<br/>
+                        <b>Direction:</b> ${pt.direction}°
+                    `);
+
+                    amvLayerGroup.addLayer(marker);
+                }
+            });
+
+            document.getElementById('pointCount').innerText = count;
+        }
+
+        // Fetch data automatically when page opens
+        fetchLiveData();
+
+        // Auto refresh every 10 minutes (600,000 ms)
+        setInterval(fetchLiveData, 600000);
+    </script>
+</body>
+</html>
