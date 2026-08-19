@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Himawari AMV Continuous Auto-Pipeline (Runs every 1800s / 30m)
-# Fixes CloudFront 301 Redirects & Validates Binary BUFR Download
+# Includes HTML error protection and CloudFront redirect handling
 # ==============================================================================
 
 INTERVAL=1800  # Execution frequency in seconds (30 minutes)
@@ -19,7 +19,7 @@ run_pipeline() {
     MONTH=$(date -u +"%m")
     DAY=$(date -u +"%d")
 
-    # Fixed: Using HTTPS to prevent CloudFront redirects
+    # GISC Tokyo base endpoints
     GISC_BASE_URL="https://www.wis-jma.go.jp/cms/data/${YEAR}/${MONTH}/${DAY}"
     BUFR_HEADER="IUXA01"
 
@@ -112,24 +112,25 @@ EOF
     git pull origin "${BRANCH}" --rebase || echo "Warning: Git pull failed, continuing..."
 
     # --------------------------------------------------------------------------
-    # 3. Download JMA GISC BUFR Data (Following Redirects via -sL)
+    # 3. Download JMA GISC BUFR Data (With Redirects & Failure Guard)
     # --------------------------------------------------------------------------
     echo "[2/4] Fetching latest BUFR dataset from JMA GISC..."
-    
-    # -sL follows CloudFront location redirects
+
+    # -sL tells curl to follow HTTP/HTTPS 301/302 redirects
     LATEST_FILE_NAME=$(curl -sL "${GISC_BASE_URL}/" | grep -oE "href=\"[^\"]*${BUFR_HEADER}[^\"]*\"" | cut -d'"' -f2 | tail -n 1 || true)
 
     if [ -n "${LATEST_FILE_NAME}" ]; then
         echo "      Targeting: ${LATEST_FILE_NAME}"
         curl -sL -o "${TEMP_BUFR}" "${GISC_BASE_URL}/${LATEST_FILE_NAME}"
     else
-        echo "      Fallback download target..."
+        echo "      Attempting direct fallback URL..."
         curl -sL -o "${TEMP_BUFR}" "https://www.wis-jma.go.jp/cms/data/latest_amv.bin" || true
     fi
 
-    # Check if download is HTML instead of Binary
-    if grep -q -i "<html" "${TEMP_BUFR}"; then
-        echo "Error: Downloaded file is HTML (likely a 301/404 error page). Aborting parse step."
+    # GUARD: Ensure the downloaded file is binary, not HTML error pages
+    if grep -q -i -E "(<html|301 moved|404 not found)" "${TEMP_BUFR}" 2>/dev/null; then
+        echo "Error: Downloaded file contains HTML error markup instead of binary data."
+        echo "Skipping parse step to prevent corrupting ${OUTPUT_FILE}."
         return 1
     fi
 
@@ -140,7 +141,7 @@ EOF
     if [ -f "${TEMP_BUFR}" ] && [ -s "${TEMP_BUFR}" ]; then
         python3 "${PYTHON_SCRIPT}" "${TEMP_BUFR}" "${OUTPUT_FILE}"
     else
-        echo "Error: BUFR download failed or file is zero bytes."
+        echo "Error: BUFR download failed or file is 0 bytes."
         return 1
     fi
 
@@ -151,11 +152,11 @@ EOF
     git add "${OUTPUT_FILE}"
 
     if git diff --staged --quiet; then
-        echo "      No changes detected in data.json."
+        echo "      No changes detected in ${OUTPUT_FILE}."
     else
         git commit -m "Auto-deploy real JMA AMV data [${TIMESTAMP}]"
         git push origin "${BRANCH}"
-        echo "      Pushed updates to remote repository."
+        echo "      Pushed updates to GitHub."
     fi
 
     echo "=================================================="
@@ -167,7 +168,7 @@ EOF
 # Continuous Execution Loop (Runs every 1800 seconds)
 # ------------------------------------------------------------------------------
 while true; do
-    run_pipeline || echo "Pipeline pass encountered an error, waiting for next run..."
+    run_pipeline || echo "Pipeline pass encountered an issue, sleeping until next 30m window..."
 
     echo ""
     echo "Sleeping for 1800 seconds (30 minutes) until next update..."
