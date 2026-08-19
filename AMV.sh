@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # All-In-One NOAA AMV Fetcher & GitHub Deployer
-# Self-extracts embedded Python script, fetches data, and pushes to GitHub.
-# Runs continuously every 1800 seconds (30 minutes).
+# Fetches latest observations from NOAA ERDDAP and pushes to GitHub
 # ==============================================================================
 
-INTERVAL=1800  # Execution loop frequency in seconds
-BRANCH="main"  # Target Git branch (change to 'master' if needed)
+INTERVAL=1800  # Run every 30 minutes
+BRANCH="main"  # Target Git branch
 
 run_pipeline() {
     set -euo pipefail
@@ -15,7 +14,7 @@ run_pipeline() {
     PYTHON_SCRIPT=$(mktemp /tmp/fetch_amv.XXXXXX.py)
     TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-    # Clean up temporary Python script on exit
+    # Cleanup temporary script on exit
     trap 'rm -f "${PYTHON_SCRIPT}"' EXIT
 
     echo "=================================================="
@@ -24,7 +23,7 @@ run_pipeline() {
     echo "=================================================="
 
     # --------------------------------------------------------------------------
-    # 1. Embed and Extract Python Fetcher (Fixed URL Querying)
+    # 1. Embed Python Fetcher
     # --------------------------------------------------------------------------
     cat << 'EOF' > "${PYTHON_SCRIPT}"
 import sys
@@ -32,18 +31,18 @@ import os
 import json
 import urllib.request
 import urllib.error
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 OUTPUT_FILE = "data.json"
 
 def fetch_noaa_amv():
-    print("Fetching live satellite wind vectors from NOAA...")
+    print("Fetching latest satellite wind vectors from NOAA...")
 
-    # Query last 1000 observations to guarantee non-empty payload and avoid 400 time errors
-    url = 'https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&orderByMax(%22time%22)'
+    # Reliable ERDDAP query URL retrieving the last 3000 rows
+    url = 'https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&last3000'
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'application/json'
     }
 
@@ -90,7 +89,7 @@ def fetch_noaa_amv():
         with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
             json.dump(geojson_data, f, indent=2)
 
-        print(f" Successfully saved {len(features)} vector points into '{OUTPUT_FILE}'.")
+        print(f"Successfully saved {len(features)} vector points into '{OUTPUT_FILE}'.")
         return True
 
     except urllib.error.HTTPError as e:
@@ -107,26 +106,26 @@ if __name__ == "__main__":
 EOF
 
     # --------------------------------------------------------------------------
-    # 2. Sync Git Branch
+    # 2. Sync Local Repository with Remote
     # --------------------------------------------------------------------------
     echo "[1/3] Syncing local branch with GitHub..."
     git pull origin "${BRANCH}" --rebase || echo "Warning: Git pull failed, continuing..."
 
     # --------------------------------------------------------------------------
-    # 3. Run Embedded Python Script
+    # 3. Execute Embedded Fetcher
     # --------------------------------------------------------------------------
     echo "[2/3] Executing embedded Python fetcher..."
     python3 "${PYTHON_SCRIPT}"
 
     # --------------------------------------------------------------------------
-    # 4. Commit and Push Updated data.json to GitHub
+    # 4. Commit & Push Changes
     # --------------------------------------------------------------------------
     echo "[3/3] Deploying data.json to GitHub..."
     if [ -f "${OUTPUT_FILE}" ]; then
         git add "${OUTPUT_FILE}"
 
         if git diff --staged --quiet; then
-            echo "      No changes detected in data.json. Skipping commit."
+            echo "      No data changes detected. Skipping commit."
         else
             git commit -m "Auto-update NOAA satellite wind vectors [${TIMESTAMP}]"
             git push origin "${BRANCH}"
@@ -143,7 +142,7 @@ EOF
 }
 
 # ------------------------------------------------------------------------------
-# Infinite Loop (Runs every 1800 Seconds / 30 Minutes)
+# Infinite Loop
 # ------------------------------------------------------------------------------
 while true; do
     run_pipeline || echo "Pipeline pass encountered an error. Waiting for next cycle..."
