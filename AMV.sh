@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Himawari AMV Continuous Auto-Pipeline (Runs every 1800s / 30m)
+# Fixes CloudFront 301 Redirects & Validates Binary BUFR Download
 # ==============================================================================
 
 INTERVAL=1800  # Execution frequency in seconds (30 minutes)
 
-# Function executing the single update & deployment pass
 run_pipeline() {
     set -euo pipefail
 
@@ -19,10 +19,11 @@ run_pipeline() {
     MONTH=$(date -u +"%m")
     DAY=$(date -u +"%d")
 
-    GISC_BASE_URL="http://www.wis-jma.go.jp/cms/data/${YEAR}/${MONTH}/${DAY}"
+    # Fixed: Using HTTPS to prevent CloudFront redirects
+    GISC_BASE_URL="https://www.wis-jma.go.jp/cms/data/${YEAR}/${MONTH}/${DAY}"
     BUFR_HEADER="IUXA01"
 
-    # Clean temporary files on pass exit
+    # Clean temporary files on exit
     trap 'rm -f "${PYTHON_SCRIPT}" "${TEMP_BUFR}"' EXIT
 
     echo "=================================================="
@@ -30,7 +31,9 @@ run_pipeline() {
     echo " Time: ${TIMESTAMP}"
     echo "=================================================="
 
-    # 1. Extract embedded Python parser
+    # --------------------------------------------------------------------------
+    # 1. Self-Extract Embedded Python Parser
+    # --------------------------------------------------------------------------
     cat << 'EOF' > "${PYTHON_SCRIPT}"
 import sys
 import os
@@ -102,32 +105,48 @@ if __name__ == "__main__":
     parse_bufr_to_geojson(sys.argv[1], sys.argv[2])
 EOF
 
-    # 2. Sync local repository
+    # --------------------------------------------------------------------------
+    # 2. Sync Git Repository
+    # --------------------------------------------------------------------------
     echo "[1/4] Syncing latest Git branch..."
     git pull origin "${BRANCH}" --rebase || echo "Warning: Git pull failed, continuing..."
 
-    # 3. Download JMA GISC BUFR data
+    # --------------------------------------------------------------------------
+    # 3. Download JMA GISC BUFR Data (Following Redirects via -sL)
+    # --------------------------------------------------------------------------
     echo "[2/4] Fetching latest BUFR dataset from JMA GISC..."
-    LATEST_FILE_NAME=$(curl -s "${GISC_BASE_URL}/" | grep -oE "href=\"[^\"]*${BUFR_HEADER}[^\"]*\"" | cut -d'"' -f2 | tail -n 1 || true)
+    
+    # -sL follows CloudFront location redirects
+    LATEST_FILE_NAME=$(curl -sL "${GISC_BASE_URL}/" | grep -oE "href=\"[^\"]*${BUFR_HEADER}[^\"]*\"" | cut -d'"' -f2 | tail -n 1 || true)
 
     if [ -n "${LATEST_FILE_NAME}" ]; then
         echo "      Targeting: ${LATEST_FILE_NAME}"
-        curl -s -o "${TEMP_BUFR}" "${GISC_BASE_URL}/${LATEST_FILE_NAME}"
+        curl -sL -o "${TEMP_BUFR}" "${GISC_BASE_URL}/${LATEST_FILE_NAME}"
     else
         echo "      Fallback download target..."
-        curl -s -o "${TEMP_BUFR}" "http://www.wis-jma.go.jp/cms/data/latest_amv.bin" || true
+        curl -sL -o "${TEMP_BUFR}" "https://www.wis-jma.go.jp/cms/data/latest_amv.bin" || true
     fi
 
-    # 4. Parse BUFR data
+    # Check if download is HTML instead of Binary
+    if grep -q -i "<html" "${TEMP_BUFR}"; then
+        echo "Error: Downloaded file is HTML (likely a 301/404 error page). Aborting parse step."
+        return 1
+    fi
+
+    # --------------------------------------------------------------------------
+    # 4. Parse BUFR to GeoJSON
+    # --------------------------------------------------------------------------
     echo "[3/4] Parsing BUFR to GeoJSON via embedded Python..."
     if [ -f "${TEMP_BUFR}" ] && [ -s "${TEMP_BUFR}" ]; then
         python3 "${PYTHON_SCRIPT}" "${TEMP_BUFR}" "${OUTPUT_FILE}"
     else
-        echo "Error: BUFR download failed."
+        echo "Error: BUFR download failed or file is zero bytes."
         return 1
     fi
 
-    # 5. Commit and Deploy
+    # --------------------------------------------------------------------------
+    # 5. Commit and Push to GitHub
+    # --------------------------------------------------------------------------
     echo "[4/4] Deploying to GitHub..."
     git add "${OUTPUT_FILE}"
 
@@ -145,7 +164,7 @@ EOF
 }
 
 # ------------------------------------------------------------------------------
-# Infinite Execution Loop (Every 1800s)
+# Continuous Execution Loop (Runs every 1800 seconds)
 # ------------------------------------------------------------------------------
 while true; do
     run_pipeline || echo "Pipeline pass encountered an error, waiting for next run..."
