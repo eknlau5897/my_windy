@@ -170,7 +170,7 @@
             const statusEl = document.getElementById('statusText');
             statusEl.innerText = "Fetching NOAA data...";
 
-            const rawUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&last3000';
+            const rawUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&last15000';
             const corsProxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(rawUrl);
 
             try {
