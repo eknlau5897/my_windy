@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Himawari Satellite & NOAA AMV GIS (Wind Barbs)</title>
+    <title>West Pacific Himawari (NASA GIBS Band 13) & NOAA AMV Winds</title>
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -12,7 +12,6 @@
         body { margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #0b0f19; color: #fff; }
         #map { height: 100vh; width: 100vw; }
 
-        /* Floating UI Control Panel */
         .control-panel {
             position: absolute;
             top: 20px;
@@ -24,7 +23,7 @@
             z-index: 1000;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            width: 250px;
+            width: 260px;
         }
 
         .control-panel h3 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #38bdf8; letter-spacing: 0.5px; }
@@ -46,7 +45,6 @@
 
         .status { margin-top: 10px; font-size: 11px; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
 
-        /* Remove default background/border from custom Leaflet DivIcons */
         .wind-barb-icon {
             background: transparent !important;
             border: none !important;
@@ -57,9 +55,8 @@
 
     <div id="map"></div>
 
-    <!-- UI Overlay Controls -->
     <div class="control-panel">
-        <h3>Satellite Winds (AMV)</h3>
+        <h3>West Pacific AMV Winds</h3>
         
         <div id="filters">
             <label class="filter-option">
@@ -88,7 +85,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // 1. Initialize Leaflet Map
+        // 1. Initialize Leaflet Map Centered over West Pacific
         const map = L.map('map', {
             center: [15.0, 135.0],
             zoom: 4
@@ -99,19 +96,22 @@
             attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(map);
 
-        // 2. Add Live Himawari Satellite Layer
-        const himawariWMS = L.tileLayer.wms('https://coastwatch.noaa.gov/geoserver/wms', {
-            layers: 'coastwatch:himawari9_ir',
+        // 2. NASA GIBS Himawari Band 13 (Clean Infrared) WMS Layer
+        const todayDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+        const nasaGibsBand13 = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi', {
+            layers: 'Himawari_AHI_Band13_Clean_Infrared',
             format: 'image/png',
             transparent: true,
-            opacity: 0.6,
-            version: '1.3.0'
+            opacity: 0.65,
+            version: '1.3.0',
+            time: todayDate,
+            attribution: '&copy; NASA GIBS / EOSDIS'
         }).addTo(map);
 
         let rawAMVData = [];
         let amvLayerGroup = L.layerGroup().addTo(map);
 
-        // 3. Helper: Generate Meteorological Wind Barb SVG
+        // 3. Meteorological Wind Barb SVG Generator
         function createWindBarbSVG(speedMS, dirDeg, color) {
             const knots = Math.round(speedMS * 1.94384);
             
@@ -123,9 +123,9 @@
             let lines5 = Math.floor(k / 5);
 
             let barbElements = '';
-            let yPos = 4; // Start near top end of the staff
+            let yPos = 4;
 
-            // 50-knot Pennants (Solid Triangles)
+            // 50-knot Pennants
             for (let i = 0; i < flags50; i++) {
                 barbElements += `<polygon points="20,${yPos} 32,${yPos + 2} 20,${yPos + 6}" fill="${color}" />`;
                 yPos += 7;
@@ -143,7 +143,7 @@
                 yPos += 5;
             }
 
-            // Calm Wind (< 3 Knots): Circle
+            // Calm Wind (< 3 kts)
             if (knots < 3) {
                 return `
                 <svg width="40" height="40" viewBox="0 0 40 40">
@@ -151,26 +151,22 @@
                 </svg>`;
             }
 
-            // Rotated Container for Directional Alignment
             return `
             <div style="transform: rotate(${dirDeg}deg); transform-origin: center center; width: 40px; height: 40px;">
                 <svg width="40" height="40" viewBox="0 0 40 40">
-                    <!-- Base Dot -->
                     <circle cx="20" cy="20" r="2.5" fill="${color}" />
-                    <!-- Main Staff -->
                     <line x1="20" y1="20" x2="20" y2="4" stroke="${color}" stroke-width="2" stroke-linecap="round" />
-                    <!-- Pennants and Barbs -->
                     ${barbElements}
                 </svg>
             </div>`;
         }
 
-        // 4. Fetch Live Data
+        // 4. Fetch Live West Pacific Data (3000 points bounded to Lat: -10 to 50, Lon: 100 to 180)
         async function fetchLiveData() {
             const statusEl = document.getElementById('statusText');
             statusEl.innerText = "Fetching NOAA data...";
 
-            const rawUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&last15000';
+            const rawUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&latitude>=-10&latitude<=50&longitude>=100&longitude<=180&last3000';
             const corsProxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(rawUrl);
 
             try {
@@ -220,13 +216,13 @@
             }
         }
 
-        // 5. Render Wind Barbs on Map
+        // 5. Render Wind Barbs
         function filterAndRender() {
             amvLayerGroup.clearLayers();
 
-            const showHigh = document.getElementById('chkHigh').checked; // < 400 hPa
-            const showMid = document.getElementById('chkMid').checked;   // 400-700 hPa
-            const showLow = document.getElementById('chkLow').checked;   // > 700 hPa
+            const showHigh = document.getElementById('chkHigh').checked;
+            const showMid = document.getElementById('chkMid').checked;
+            const showLow = document.getElementById('chkLow').checked;
 
             let count = 0;
 
@@ -241,7 +237,6 @@
                 if (show) {
                     count++;
 
-                    // Color Scale by Pressure Altitude
                     let color = "#00ffff"; // High level (<400 hPa)
                     if (p > 700) color = "#ff5500"; // Low level (>700 hPa)
                     else if (p >= 400) color = "#ffff00"; // Mid level (400-700 hPa)
@@ -272,7 +267,7 @@
             document.getElementById('pointCount').innerText = count;
         }
 
-        // Run on boot
+        // Boot
         fetchLiveData();
 
         // Auto-refresh every 10 minutes

@@ -37,7 +37,7 @@ OUTPUT_FILE = "data.json"
 # List of endpoints to try in order
 ENDPOINTS = [
     # 1. NOAA Primary Dataset Sliced Suffix
-    "https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&last15000",
+    "https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&last3000",
     # 2. NOAA Secondary Backup Dataset Suffix
     "https://coastwatch.pfeg.noaa.gov/erddap/tabledap/nesdisAMV.json?latitude,longitude,pressure,wind_speed,wind_direction&last1000"
 ]
@@ -55,8 +55,8 @@ def generate_fallback_grid():
     print("Warning: External APIs returned 0 records. Generating global satellite wind grid fallback...")
     features = []
     # Generates coverage across Pacific/Asia Himawari region
-    for lat in range(-30, 50, 4):
-        for lon in range(90, 180, 5):
+    for lat in range(-30, 50, 2):
+        for lon in range(90, 180, 2):
             features.append({
                 "type": "Feature",
                 "geometry": {
