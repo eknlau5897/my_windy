@@ -209,22 +209,24 @@
 
             if (chartType === 'none') return;
 
-            let imageUrl = '';
+            let rawImageUrl = '';
 
             // Direct live KMA static PNG chart endpoints
             if (chartType === 'surface') {
-                imageUrl = 'https://www.weather.go.kr/w/resources/image/chart/sh/sh_asia_surface.png';
+                rawImageUrl = 'https://www.weather.go.kr/w/resources/image/chart/sh/sh_asia_surface.png';
             } else if (chartType === '850') {
-                imageUrl = 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_850.png';
+                rawImageUrl = 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_850.png';
             } else if (chartType === '500') {
-                imageUrl = 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_500.png';
+                rawImageUrl = 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_500.png';
             } else if (chartType === '300') {
-                imageUrl = 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_300.png';
+                rawImageUrl = 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_300.png';
             }
 
+            // Wrap in CORS proxy to bypass KMA browser origin blocks
+            const proxiedUrl = 'https://corsproxy.io/?' + encodeURIComponent(rawImageUrl);
             const opacity = parseFloat(document.getElementById('chartOpacity').value);
 
-            currentKMAOverlay = L.imageOverlay(imageUrl, kmaChartBounds, {
+            currentKMAOverlay = L.imageOverlay(proxiedUrl, kmaChartBounds, {
                 opacity: opacity,
                 interactive: false
             }).addTo(map);
