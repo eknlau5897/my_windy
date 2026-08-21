@@ -66,7 +66,7 @@ def generate_fallback_grid():
                 "properties": {
                     "speed_ms": round(random.uniform(5.0, 45.0), 1),
                     "direction": random.randint(0, 360),
-                    "pressure_hpa": random.choice([250, 300, 500, 700, 850])
+                    "pressure_hpa": random.choice([250, 300, 500, 700, 850,1000])
                 }
             })
     return features
