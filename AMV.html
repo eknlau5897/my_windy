@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>West Pacific AMV Winds & KMA Synoptic Weather</title>
+    <title>West Pacific Himawari (NASA GIBS Band 13) & NOAA AMV Winds</title>
 
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
@@ -22,7 +23,7 @@
             z-index: 1000;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            width: 295px;
+            width: 285px;
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -48,19 +49,12 @@
         .btn-secondary { background: #334155; }
         .btn-secondary:hover { background: #475569; }
 
-        select.chart-dropdown {
-            width: 100%;
-            padding: 6px;
-            border-radius: 6px;
-            background: #1e293b;
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 12px;
-            margin-top: 4px;
-        }
-
         .status { margin-top: 10px; font-size: 11px; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
-        .wind-barb-icon { background: transparent !important; border: none !important; }
+
+        .wind-barb-icon {
+            background: transparent !important;
+            border: none !important;
+        }
     </style>
 </head>
 <body>
@@ -68,38 +62,14 @@
     <div id="map"></div>
 
     <div class="control-panel">
-        <h3>West Pacific Weather</h3>
-
-        <div class="filter-section-title">Satellite IR (NASA GIBS / Himawari)</div>
-        <label class="filter-option">
-            <span>Show Himawari IR Band13</span>
-            <input type="checkbox" id="chkSat" checked onchange="toggleSatellite()">
-        </label>
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span style="font-size: 11px; color: #94a3b8;">Sat Opacity</span>
-            <input type="range" id="satOpacity" min="0.1" max="1.0" step="0.05" value="0.5" oninput="adjustSatOpacity()" style="width: 110px;">
-        </div>
-
-        <div class="filter-section-title">KMA Synoptic Charts</div>
-        <select id="kmaChartSelect" class="chart-dropdown" onchange="updateKMAChart()">
-            <option value="none">None (Disabled)</option>
-            <option value="surface">KMA Surface Analysis (Isobars / Fronts)</option>
-            <option value="850">KMA 850 hPa Upper-Air Chart</option>
-            <option value="500">KMA 500 hPa Upper-Air Chart</option>
-            <option value="300">KMA 300 hPa Jetstream Chart</option>
-        </select>
+        <h3>West Pacific AMV Winds</h3>
         
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
-            <span style="font-size: 11px; color: #94a3b8;">Chart Opacity</span>
-            <input type="range" id="chartOpacity" min="0.1" max="1.0" step="0.05" value="0.75" oninput="adjustChartOpacity()" style="width: 110px;">
-        </div>
-
-        <div style="display: flex; gap: 6px; margin-top: 12px; margin-bottom: 8px;">
+        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
             <button class="btn-action" onclick="setAllLevels(true)">Select All</button>
             <button class="btn-action btn-secondary" onclick="setAllLevels(false)">Deselect All</button>
         </div>
 
-        <div class="filter-section-title">AMV Pressure Levels (hPa)</div>
+        <div class="filter-section-title">Pressure Levels (hPa)</div>
         <div id="filters">
             <label class="filter-option">
                 <span><span class="badge" style="background: #a855f7;"></span> 250 hPa (Upper)</span>
@@ -147,99 +117,42 @@
 
         <div class="status">
             <div>Status: <span id="statusText" style="color: #38bdf8;">Initializing...</span></div>
-            <div>Active Points: <strong id="pointCount" style="color: #fff;">0</strong></div>
+            <div>Observations: <strong id="pointCount" style="color: #fff;">0</strong></div>
         </div>
     </div>
 
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
+        // 1. Initialize Leaflet Map Centered over West Pacific
         const map = L.map('map', {
-            center: [25.0, 130.0],
+            center: [15.0, 135.0],
             zoom: 4
         });
 
-        // Dark Base Map
+        // Dark Basemap
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(map);
 
-        // --- NASA GIBS Satellite Background Layer ---
+        // 2. NASA GIBS Himawari Band 13 (Clean Infrared) WMS Layer (50 mins prior, rounded to 10m intervals)
         const now = new Date();
         const targetTime = new Date(now.getTime() - 50 * 60 * 1000);
         targetTime.setUTCMinutes(Math.floor(targetTime.getUTCMinutes() / 10) * 10, 0, 0);
         const isoTimeString = targetTime.toISOString().split('.')[0] + 'Z';
 
-        const nasaGibsSatWMS = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi', {
+        const nasaGibsBand13 = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi', {
             layers: 'Himawari_AHI_Band13_Clean_Infrared',
             format: 'image/png',
             transparent: true,
-            opacity: 0.5,
+            opacity: 0.65,
             version: '1.3.0',
             time: isoTimeString,
             attribution: '&copy; NASA GIBS / EOSDIS'
         }).addTo(map);
 
-        function toggleSatellite() {
-            if (document.getElementById('chkSat').checked) {
-                map.addLayer(nasaGibsSatWMS);
-            } else {
-                map.removeLayer(nasaGibsSatWMS);
-            }
-        }
-
-        function adjustSatOpacity() {
-            const val = parseFloat(document.getElementById('satOpacity').value);
-            nasaGibsSatWMS.setOpacity(val);
-        }
-
-        // --- Live KMA Synoptic Surface & Upper-Air Charts Overlay ---
-        let currentKMAOverlay = null;
-
-        // Standard spatial bounding box for KMA East Asia regional charts
-        const kmaChartBounds = [[-5.0, 85.0], [60.0, 175.0]];
-
-        function updateKMAChart() {
-            const chartType = document.getElementById('kmaChartSelect').value;
-
-            if (currentKMAOverlay) {
-                map.removeLayer(currentKMAOverlay);
-                currentKMAOverlay = null;
-            }
-
-            if (chartType === 'none') return;
-
-            let rawImageUrl = '';
-
-            // Direct live KMA static PNG chart endpoints
-            if (chartType === 'surface') {
-                rawImageUrl = 'https://www.weather.go.kr/w/resources/image/chart/sh/sh_asia_surface.png';
-            } else if (chartType === '850') {
-                rawImageUrl = 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_850.png';
-            } else if (chartType === '500') {
-                rawImageUrl = 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_500.png';
-            } else if (chartType === '300') {
-                rawImageUrl = 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_300.png';
-            }
-
-            // Wrap in CORS proxy to bypass KMA browser origin blocks
-            const proxiedUrl = 'https://corsproxy.io/?' + encodeURIComponent(rawImageUrl);
-            const opacity = parseFloat(document.getElementById('chartOpacity').value);
-
-            currentKMAOverlay = L.imageOverlay(proxiedUrl, kmaChartBounds, {
-                opacity: opacity,
-                interactive: false
-            }).addTo(map);
-        }
-
-        function adjustChartOpacity() {
-            if (currentKMAOverlay) {
-                const val = parseFloat(document.getElementById('chartOpacity').value);
-                currentKMAOverlay.setOpacity(val);
-            }
-        }
-
-        // --- Coastlines ---
+        // 3. Red Coastline Layer Setup
         let coastlineLayer = null;
         async function loadRedCoastlines() {
             try {
@@ -263,15 +176,16 @@
             }
         }
 
-        // --- AMV Wind Barbs Processing ---
         let rawAMVData = [];
         let amvLayerGroup = L.layerGroup().addTo(map);
 
+        // Utility to batch check/uncheck checkboxes
         function setAllLevels(state) {
             document.querySelectorAll('.lvl-chk').forEach(chk => chk.checked = state);
             filterAndRender();
         }
 
+        // Snap observation pressure to nearest standard pressure tier for granular filter mapping
         function snapToStandardLevel(p) {
             const levels = [250, 300, 400, 500, 700, 850, 925, 1000];
             let closest = levels[0];
@@ -286,6 +200,7 @@
             return closest;
         }
 
+        // Get color associated with pressure tier
         function getColorForLevel(p) {
             switch(p) {
                 case 250: return '#a855f7';
@@ -300,11 +215,14 @@
             }
         }
 
+        // 4. Meteorological Wind Barb SVG Generator
         function createWindBarbSVG(speedMS, dirDeg, color) {
             const knots = Math.round(speedMS * 1.94384);
             let k = knots;
-            let flags50 = Math.floor(k / 50); k %= 50;
-            let lines10 = Math.floor(k / 10); k %= 10;
+            let flags50 = Math.floor(k / 50);
+            k %= 50;
+            let lines10 = Math.floor(k / 10);
+            k %= 10;
             let lines5 = Math.floor(k / 5);
 
             let barbElements = '';
@@ -324,7 +242,10 @@
             }
 
             if (knots < 3) {
-                return `<svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="4" fill="none" stroke="${color}" stroke-width="2" /></svg>`;
+                return `
+                <svg width="40" height="40" viewBox="0 0 40 40">
+                    <circle cx="20" cy="20" r="4" fill="none" stroke="${color}" stroke-width="2" />
+                </svg>`;
             }
 
             return `
@@ -337,6 +258,7 @@
             </div>`;
         }
 
+        // 5. Fetch Live West Pacific Data
         async function fetchLiveData() {
             const statusEl = document.getElementById('statusText');
             statusEl.innerText = "Fetching NOAA data...";
@@ -363,7 +285,7 @@
                 filterAndRender();
 
             } catch (error) {
-                console.warn("Proxy fetch failed, fallback to local data.json...", error);
+                console.warn("Proxy fetch failed, reading local fallback data.json...", error);
                 fetchFallbackJSON();
             }
         }
@@ -389,47 +311,52 @@
             }
         }
 
+        // 6. Render Wind Barbs based on granular individual pressure level checkboxes
         function filterAndRender() {
             amvLayerGroup.clearLayers();
 
+            // Collect active pressure levels from checkboxes
             const activeLevels = {};
             document.querySelectorAll('.lvl-chk').forEach(chk => {
                 if (chk.checked) activeLevels[parseInt(chk.value)] = true;
             });
 
-            const filteredPoints = rawAMVData.filter(pt => {
-                const lvl = snapToStandardLevel(pt.pressure);
-                return activeLevels[lvl];
+            let count = 0;
+
+            rawAMVData.forEach(pt => {
+                const standardLevel = snapToStandardLevel(pt.pressure);
+
+                if (activeLevels[standardLevel]) {
+                    count++;
+                    const color = getColorForLevel(standardLevel);
+                    const svgHtml = createWindBarbSVG(pt.speed, pt.direction, color);
+
+                    const icon = L.divIcon({
+                        html: svgHtml,
+                        className: 'wind-barb-icon',
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 20]
+                    });
+
+                    const marker = L.marker([pt.lat, pt.lon], { icon: icon });
+                    const speedKnots = Math.round(pt.speed * 1.94384);
+
+                    marker.bindPopup(`
+                        <strong>Satellite Wind Observation</strong><br/>
+                        <b>Exact Pressure:</b> ${pt.pressure} hPa<br/>
+                        <b>Matched Level:</b> ${standardLevel} hPa<br/>
+                        <b>Wind Speed:</b> ${pt.speed} m/s (${speedKnots} kts)<br/>
+                        <b>Direction:</b> ${pt.direction}°
+                    `);
+
+                    amvLayerGroup.addLayer(marker);
+                }
             });
 
-            filteredPoints.forEach(pt => {
-                const stdLvl = snapToStandardLevel(pt.pressure);
-                const color = getColorForLevel(stdLvl);
-                const svgHtml = createWindBarbSVG(pt.speed, pt.direction, color);
-
-                const icon = L.divIcon({
-                    html: svgHtml,
-                    className: 'wind-barb-icon',
-                    iconSize: [40, 40],
-                    iconAnchor: [20, 20]
-                });
-
-                const marker = L.marker([pt.lat, pt.lon], { icon: icon });
-                const speedKnots = Math.round(pt.speed * 1.94384);
-
-                marker.bindPopup(`
-                    <strong>AMV Wind Observation</strong><br/>
-                    <b>Pressure:</b> ${pt.pressure} hPa (Level: ${stdLvl} hPa)<br/>
-                    <b>Speed:</b> ${pt.speed} m/s (${speedKnots} kts)<br/>
-                    <b>Direction:</b> ${pt.direction}°
-                `);
-
-                amvLayerGroup.addLayer(marker);
-            });
-
-            document.getElementById('pointCount').innerText = filteredPoints.length;
+            document.getElementById('pointCount').innerText = count;
         }
 
+        // Boot
         fetchLiveData();
         setInterval(fetchLiveData, 600000);
     </script>
