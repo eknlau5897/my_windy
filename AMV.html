@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>West Pacific AMV Winds & Global Synoptic WMS</title>
+    <title>West Pacific AMV Winds & KMA Synoptic Weather</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -68,30 +68,30 @@
     <div id="map"></div>
 
     <div class="control-panel">
-        <h3>West Pacific AMV Winds</h3>
+        <h3>West Pacific Weather</h3>
 
-        <div class="filter-section-title">Satellite IR (Himawari)</div>
+        <div class="filter-section-title">Satellite IR (NASA GIBS / Himawari)</div>
         <label class="filter-option">
-            <span>Show Satellite IR Band13</span>
+            <span>Show Himawari IR Band13</span>
             <input type="checkbox" id="chkSat" checked onchange="toggleSatellite()">
         </label>
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
             <span style="font-size: 11px; color: #94a3b8;">Sat Opacity</span>
-            <input type="range" id="satOpacity" min="0.1" max="1.0" step="0.05" value="0.65" oninput="adjustSatOpacity()" style="width: 110px;">
+            <input type="range" id="satOpacity" min="0.1" max="1.0" step="0.05" value="0.5" oninput="adjustSatOpacity()" style="width: 110px;">
         </div>
 
-        <div class="filter-section-title">Synoptic / Upper-Air WMS</div>
-        <select id="synopticWmsSelect" class="chart-dropdown" onchange="updateSynopticWMS()">
+        <div class="filter-section-title">KMA Synoptic Charts</div>
+        <select id="kmaChartSelect" class="chart-dropdown" onchange="updateKMAChart()">
             <option value="none">None (Disabled)</option>
-            <option value="surface">MSLP Pressure Analysis Isobars</option>
-            <option value="850">850 hPa Geopotential Height & Temp</option>
-            <option value="500">500 hPa Geopotential Height</option>
-            <option value="250">250 hPa Upper-Level Wind Speed</option>
+            <option value="surface">KMA Surface Analysis (Isobars / Fronts)</option>
+            <option value="850">KMA 850 hPa Upper-Air Chart</option>
+            <option value="500">KMA 500 hPa Upper-Air Chart</option>
+            <option value="300">KMA 300 hPa Jetstream Chart</option>
         </select>
         
         <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
-            <span style="font-size: 11px; color: #94a3b8;">WMS Opacity</span>
-            <input type="range" id="wmsOpacity" min="0.1" max="1.0" step="0.05" value="0.75" oninput="adjustWmsOpacity()" style="width: 110px;">
+            <span style="font-size: 11px; color: #94a3b8;">Chart Opacity</span>
+            <input type="range" id="chartOpacity" min="0.1" max="1.0" step="0.05" value="0.75" oninput="adjustChartOpacity()" style="width: 110px;">
         </div>
 
         <div style="display: flex; gap: 6px; margin-top: 12px; margin-bottom: 8px;">
@@ -135,7 +135,7 @@
             </label>
         </div>
 
-        <div class="filter-section-title">Overlay Options</div>
+        <div class="filter-section-title">Layers</div>
         <label class="filter-option">
             <span><span class="badge" style="border: 1px solid #ff0000; background: transparent;"></span> Show Red Coastlines</span>
             <input type="checkbox" id="chkCoastlines" checked onchange="toggleCoastlines()">
@@ -159,7 +159,7 @@
             zoom: 4
         });
 
-        // Dark Base Layer
+        // Dark Base Map
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(map);
@@ -174,7 +174,7 @@
             layers: 'Himawari_AHI_Band13_Clean_Infrared',
             format: 'image/png',
             transparent: true,
-            opacity: 0.65,
+            opacity: 0.5,
             version: '1.3.0',
             time: isoTimeString,
             attribution: '&copy; NASA GIBS / EOSDIS'
@@ -193,75 +193,51 @@
             nasaGibsSatWMS.setOpacity(val);
         }
 
-        // --- Global Synoptic Surface & Upper Air WMS Layer (MSC GeoMet) ---
-        let activeSynopticWms = null;
+        // --- Live KMA Synoptic Surface & Upper-Air Charts Overlay ---
+        let currentKMAOverlay = null;
 
-        function updateSynopticWMS() {
-            const selectedType = document.getElementById('synopticWmsSelect').value;
+        // Standard spatial bounding box for KMA East Asia regional charts
+        const kmaChartBounds = [[-5.0, 85.0], [60.0, 175.0]];
 
-            if (activeSynopticWms) {
-                map.removeLayer(activeSynopticWms);
-                activeSynopticWms = null;
+        function updateKMAChart() {
+            const chartType = document.getElementById('kmaChartSelect').value;
+
+            if (currentKMAOverlay) {
+                map.removeLayer(currentKMAOverlay);
+                currentKMAOverlay = null;
             }
 
-            if (selectedType === 'none') return;
+            if (chartType === 'none') return;
 
-            const opacity = parseFloat(document.getElementById('wmsOpacity').value);
+            let imageUrl = '';
 
-            if (selectedType === 'surface') {
-                // Global Sea Level Pressure Isobars
-                activeSynopticWms = L.tileLayer.wms('https://geo.weather.gc.ca/geomet', {
-                    layers: 'GDPS.ETA_PR',
-                    format: 'image/png',
-                    transparent: true,
-                    version: '1.3.0',
-                    opacity: opacity,
-                    attribution: '&copy; MSC GeoMet / Environment Canada'
-                }).addTo(map);
-            } 
-            else if (selectedType === '850') {
-                // Global 850 hPa Geopotential Height & Temperature
-                activeSynopticWms = L.tileLayer.wms('https://geo.weather.gc.ca/geomet', {
-                    layers: 'GDPS.3_GZ.850',
-                    format: 'image/png',
-                    transparent: true,
-                    version: '1.3.0',
-                    opacity: opacity,
-                    attribution: '&copy; MSC GeoMet / Environment Canada'
-                }).addTo(map);
+            // Direct live KMA static PNG chart endpoints
+            if (chartType === 'surface') {
+                imageUrl = 'https://www.weather.go.kr/w/resources/image/chart/sh/sh_asia_surface.png';
+            } else if (chartType === '850') {
+                imageUrl = 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_850.png';
+            } else if (chartType === '500') {
+                imageUrl = 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_500.png';
+            } else if (chartType === '300') {
+                imageUrl = 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_300.png';
             }
-            else if (selectedType === '500') {
-                // Global 500 hPa Geopotential Height
-                activeSynopticWms = L.tileLayer.wms('https://geo.weather.gc.ca/geomet', {
-                    layers: 'GDPS.3_GZ.500',
-                    format: 'image/png',
-                    transparent: true,
-                    version: '1.3.0',
-                    opacity: opacity,
-                    attribution: '&copy; MSC GeoMet / Environment Canada'
-                }).addTo(map);
-            }
-            else if (selectedType === '250') {
-                // Global 250 hPa Upper Level Wind Speed
-                activeSynopticWms = L.tileLayer.wms('https://geo.weather.gc.ca/geomet', {
-                    layers: 'GDPS.ETA_UU.250',
-                    format: 'image/png',
-                    transparent: true,
-                    version: '1.3.0',
-                    opacity: opacity,
-                    attribution: '&copy; MSC GeoMet / Environment Canada'
-                }).addTo(map);
+
+            const opacity = parseFloat(document.getElementById('chartOpacity').value);
+
+            currentKMAOverlay = L.imageOverlay(imageUrl, kmaChartBounds, {
+                opacity: opacity,
+                interactive: false
+            }).addTo(map);
+        }
+
+        function adjustChartOpacity() {
+            if (currentKMAOverlay) {
+                const val = parseFloat(document.getElementById('chartOpacity').value);
+                currentKMAOverlay.setOpacity(val);
             }
         }
 
-        function adjustWmsOpacity() {
-            if (activeSynopticWms && activeSynopticWms.setOpacity) {
-                const val = parseFloat(document.getElementById('wmsOpacity').value);
-                activeSynopticWms.setOpacity(val);
-            }
-        }
-
-        // --- Red Coastlines ---
+        // --- Coastlines ---
         let coastlineLayer = null;
         async function loadRedCoastlines() {
             try {
@@ -385,7 +361,7 @@
                 filterAndRender();
 
             } catch (error) {
-                console.warn("Proxy fetch failed, trying fallback local data.json...", error);
+                console.warn("Proxy fetch failed, fallback to local data.json...", error);
                 fetchFallbackJSON();
             }
         }
