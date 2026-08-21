@@ -318,7 +318,7 @@
             }
         }
 
-        // Fixed Meteorological SVG Generator
+        // Corrected Meteorological SVG Wind Barb Generator
         function createWindBarbSVG(speedMS, dirDeg, color, lat = 25) {
             const knots = Math.round(speedMS * 1.94384);
             let k = knots;
@@ -334,7 +334,7 @@
             }
 
             let barbElements = '';
-            let yPos = 4;
+            let yPos = 4; // Outer tail end of the staff
             
             const isNH = lat >= 0;
             const xEnd10 = isNH ? 8 : 32;
@@ -342,25 +342,23 @@
 
             for (let i = 0; i < flags50; i++) {
                 const polyPoints = isNH 
-                    ? `20,${yPos} 8,${yPos + 2} 20,${yPos + 6}` 
-                    : `20,${yPos} 32,${yPos + 2} 20,${yPos + 6}`;
+                    ? `20,${yPos} 8,${yPos + 3} 20,${yPos + 6}` 
+                    : `20,${yPos} 32,${yPos + 3} 20,${yPos + 6}`;
                 barbElements += `<polygon points="${polyPoints}" fill="${color}" />`;
                 yPos += 7;
             }
             for (let i = 0; i < lines10; i++) {
-                barbElements += `<line x1="20" y1="${yPos}" x2="${xEnd10}" y2="${yPos - 3}" stroke="${color}" stroke-width="2" stroke-linecap="round" />`;
+                barbElements += `<line x1="20" y1="${yPos}" x2="${xEnd10}" y2="${yPos + 3}" stroke="${color}" stroke-width="2" stroke-linecap="round" />`;
                 yPos += 5;
             }
             for (let i = 0; i < lines5; i++) {
-                barbElements += `<line x1="20" y1="${yPos}" x2="${xEnd5}" y2="${yPos - 2}" stroke="${color}" stroke-width="2" stroke-linecap="round" />`;
+                barbElements += `<line x1="20" y1="${yPos}" x2="${xEnd5}" y2="${yPos + 2}" stroke="${color}" stroke-width="2" stroke-linecap="round" />`;
                 yPos += 5;
             }
 
-            // Invert angle (+180 deg) so barb points FROM wind source toward station center
-            const rotationAngle = (dirDeg + 180) % 360;
-
+            // Standard rotation angle (0° points North, rotates clockwise)
             return `
-            <div style="transform: rotate(${rotationAngle}deg); transform-origin: center center; width: 40px; height: 40px;">
+            <div style="transform: rotate(${dirDeg}deg); transform-origin: center center; width: 40px; height: 40px;">
                 <svg width="40" height="40" viewBox="0 0 40 40">
                     <circle cx="20" cy="20" r="2.5" fill="${color}" />
                     <line x1="20" y1="20" x2="20" y2="4" stroke="${color}" stroke-width="2" stroke-linecap="round" />
