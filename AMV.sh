@@ -22,7 +22,7 @@ run_pipeline() {
     echo "=================================================="
 
     # --------------------------------------------------------------------------
-    # Embedded Python Script with Endpoints & Fallback
+    # Embedded Python Script
     # --------------------------------------------------------------------------
     cat << 'EOF' > "${PYTHON_SCRIPT}"
 import sys
@@ -34,11 +34,8 @@ from datetime import datetime, timezone
 
 OUTPUT_FILE = "data.json"
 
-# List of endpoints to try in order
 ENDPOINTS = [
-    # 1. NOAA Primary Dataset Sliced Suffix
     "https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&last3000",
-    # 2. NOAA Secondary Backup Dataset Suffix
     "https://coastwatch.pfeg.noaa.gov/erddap/tabledap/nesdisAMV.json?latitude,longitude,pressure,wind_speed,wind_direction&last1000"
 ]
 
@@ -52,9 +49,8 @@ def fetch_from_url(url):
     return []
 
 def generate_fallback_grid():
-    print("Warning: External APIs returned 0 records. Generating global satellite wind grid fallback...")
+    print("Warning: External APIs returned 0 records. Generating fallback grid...")
     features = []
-    # Generates coverage across Pacific/Asia Himawari region
     for lat in range(-30, 50, 2):
         for lon in range(90, 180, 2):
             features.append({
@@ -66,12 +62,12 @@ def generate_fallback_grid():
                 "properties": {
                     "speed_ms": round(random.uniform(5.0, 45.0), 1),
                     "direction": random.randint(0, 360),
-                    "pressure_hpa": random.choice([250, 300, 500, 700, 850,1000])
+                    "pressure_hpa": random.choice([250, 300, 500, 700, 850, 1000])
                 }
             })
     return features
 
-def main():
+def run():
     rows = []
     for url in ENDPOINTS:
         try:
@@ -105,7 +101,6 @@ def main():
         except (ValueError, TypeError):
             continue
 
-    # Use fallback grid if all remote requests yielded zero valid features
     if len(features) == 0:
         features = generate_fallback_grid()
 
@@ -119,17 +114,20 @@ def main():
         json.dump(geojson_data, f, indent=2)
 
     print(f"Wrote {len(features)} points into '{OUTPUT_FILE}'.")
-    return True
 
+# Direct Top-Level Execution
 if __name__ == "__main__":
-    main()
+    run()
 EOF
 
     # --------------------------------------------------------------------------
     # Git Sync & Push
     # --------------------------------------------------------------------------
-    echo "[1/3] Syncing Git..."
-    git pull origin "${BRANCH}" --rebase || echo "Git pull skipped."
+    CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "${BRANCH}")
+    CURRENT_BRANCH=${CURRENT_BRANCH:-main}
+
+    echo "[1/3] Syncing Git on '${CURRENT_BRANCH}'..."
+    git pull origin "${CURRENT_BRANCH}" --rebase || echo "      Git pull skipped."
 
     echo "[2/3] Executing Fetcher..."
     python3 "${PYTHON_SCRIPT}"
@@ -141,7 +139,7 @@ EOF
             echo "      No change in output file."
         else
             git commit -m "Auto-update satellite wind vectors [${TIMESTAMP}]"
-            git push origin "${BRANCH}"
+            git push origin "${CURRENT_BRANCH}" || git push -u origin "${CURRENT_BRANCH}"
             echo "      Pushed fresh data.json to GitHub!"
         fi
     fi
