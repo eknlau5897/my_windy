@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>West Pacific Himawari (NASA GIBS Band 13) & NOAA AMV Winds</title>
+    <title>West Pacific Himawari Infrared & AMV Streamlines</title>
 
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
@@ -51,10 +50,8 @@
 
         .status { margin-top: 10px; font-size: 11px; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; }
 
-        .wind-barb-icon {
-            background: transparent !important;
-            border: none !important;
-        }
+        .wind-barb-icon { background: transparent !important; border: none !important; }
+        .stream-arrow { background: transparent !important; border: none !important; }
     </style>
 </head>
 <body>
@@ -63,8 +60,18 @@
 
     <div class="control-panel">
         <h3>West Pacific AMV Winds</h3>
+
+        <div class="filter-section-title">Display Mode</div>
+        <label class="filter-option">
+            <span>Show Wind Barbs</span>
+            <input type="radio" name="mode" value="barbs" checked onchange="toggleRenderMode()">
+        </label>
+        <label class="filter-option">
+            <span>Show Streamlines</span>
+            <input type="radio" name="mode" value="streamlines" onchange="toggleRenderMode()">
+        </label>
         
-        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+        <div style="display: flex; gap: 6px; margin-top: 8px; margin-bottom: 8px;">
             <button class="btn-action" onclick="setAllLevels(true)">Select All</button>
             <button class="btn-action btn-secondary" onclick="setAllLevels(false)">Deselect All</button>
         </div>
@@ -117,26 +124,22 @@
 
         <div class="status">
             <div>Status: <span id="statusText" style="color: #38bdf8;">Initializing...</span></div>
-            <div>Observations: <strong id="pointCount" style="color: #fff;">0</strong></div>
+            <div>Active Features: <strong id="pointCount" style="color: #fff;">0</strong></div>
         </div>
     </div>
 
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // 1. Initialize Leaflet Map Centered over West Pacific
         const map = L.map('map', {
             center: [15.0, 135.0],
             zoom: 4
         });
 
-        // Dark Basemap
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(map);
 
-        // 2. NASA GIBS Himawari Band 13 (Clean Infrared) WMS Layer (50 mins prior, rounded to 10m intervals)
         const now = new Date();
         const targetTime = new Date(now.getTime() - 50 * 60 * 1000);
         targetTime.setUTCMinutes(Math.floor(targetTime.getUTCMinutes() / 10) * 10, 0, 0);
@@ -152,7 +155,6 @@
             attribution: '&copy; NASA GIBS / EOSDIS'
         }).addTo(map);
 
-        // 3. Red Coastline Layer Setup
         let coastlineLayer = null;
         async function loadRedCoastlines() {
             try {
@@ -179,13 +181,11 @@
         let rawAMVData = [];
         let amvLayerGroup = L.layerGroup().addTo(map);
 
-        // Utility to batch check/uncheck checkboxes
         function setAllLevels(state) {
             document.querySelectorAll('.lvl-chk').forEach(chk => chk.checked = state);
             filterAndRender();
         }
 
-        // Snap observation pressure to nearest standard pressure tier for granular filter mapping
         function snapToStandardLevel(p) {
             const levels = [250, 300, 400, 500, 700, 850, 925, 1000];
             let closest = levels[0];
@@ -200,7 +200,6 @@
             return closest;
         }
 
-        // Get color associated with pressure tier
         function getColorForLevel(p) {
             switch(p) {
                 case 250: return '#a855f7';
@@ -215,14 +214,11 @@
             }
         }
 
-        // 4. Meteorological Wind Barb SVG Generator
         function createWindBarbSVG(speedMS, dirDeg, color) {
             const knots = Math.round(speedMS * 1.94384);
             let k = knots;
-            let flags50 = Math.floor(k / 50);
-            k %= 50;
-            let lines10 = Math.floor(k / 10);
-            k %= 10;
+            let flags50 = Math.floor(k / 50); k %= 50;
+            let lines10 = Math.floor(k / 10); k %= 10;
             let lines5 = Math.floor(k / 5);
 
             let barbElements = '';
@@ -242,10 +238,7 @@
             }
 
             if (knots < 3) {
-                return `
-                <svg width="40" height="40" viewBox="0 0 40 40">
-                    <circle cx="20" cy="20" r="4" fill="none" stroke="${color}" stroke-width="2" />
-                </svg>`;
+                return `<svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="4" fill="none" stroke="${color}" stroke-width="2" /></svg>`;
             }
 
             return `
@@ -258,7 +251,6 @@
             </div>`;
         }
 
-        // 5. Fetch Live West Pacific Data
         async function fetchLiveData() {
             const statusEl = document.getElementById('statusText');
             statusEl.innerText = "Fetching NOAA data...";
@@ -285,7 +277,7 @@
                 filterAndRender();
 
             } catch (error) {
-                console.warn("Proxy fetch failed, reading local fallback data.json...", error);
+                console.warn("Proxy fetch failed, loading local fallback data.json...", error);
                 fetchFallbackJSON();
             }
         }
@@ -311,24 +303,159 @@
             }
         }
 
-        // 6. Render Wind Barbs based on granular individual pressure level checkboxes
+        function toggleRenderMode() {
+            filterAndRender();
+        }
+
+        // --- OPTION 2 STREAMLINE INTEGRATION ENGINE ---
+
+        // Convert Speed (m/s) & Direction (degrees) into U (E-W) and V (N-S) vector components
+        function dirSpeedToUV(speed, dirDeg) {
+            const rad = (dirDeg * Math.PI) / 180;
+            const u = -speed * Math.sin(rad); // West-to-East component
+            const v = -speed * Math.cos(rad); // South-to-North component
+            return { u, v };
+        }
+
+        // Interpolate U & V components at point (lat, lon) using Inverse Distance Weighting (IDW)
+        function interpolateUV(lat, lon, points) {
+            let sumWeight = 0;
+            let sumU = 0;
+            let sumV = 0;
+            const maxRadius = 8.0; // Max search radius in degrees (~880 km)
+            const p = 2; // Distance power weighting factor
+
+            for (let i = 0; i < points.length; i++) {
+                const pt = points[i];
+                const dLat = lat - pt.lat;
+                const dLon = lon - pt.lon;
+                const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+
+                if (dist > maxRadius) continue;
+                if (dist < 0.01) return dirSpeedToUV(pt.speed, pt.direction); // Exceedingly close match
+
+                const w = 1 / Math.pow(dist, p);
+                const uv = dirSpeedToUV(pt.speed, pt.direction);
+
+                sumWeight += w;
+                sumU += uv.u * w;
+                sumV += uv.v * w;
+            }
+
+            if (sumWeight === 0) return null; // Data gap (no observations within radius)
+
+            return { u: sumU / sumWeight, v: sumV / sumWeight };
+        }
+
+        // Generate and trace forward streamline curves from seeded grid nodes
+        function renderStreamlines(filteredPoints) {
+            if (filteredPoints.length === 0) return 0;
+
+            const gridSpacing = 2.0; // Grid step in degrees
+            const maxSteps = 15;     // Segment steps per line
+            const stepSize = 0.25;   // Distance delta per step in degrees
+            let streamlineCount = 0;
+
+            // Define grid extent covering West Pacific basin
+            for (let lat = -5; lat <= 45; lat += gridSpacing) {
+                for (let lon = 105; lon <= 175; lon += gridSpacing) {
+                    
+                    let currLat = lat;
+                    let currLon = lon;
+                    const path = [[currLat, currLon]];
+                    let totalSpeed = 0;
+
+                    for (let step = 0; step < maxSteps; step++) {
+                        const uv = interpolateUV(currLat, currLon, filteredPoints);
+                        if (!uv) break; // Terminate line if entering a data void
+
+                        const speed = Math.sqrt(uv.u * uv.u + uv.v * uv.v);
+                        if (speed < 1.0) break; // Terminate if wind is too calm (< 1 m/s)
+
+                        totalSpeed += speed;
+
+                        // Step forward along wind vector trajectory
+                        const dLat = (uv.v / speed) * stepSize;
+                        const dLon = (uv.u / speed) * stepSize;
+
+                        currLat += dLat;
+                        currLon += dLon;
+                        path.push([currLat, currLon]);
+                    }
+
+                    // Render streamline curve if at least 3 valid trajectory points exist
+                    if (path.length >= 3) {
+                        streamlineCount++;
+                        const avgSpeed = totalSpeed / (path.length - 1);
+
+                        // Dynamic color scaling based on wind speed (m/s)
+                        let color = '#38bdf8'; // Normal (Light Blue)
+                        if (avgSpeed > 25) color = '#ef4444'; // Jetstream / High Wind (Red)
+                        else if (avgSpeed > 15) color = '#f97316'; // Moderate (Orange)
+                        else if (avgSpeed > 8) color = '#eab308'; // Light (Yellow)
+
+                        // Render polyline path
+                        const line = L.polyline(path, {
+                            color: color,
+                            weight: 2,
+                            opacity: 0.8
+                        });
+                        amvLayerGroup.addLayer(line);
+
+                        // Add directional arrowhead at stream midpoint
+                        const midIndex = Math.floor(path.length / 2);
+                        const p1 = path[midIndex];
+                        const p2 = path[midIndex + 1];
+
+                        if (p1 && p2) {
+                            const angle = Math.atan2(p2[1] - p1[1], p2[0] - p1[0]) * (180 / Math.PI);
+                            
+                            const arrowIcon = L.divIcon({
+                                className: 'stream-arrow',
+                                html: `<div style="transform: rotate(${90 - angle}deg); transform-origin: center center;">
+                                         <svg width="12" height="12" viewBox="0 0 10 10">
+                                            <polygon points="5,0 10,10 5,7 0,10" fill="${color}"/>
+                                         </svg>
+                                       </div>`,
+                                iconSize: [12, 12],
+                                iconAnchor: [6, 6]
+                            });
+
+                            const arrowMarker = L.marker(p1, { icon: arrowIcon, interactive: false });
+                            amvLayerGroup.addLayer(arrowMarker);
+                        }
+                    }
+                }
+            }
+            return streamlineCount;
+        }
+
+        // Master Filter & Render Pipeline
         function filterAndRender() {
             amvLayerGroup.clearLayers();
 
-            // Collect active pressure levels from checkboxes
             const activeLevels = {};
             document.querySelectorAll('.lvl-chk').forEach(chk => {
                 if (chk.checked) activeLevels[parseInt(chk.value)] = true;
             });
 
-            let count = 0;
+            // Filter raw AMV observations to user-selected pressure tiers
+            const filteredPoints = rawAMVData.filter(pt => {
+                const lvl = snapToStandardLevel(pt.pressure);
+                return activeLevels[lvl];
+            });
 
-            rawAMVData.forEach(pt => {
-                const standardLevel = snapToStandardLevel(pt.pressure);
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            let featureCount = 0;
 
-                if (activeLevels[standardLevel]) {
-                    count++;
-                    const color = getColorForLevel(standardLevel);
+            if (mode === 'streamlines') {
+                featureCount = renderStreamlines(filteredPoints);
+            } else {
+                // Render standard Point Wind Barbs
+                filteredPoints.forEach(pt => {
+                    featureCount++;
+                    const stdLvl = snapToStandardLevel(pt.pressure);
+                    const color = getColorForLevel(stdLvl);
                     const svgHtml = createWindBarbSVG(pt.speed, pt.direction, color);
 
                     const icon = L.divIcon({
@@ -344,19 +471,18 @@
                     marker.bindPopup(`
                         <strong>Satellite Wind Observation</strong><br/>
                         <b>Exact Pressure:</b> ${pt.pressure} hPa<br/>
-                        <b>Matched Level:</b> ${standardLevel} hPa<br/>
+                        <b>Matched Level:</b> ${stdLvl} hPa<br/>
                         <b>Wind Speed:</b> ${pt.speed} m/s (${speedKnots} kts)<br/>
                         <b>Direction:</b> ${pt.direction}°
                     `);
 
                     amvLayerGroup.addLayer(marker);
-                }
-            });
+                });
+            }
 
-            document.getElementById('pointCount').innerText = count;
+            document.getElementById('pointCount').innerText = featureCount;
         }
 
-        // Boot
         fetchLiveData();
         setInterval(fetchLiveData, 600000);
     </script>
