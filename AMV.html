@@ -100,9 +100,11 @@
             attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(map);
 
-        // 2. NASA GIBS Himawari Band 13 (Clean Infrared) WMS Layer (50 mins ago, rounded to 10m cadence)
+        // 2. NASA GIBS Himawari Band 13 (Clean Infrared) WMS Layer (50 mins prior, rounded to 10m intervals)
         const now = new Date();
         const targetTime = new Date(now.getTime() - 50 * 60 * 1000);
+        
+        // Align minutes to nearest 10-minute GIBS scan window (00, 10, 20, 30, 40, 50)
         targetTime.setUTCMinutes(Math.floor(targetTime.getUTCMinutes() / 10) * 10, 0, 0);
 
         const isoTimeString = targetTime.toISOString().split('.')[0] + 'Z';
@@ -121,6 +123,7 @@
         let coastlineLayer = null;
         async function loadRedCoastlines() {
             try {
+                // Fetch GeoJSON coastline boundaries
                 const response = await fetch('https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_coastline.geojson');
                 const geojsonData = await response.json();
 
@@ -200,13 +203,13 @@
             </div>`;
         }
 
-        // 5. Fetch Live West Pacific Data via AllOrigins CORS Proxy
+        // 5. Fetch Live West Pacific Data (Includes Surface / 1000 hPa Observations)
         async function fetchLiveData() {
             const statusEl = document.getElementById('statusText');
             statusEl.innerText = "Fetching NOAA data...";
 
             const rawUrl = 'https://coastwatch.pfeg.noaa.gov/erddap/tabledap/noaa_nesdis_amv.json?latitude,longitude,pressure,wind_speed,wind_direction&latitude>=-10&latitude<=50&longitude>=100&longitude<=180&last3000';
-            const corsProxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(rawUrl);
+            const corsProxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(rawUrl);
 
             try {
                 const response = await fetch(corsProxyUrl);
@@ -255,13 +258,13 @@
             }
         }
 
-        // 6. Render Wind Barbs
+        // 6. Render Wind Barbs (Filtering low levels down to 1000 hPa)
         function filterAndRender() {
             amvLayerGroup.clearLayers();
 
             const showHigh = document.getElementById('chkHigh').checked; // < 400 hPa
             const showMid = document.getElementById('chkMid').checked;   // 400 - 700 hPa
-            const showLow = document.getElementById('chkLow').checked;   // > 700 hPa
+            const showLow = document.getElementById('chkLow').checked;   // > 700 hPa (includes 850, 925, 1000 hPa)
 
             let count = 0;
 
@@ -278,7 +281,7 @@
 
                     // Color Scale by Pressure Level
                     let color = "#00ffff"; // High level (<400 hPa)
-                    if (p > 700) color = "#ff3333"; // Surface / Low level (>700 hPa)
+                    if (p > 700) color = "#ff3333"; // Surface / Low level (>700 hPa including 1000 hPa)
                     else if (p >= 400) color = "#ffff00"; // Mid level (400-700 hPa)
 
                     const svgHtml = createWindBarbSVG(pt.speed, pt.direction, color);
