@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>West Pacific AMV Winds & KMA Weather Charts</title>
+    <title>West Pacific AMV Winds & JMA Open WMS Weather Charts</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -70,19 +70,27 @@
     <div class="control-panel">
         <h3>West Pacific AMV Winds</h3>
 
-        <div class="filter-section-title">KMA Weather Chart Overlay</div>
-        <select id="kmaChartSelect" class="chart-dropdown" onchange="updateKMAChart()">
+        <div class="filter-section-title">Satellite IR (Himawari)</div>
+        <label class="filter-option">
+            <span>Show Satellite IR Band13</span>
+            <input type="checkbox" id="chkSat" checked onchange="toggleSatellite()">
+        </label>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <span style="font-size: 11px; color: #94a3b8;">Sat Opacity</span>
+            <input type="range" id="satOpacity" min="0.1" max="1.0" step="0.05" value="0.65" oninput="adjustSatOpacity()" style="width: 110px;">
+        </div>
+
+        <div class="filter-section-title">JMA Open WMS Layers</div>
+        <select id="jmaChartSelect" class="chart-dropdown" onchange="updateJMAWMS()">
             <option value="none">None (Disabled)</option>
-            <option value="surface">Surface (1000 hPa)</option>
-            <option value="850">850 hPa Upper-Air Chart</option>
-            <option value="500">500 hPa Upper-Air Chart</option>
-            <option value="300">300 hPa Upper-Air Chart</option>
-            <option value="200">200 hPa Jetstream Chart</option>
+            <option value="hrpns">JMA High-Res Precipitation Radar WMS</option>
+            <option value="analysis">JMA Synoptic Weather Analysis Overlay</option>
+            <option value="ir">JMA Himawari Infrared WMS Tile</option>
         </select>
         
         <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
-            <span style="font-size: 11px; color: #94a3b8;">Chart Opacity</span>
-            <input type="range" id="chartOpacity" min="0.1" max="1.0" step="0.05" value="0.65" oninput="adjustChartOpacity()" style="width: 110px;">
+            <span style="font-size: 11px; color: #94a3b8;">JMA Opacity</span>
+            <input type="range" id="jmaOpacity" min="0.1" max="1.0" step="0.05" value="0.75" oninput="adjustJMAOpacity()" style="width: 110px;">
         </div>
 
         <div style="display: flex; gap: 6px; margin-top: 12px; margin-bottom: 8px;">
@@ -154,51 +162,88 @@
             attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(map);
 
-        let kmaChartLayer = null;
+        // --- NASA GIBS Satellite Background Layer ---
+        const now = new Date();
+        const targetTime = new Date(now.getTime() - 50 * 60 * 1000);
+        targetTime.setUTCMinutes(Math.floor(targetTime.getUTCMinutes() / 10) * 10, 0, 0);
+        const isoTimeString = targetTime.toISOString().split('.')[0] + 'Z';
 
-        // KMA East Asia Chart Coverage Bounding Box (Approx. 10°N to 60°N, 90°E to 160°E)
-        const kmaBounds = [[10.0, 90.0], [60.0, 160.0]];
+        const nasaGibsSatWMS = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi', {
+            layers: 'Himawari_AHI_Band13_Clean_Infrared',
+            format: 'image/png',
+            transparent: true,
+            opacity: 0.65,
+            version: '1.3.0',
+            time: isoTimeString,
+            attribution: '&copy; NASA GIBS / EOSDIS'
+        }).addTo(map);
 
-        // Generates dynamic URLs fetching weather charts from KMA's image server
-        function getKMAChartUrl(level) {
-            const chartMap = {
-                'surface': 'https://www.weather.go.kr/w/resources/image/chart/sh/sh_asia_surface.png',
-                '850': 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_850.png',
-                '500': 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_500.png',
-                '300': 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_300.png',
-                '200': 'https://www.weather.go.kr/w/resources/image/chart/up/up_asia_200.png'
-            };
-            return chartMap[level] || null;
+        function toggleSatellite() {
+            if (document.getElementById('chkSat').checked) {
+                map.addLayer(nasaGibsSatWMS);
+            } else {
+                map.removeLayer(nasaGibsSatWMS);
+            }
         }
 
-        function updateKMAChart() {
-            const selectedLevel = document.getElementById('kmaChartSelect').value;
-            
-            if (kmaChartLayer) {
-                map.removeLayer(kmaChartLayer);
-                kmaChartLayer = null;
+        function adjustSatOpacity() {
+            const val = parseFloat(document.getElementById('satOpacity').value);
+            nasaGibsSatWMS.setOpacity(val);
+        }
+
+        // --- Keyless JMA Public WMS Tile Service Integration ---
+        let jmaWmsLayer = null;
+
+        function updateJMAWMS() {
+            const selectedType = document.getElementById('jmaChartSelect').value;
+
+            if (jmaWmsLayer) {
+                map.removeLayer(jmaWmsLayer);
+                jmaWmsLayer = null;
             }
 
-            if (selectedLevel === 'none') return;
+            if (selectedType === 'none') return;
 
-            const url = getKMAChartUrl(selectedLevel);
-            const opacity = parseFloat(document.getElementById('chartOpacity').value);
+            const opacity = parseFloat(document.getElementById('jmaOpacity').value);
 
-            if (url) {
-                kmaChartLayer = L.imageOverlay(url, kmaBounds, {
+            if (selectedType === 'hrpns') {
+                // Keyless JMA High Resolution Precipitation Nowcast Tile Server
+                jmaWmsLayer = L.tileLayer('https://www.jma.go.jp/bosai/jmatile/data/nowc/latest/nowc/surf/hrpns/{z}/{x}/{y}.png', {
                     opacity: opacity,
-                    interactive: false
+                    maxZoom: 10,
+                    attribution: '&copy; Japan Meteorological Agency (JMA)'
+                }).addTo(map);
+            } 
+            else if (selectedType === 'analysis') {
+                // Keyless Open GeoServer WMS mirroring JMA Synoptic Surface Analysis
+                jmaWmsLayer = L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/jp_hrrr.cgi', {
+                    layers: 'jp_hrrr',
+                    format: 'image/png',
+                    transparent: true,
+                    version: '1.1.1',
+                    opacity: opacity,
+                    attribution: '&copy; JMA / IEM Open WMS'
+                }).addTo(map);
+            }
+            else if (selectedType === 'ir') {
+                // Keyless JMA Satellite Tile Stream
+                jmaWmsLayer = L.tileLayer('https://www.jma.go.jp/bosai/jmatile/data/sat/latest/sat/surf/ir/{z}/{x}/{y}.png', {
+                    opacity: opacity,
+                    attribution: '&copy; Japan Meteorological Agency'
                 }).addTo(map);
             }
         }
 
-        function adjustChartOpacity() {
-            if (kmaChartLayer) {
-                const opacity = parseFloat(document.getElementById('chartOpacity').value);
-                kmaChartLayer.setOpacity(opacity);
+        function adjustJMAOpacity() {
+            if (jmaWmsLayer) {
+                const val = parseFloat(document.getElementById('jmaOpacity').value);
+                if (jmaWmsLayer.setOpacity) {
+                    jmaWmsLayer.setOpacity(val);
+                }
             }
         }
 
+        // --- Coastlines ---
         let coastlineLayer = null;
         async function loadRedCoastlines() {
             try {
@@ -222,6 +267,7 @@
             }
         }
 
+        // --- AMV Wind Barbs ---
         let rawAMVData = [];
         let amvLayerGroup = L.layerGroup().addTo(map);
 
