@@ -67,7 +67,7 @@ def generate_fallback_grid():
             })
     return features
 
-def run():
+def main():
     rows = []
     for url in ENDPOINTS:
         try:
@@ -115,9 +115,8 @@ def run():
 
     print(f"Wrote {len(features)} points into '{OUTPUT_FILE}'.")
 
-# Direct Top-Level Execution
 if __name__ == "__main__":
-    run()
+    main()
 EOF
 
     # --------------------------------------------------------------------------
