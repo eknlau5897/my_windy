@@ -319,61 +319,42 @@
         }
 
         // Corrected Meteorological SVG Wind Barb Generator
-        function createWindBarbSVG(speedMS, dirDeg, color, lat = 25) {
-    const knots = Math.round(speedMS * 1.94384);
-    let k = knots;
+        function createWindBarbSVG(speedMS, dirDeg, color) {
+            const knots = Math.round(speedMS * 1.94384);
+            let k = knots;
+            let flags50 = Math.floor(k / 50); k %= 50;
+            let lines10 = Math.floor(k / 10); k %= 10;
+            let lines5 = Math.floor(k / 5);
 
-    let flags50 = Math.floor(k / 50); k %= 50;
-    let lines10 = Math.floor(k / 10); k %= 10;
-    let lines5 = Math.floor(k / 5);
+            let barbElements = '';
+            let yPos = 4;
 
-    // Calm winds (< 3 knots)
-    if (knots < 3) {
-        return `<svg width="40" height="40" viewBox="0 0 40 40">
-            <circle cx="20" cy="20" r="4" fill="none" stroke="${color}" stroke-width="2" />
-        </svg>`;
-    }
+            for (let i = 0; i < flags50; i++) {
+                barbElements += `<polygon points="20,${yPos} 32,${yPos + 2} 20,${yPos + 6}" fill="${color}" />`;
+                yPos += 7;
+            }
+            for (let i = 0; i < lines10; i++) {
+                barbElements += `<line x1="20" y1="${yPos}" x2="32" y2="${yPos - 4}" stroke="${color}" stroke-width="2" stroke-linecap="round" />`;
+                yPos += 5;
+            }
+            for (let i = 0; i < lines5; i++) {
+                barbElements += `<line x1="20" y1="${yPos}" x2="26" y2="${yPos - 2}" stroke="${color}" stroke-width="2" stroke-linecap="round" />`;
+                yPos += 5;
+            }
 
-    let barbElements = '';
-    let yPos = 4; // Start at top/outer tail end of the staff
-    
-    const isNH = lat >= 0;
-    const xEnd10 = isNH ? 8 : 32;   // Barbs project left in NH
-    const xEnd5  = isNH ? 14 : 26;
+            if (knots < 3) {
+                return `<svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="4" fill="none" stroke="${color}" stroke-width="2" /></svg>`;
+            }
 
-    // Draw 50-kt pennants (flags slope down toward station dot y=20)
-    for (let i = 0; i < flags50; i++) {
-        const polyPoints = isNH 
-            ? `20,${yPos} 8,${yPos + 4} 20,${yPos + 7}` 
-            : `20,${yPos} 32,${yPos + 4} 20,${yPos + 7}`;
-        barbElements += `<polygon points="${polyPoints}" fill="${color}" />`;
-        yPos += 7;
-    }
-
-    // Draw 10-kt full barbs (slanted down toward y=20)
-    for (let i = 0; i < lines10; i++) {
-        barbElements += `<line x1="20" y1="${yPos}" x2="${xEnd10}" y2="${yPos + 4}" stroke="${color}" stroke-width="2" stroke-linecap="round" />`;
-        yPos += 5;
-    }
-
-    // Draw 5-kt half barbs
-    for (let i = 0; i < lines5; i++) {
-        barbElements += `<line x1="20" y1="${yPos}" x2="${xEnd5}" y2="${yPos + 3}" stroke="${color}" stroke-width="2" stroke-linecap="round" />`;
-        yPos += 5;
-    }
-
-    return `
-    <div style="transform: rotate(${dirDeg}deg); transform-origin: center center; width: 40px; height: 40px;">
-        <svg width="40" height="40" viewBox="0 0 40 40">
-            <!-- Staff line from station dot (20,20) extending outward to (20,4) -->
-            <line x1="20" y1="20" x2="20" y2="4" stroke="${color}" stroke-width="2" stroke-linecap="round" />
-            <!-- Station center dot -->
-            <circle cx="20" cy="20" r="2.5" fill="${color}" />
-            <!-- Barbs at outer tail -->
-            ${barbElements}
-        </svg>
-    </div>`;
-}
+            return `
+            <div style="transform: rotate(${dirDeg}deg); transform-origin: center center; width: 40px; height: 40px;">
+                <svg width="40" height="40" viewBox="0 0 40 40">
+                    <circle cx="20" cy="20" r="2.5" fill="${color}" />
+                    <line x1="20" y1="20" x2="20" y2="4" stroke="${color}" stroke-width="2" stroke-linecap="round" />
+                    ${barbElements}
+                </svg>
+            </div>`;
+        }
 
         async function fetchLiveData() {
             const statusEl = document.getElementById('statusText');
