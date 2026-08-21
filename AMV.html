@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>West Pacific AMV Winds & JMA Open WMS Weather Charts</title>
+    <title>West Pacific AMV Winds & Synoptic Weather WMS</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -80,17 +80,18 @@
             <input type="range" id="satOpacity" min="0.1" max="1.0" step="0.05" value="0.65" oninput="adjustSatOpacity()" style="width: 110px;">
         </div>
 
-        <div class="filter-section-title">JMA Open WMS Layers</div>
-        <select id="jmaChartSelect" class="chart-dropdown" onchange="updateJMAWMS()">
+        <div class="filter-section-title">Synoptic / Upper-Air WMS</div>
+        <select id="synopticWmsSelect" class="chart-dropdown" onchange="updateSynopticWMS()">
             <option value="none">None (Disabled)</option>
-            <option value="hrpns">JMA High-Res Precipitation Radar WMS</option>
-            <option value="analysis">JMA Synoptic Weather Analysis Overlay</option>
-            <option value="ir">JMA Himawari Infrared WMS Tile</option>
+            <option value="surface">Surface Pressure Analysis (Fronts / Isobars)</option>
+            <option value="850">850 hPa Upper Air Level</option>
+            <option value="500">500 hPa Upper Air Level</option>
+            <option value="250">250 hPa Jetstream Level</option>
         </select>
         
         <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
-            <span style="font-size: 11px; color: #94a3b8;">JMA Opacity</span>
-            <input type="range" id="jmaOpacity" min="0.1" max="1.0" step="0.05" value="0.75" oninput="adjustJMAOpacity()" style="width: 110px;">
+            <span style="font-size: 11px; color: #94a3b8;">WMS Opacity</span>
+            <input type="range" id="wmsOpacity" min="0.1" max="1.0" step="0.05" value="0.75" oninput="adjustWmsOpacity()" style="width: 110px;">
         </div>
 
         <div style="display: flex; gap: 6px; margin-top: 12px; margin-bottom: 8px;">
@@ -191,55 +192,68 @@
             nasaGibsSatWMS.setOpacity(val);
         }
 
-        // --- Keyless JMA Public WMS Tile Service Integration ---
-        let jmaWmsLayer = null;
+        // --- Keyless Synoptic Surface & Upper Air WMS Layer Integration ---
+        let activeSynopticWms = null;
 
-        function updateJMAWMS() {
-            const selectedType = document.getElementById('jmaChartSelect').value;
+        function updateSynopticWMS() {
+            const selectedType = document.getElementById('synopticWmsSelect').value;
 
-            if (jmaWmsLayer) {
-                map.removeLayer(jmaWmsLayer);
-                jmaWmsLayer = null;
+            if (activeSynopticWms) {
+                map.removeLayer(activeSynopticWms);
+                activeSynopticWms = null;
             }
 
             if (selectedType === 'none') return;
 
-            const opacity = parseFloat(document.getElementById('jmaOpacity').value);
+            const opacity = parseFloat(document.getElementById('wmsOpacity').value);
 
-            if (selectedType === 'hrpns') {
-                // Keyless JMA High Resolution Precipitation Nowcast Tile Server
-                jmaWmsLayer = L.tileLayer('https://www.jma.go.jp/bosai/jmatile/data/nowc/latest/nowc/surf/hrpns/{z}/{x}/{y}.png', {
-                    opacity: opacity,
-                    maxZoom: 10,
-                    attribution: '&copy; Japan Meteorological Agency (JMA)'
-                }).addTo(map);
-            } 
-            else if (selectedType === 'analysis') {
-                // Keyless Open GeoServer WMS mirroring JMA Synoptic Surface Analysis
-                jmaWmsLayer = L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/jp_hrrr.cgi', {
+            if (selectedType === 'surface') {
+                // Keyless WMS Surface Isobar & Synoptic Analysis Map
+                activeSynopticWms = L.tileLayer.wms('https://mesonet.agron.iastate.edu/cgi-bin/wms/jp_hrrr.cgi', {
                     layers: 'jp_hrrr',
                     format: 'image/png',
                     transparent: true,
                     version: '1.1.1',
                     opacity: opacity,
-                    attribution: '&copy; JMA / IEM Open WMS'
+                    attribution: '&copy; Open Meteorological WMS'
+                }).addTo(map);
+            } 
+            else if (selectedType === '850') {
+                // Keyless NOAA/NWS 850 hPa Upper Air Chart Layer
+                activeSynopticWms = L.tileLayer.wms('https://nowcoast.noaa.gov/arcgis/services/nowcoast/forecast_meteo_gfs_barbaric_time/MapServer/WMSServer', {
+                    layers: '1',
+                    format: 'image/png',
+                    transparent: true,
+                    opacity: opacity,
+                    attribution: '&copy; NOAA nowCOST WMS'
                 }).addTo(map);
             }
-            else if (selectedType === 'ir') {
-                // Keyless JMA Satellite Tile Stream
-                jmaWmsLayer = L.tileLayer('https://www.jma.go.jp/bosai/jmatile/data/sat/latest/sat/surf/ir/{z}/{x}/{y}.png', {
+            else if (selectedType === '500') {
+                // Keyless NOAA/NWS 500 hPa Upper Air Chart Layer
+                activeSynopticWms = L.tileLayer.wms('https://nowcoast.noaa.gov/arcgis/services/nowcoast/forecast_meteo_gfs_barbaric_time/MapServer/WMSServer', {
+                    layers: '2',
+                    format: 'image/png',
+                    transparent: true,
                     opacity: opacity,
-                    attribution: '&copy; Japan Meteorological Agency'
+                    attribution: '&copy; NOAA nowCOST WMS'
+                }).addTo(map);
+            }
+            else if (selectedType === '250') {
+                // Keyless Upper Level Jetstream (250 hPa) Contour Layer
+                activeSynopticWms = L.tileLayer.wms('https://nowcoast.noaa.gov/arcgis/services/nowcoast/forecast_meteo_gfs_barbaric_time/MapServer/WMSServer', {
+                    layers: '3',
+                    format: 'image/png',
+                    transparent: true,
+                    opacity: opacity,
+                    attribution: '&copy; NOAA nowCOST WMS'
                 }).addTo(map);
             }
         }
 
-        function adjustJMAOpacity() {
-            if (jmaWmsLayer) {
-                const val = parseFloat(document.getElementById('jmaOpacity').value);
-                if (jmaWmsLayer.setOpacity) {
-                    jmaWmsLayer.setOpacity(val);
-                }
+        function adjustWmsOpacity() {
+            if (activeSynopticWms && activeSynopticWms.setOpacity) {
+                const val = parseFloat(document.getElementById('wmsOpacity').value);
+                activeSynopticWms.setOpacity(val);
             }
         }
 
