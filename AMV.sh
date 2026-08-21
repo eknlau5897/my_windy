@@ -24,7 +24,7 @@ run_pipeline() {
     # --------------------------------------------------------------------------
     # Embedded Python Script
     # --------------------------------------------------------------------------
-    cat << 'EOF' > "${PYTHON_SCRIPT}"
+    python3.11 << 'EOF_PYTHON'
 import sys
 import json
 import random
