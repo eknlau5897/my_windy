@@ -23,7 +23,7 @@
             z-index: 1000;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            width: 260px;
+            width: 270px;
         }
 
         .control-panel h3 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; color: #38bdf8; letter-spacing: 0.5px; }
@@ -68,8 +68,12 @@
                 <input type="checkbox" id="chkMid" checked onchange="filterAndRender()">
             </label>
             <label class="filter-option">
-                <span><span class="badge" style="background: #ff5500;"></span> Low (&gt; 700 hPa)</span>
+                <span><span class="badge" style="background: #ff3333;"></span> Surface / Low (&gt; 700 hPa)</span>
                 <input type="checkbox" id="chkLow" checked onchange="filterAndRender()">
+            </label>
+            <label class="filter-option">
+                <span><span class="badge" style="border: 1px solid #ff0000; background: transparent;"></span> Show Red Coastlines</span>
+                <input type="checkbox" id="chkCoastlines" checked onchange="toggleCoastlines()">
             </label>
         </div>
 
@@ -91,13 +95,13 @@
             zoom: 4
         });
 
-        // Dark Basemap
+        // Dark Basemap (Labels & Dark Ocean)
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(map);
 
         // 2. NASA GIBS Himawari Band 13 (Clean Infrared) WMS Layer
-        const todayDate = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+        const todayDate = new Date().toISOString().split('T')[0];
         const nasaGibsBand13 = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi', {
             layers: 'Himawari_AHI_Band13_Clean_Infrared',
             format: 'image/png',
@@ -108,10 +112,41 @@
             attribution: '&copy; NASA GIBS / EOSDIS'
         }).addTo(map);
 
+        // 3. Red Coastline Layer Setup
+        let coastlineLayer = null;
+        async function loadRedCoastlines() {
+            try {
+                // Fetch GeoJSON coastline boundaries
+                const response = await fetch('https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_coastline.geojson');
+                const geojsonData = await response.json();
+
+                coastlineLayer = L.geoJSON(geojsonData, {
+                    style: {
+                        color: '#ff2222',   // Bright Red
+                        weight: 1.5,        // Line thickness
+                        opacity: 0.85
+                    }
+                }).addTo(map);
+            } catch (e) {
+                console.warn("Could not load coastline GeoJSON:", e);
+            }
+        }
+        loadRedCoastlines();
+
+        function toggleCoastlines() {
+            if (!coastlineLayer) return;
+            const show = document.getElementById('chkCoastlines').checked;
+            if (show) {
+                map.addLayer(coastlineLayer);
+            } else {
+                map.removeLayer(coastlineLayer);
+            }
+        }
+
         let rawAMVData = [];
         let amvLayerGroup = L.layerGroup().addTo(map);
 
-        // 3. Meteorological Wind Barb SVG Generator
+        // 4. Meteorological Wind Barb SVG Generator
         function createWindBarbSVG(speedMS, dirDeg, color) {
             const knots = Math.round(speedMS * 1.94384);
             
@@ -161,7 +196,7 @@
             </div>`;
         }
 
-        // 4. Fetch Live West Pacific Data (3000 points bounded to Lat: -10 to 50, Lon: 100 to 180)
+        // 5. Fetch Live West Pacific Data (Includes Surface / 1000 hPa Observations)
         async function fetchLiveData() {
             const statusEl = document.getElementById('statusText');
             statusEl.innerText = "Fetching NOAA data...";
@@ -216,13 +251,13 @@
             }
         }
 
-        // 5. Render Wind Barbs
+        // 6. Render Wind Barbs (Filtering low levels down to 1000 hPa)
         function filterAndRender() {
             amvLayerGroup.clearLayers();
 
-            const showHigh = document.getElementById('chkHigh').checked;
-            const showMid = document.getElementById('chkMid').checked;
-            const showLow = document.getElementById('chkLow').checked;
+            const showHigh = document.getElementById('chkHigh').checked; // < 400 hPa
+            const showMid = document.getElementById('chkMid').checked;   // 400 - 700 hPa
+            const showLow = document.getElementById('chkLow').checked;   // > 700 hPa (includes 850, 925, 1000 hPa)
 
             let count = 0;
 
@@ -237,8 +272,9 @@
                 if (show) {
                     count++;
 
+                    // Color Scale by Pressure Level
                     let color = "#00ffff"; // High level (<400 hPa)
-                    if (p > 700) color = "#ff5500"; // Low level (>700 hPa)
+                    if (p > 700) color = "#ff3333"; // Surface / Low level (>700 hPa including 1000 hPa)
                     else if (p >= 400) color = "#ffff00"; // Mid level (400-700 hPa)
 
                     const svgHtml = createWindBarbSVG(pt.speed, pt.direction, color);
