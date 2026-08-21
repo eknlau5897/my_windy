@@ -101,16 +101,22 @@
         }).addTo(map);
 
         // 2. NASA GIBS Himawari Band 13 (Clean Infrared) WMS Layer
-        const todayDate = new Date().toISOString().split('T')[0];
-        const nasaGibsBand13 = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi', {
-            layers: 'Himawari_AHI_Band13_Clean_Infrared',
-            format: 'image/png',
-            transparent: true,
-            opacity: 0.65,
-            version: '1.3.0',
-            time: todayDate,
-            attribution: '&copy; NASA GIBS / EOSDIS'
-        }).addTo(map);
+        const now = new Date();
+const targetTime = new Date(now.getTime() - 50 * 60 * 1000); // 50 mins ago
+
+// Format to ISO string truncated to minutes (YYYY-MM-DDTHH:mm:00Z)
+const isoTimeString = targetTime.toISOString().split('.')[0] + 'Z';
+
+// 2. Pass ISO timestamp to NASA GIBS WMS
+const nasaGibsBand13 = L.tileLayer.wms('https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi', {
+    layers: 'Himawari_AHI_Band13_Clean_Infrared',
+    format: 'image/png',
+    transparent: true,
+    opacity: 0.65,
+    version: '1.3.0',
+    time: isoTimeString, // Passes formatted timestamp e.g. "2026-08-21T10:38:00Z"
+    attribution: '&copy; NASA GIBS / EOSDIS'
+}).addTo(map);
 
         // 3. Red Coastline Layer Setup
         let coastlineLayer = null;
