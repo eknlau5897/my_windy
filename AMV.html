@@ -229,7 +229,7 @@
             }
         }
 
-        // Corrected Meteorological SVG Wind Barb Generator
+        // Corrected Meteorological SVG Wind Barb Generator (Flipped 180 deg to point FROM wind origin)
         function createWindBarbSVG(speedMS, dirDeg, color, lat = 25) {
             const knots = Math.round(speedMS * 1.94384);
             let k = knots;
@@ -267,8 +267,11 @@
                 yPos += 5;
             }
 
+            // Invert angle by 180 deg so barb tail points toward the wind origin
+            const barbAngle = (dirDeg + 180) % 360;
+
             return `
-            <div style="transform: rotate(${dirDeg}deg); transform-origin: center center; width: 40px; height: 40px;">
+            <div style="transform: rotate(${barbAngle}deg); transform-origin: center center; width: 40px; height: 40px;">
                 <svg width="40" height="40" viewBox="0 0 40 40">
                     <line x1="20" y1="20" x2="20" y2="4" stroke="${color}" stroke-width="2" stroke-linecap="round" />
                     <circle cx="20" cy="20" r="2.5" fill="${color}" />
