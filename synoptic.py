@@ -1,20 +1,20 @@
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 import pandas as pd
-from curl_cffi import requests
+import requests
 
 # Bounding Box: East Asia (0-60°N, 80-145°E)
 LAT_MIN, LAT_MAX = 0.0, 60.0
 LON_MIN, LON_MAX = 80.0, 145.0
 
-# 1. Primary & Secondary IEM Endpoints
-IEM_ENDPOINTS = [
-    "https://mesonet.agron.iastate.edu/geojson/surface.geojson",
-    "https://mesonet.agron.iastate.edu/geojson/network/IA_ASOS.geojson",  # Backup check
-]
-
+# NOAA Aviation Weather Center (AWC) Official Live METAR / SYNOP API
+AWC_API_URL = "https://aviationweather.gov/api/data/metar"
 STATION_LIST_URL = "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv"
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) WeatherDataScript/1.0"
+}
 
 
 def build_east_asia_wmo_catalog():
@@ -32,106 +32,110 @@ def build_east_asia_wmo_catalog():
         )
         ea_stations = df[ea_mask].copy()
 
-        ea_stations["wmo_id"] = (
-            ea_stations["usaf"].astype(str).str.split(".").str[0].str.zfill(6)
-        )
-
         catalog = {}
         for _, row in ea_stations.iterrows():
-            wmo = str(row["wmo_id"])
-            catalog[wmo] = {
-                "name": str(row.get("station name", "Station")),
-                "country": str(row.get("ctry", "")),
-            }
+            icao = str(row.get("icao", "")).strip()
+            if icao and icao != "nan":
+                catalog[icao] = {
+                    "name": str(row.get("station name", icao)),
+                    "country": str(row.get("ctry", "")),
+                    "lat": float(row["lat"]),
+                    "lon": float(row["lon"]),
+                }
 
-        print(f"✓ Catalog ready with {len(catalog)} East Asian station records.")
+        print(f"✓ Catalog ready with {len(catalog)} East Asian ICAO records.")
         return catalog
     except Exception as e:
         print(f"⚠️ Catalog build warning: {e}")
         return {}
 
 
-def fetch_mesonet_data(catalog):
-    print("Connecting to IEM Mesonet Surface Stream via TLS Impersonation...")
+def fetch_awc_realtime_data(catalog):
+    print("Fetching live global surface observations from NOAA AWC...")
+    try:
+        # Fetch global decoded METARs in JSON format
+        params = {"format": "json", "hours": 2}
 
-    for url in IEM_ENDPOINTS:
+        resp = requests.get(
+            AWC_API_URL, params=params, headers=HEADERS, timeout=20
+        )
+
+        if resp.status_code != 200:
+            print(f"⚠️ AWC API returned HTTP status {resp.status_code}")
+            return False
+
         try:
-            # Impersonate Chrome 120 browser at the TLS socket level
-            resp = requests.get(
-                url,
-                impersonate="chrome120",
-                timeout=15,
-                headers={
-                    "Accept": "application/json, text/javascript, */*; q=0.01",
-                    "Accept-Language": "en-US,en;q=0.9",
-                    "Referer": "https://mesonet.agron.iastate.edu/",
-                },
-            )
-
-            if resp.status_code != 200:
-                print(f"⚠️ Endpoint {url} returned HTTP {resp.status_code}")
-                continue
-
-            if not resp.text or len(resp.text.strip()) == 0:
-                print(f"⚠️ Endpoint {url} returned empty response.")
-                continue
-
             data = resp.json()
-            features = []
+        except json.JSONDecodeError:
+            print("⚠️ Response from NOAA AWC was not valid JSON.")
+            return False
 
-            for feat in data.get("features", []):
-                geometry = feat.get("geometry")
-                if not geometry or "coordinates" not in geometry:
-                    continue
+        features = []
 
-                lon, lat = geometry["coordinates"][0], geometry["coordinates"][1]
+        for item in data:
+            lat = item.get("lat")
+            lon = item.get("lon")
+            icao = item.get("icaoId", "")
 
-                if LON_MIN <= lon <= LON_MAX and LAT_MIN <= lat <= LAT_MAX:
-                    props = feat.get("properties", {})
-                    tmpc = props.get("tmpc")
+            # If coords aren't in payload, look them up in our catalog
+            if (lat is None or lon is None) and icao in catalog:
+                lat = catalog[icao]["lat"]
+                lon = catalog[icao]["lon"]
 
-                    if tmpc is not None:
-                        station_id = str(props.get("station", "UNK"))
-                        meta = catalog.get(station_id, {})
+            if lat is None or lon is None:
+                continue
 
-                        features.append({
-                            "type": "Feature",
-                            "geometry": geometry,
-                            "properties": {
-                                "station_id": station_id,
-                                "name": props.get("sname")
-                                or meta.get("name", station_id),
-                                "country": meta.get("country", ""),
-                                "time": datetime.utcnow().strftime(
-                                    "%Y-%m-%d %H:00 UTC"
+            # Check if point falls within East Asia bounding box
+            if LAT_MIN <= lat <= LAT_MAX and LON_MIN <= lon <= LON_MAX:
+                temp = item.get("temp")
+                dewp = item.get("dewp")
+
+                if temp is not None:
+                    meta = catalog.get(icao, {})
+
+                    features.append({
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [float(lon), float(lat)],
+                        },
+                        "properties": {
+                            "station_id": icao,
+                            "name": meta.get("name", item.get("name", icao)),
+                            "country": meta.get("country", ""),
+                            "time": item.get(
+                                "reportTime",
+                                datetime.now(timezone.utc).strftime(
+                                    "%Y-%m-%d %H:%M UTC"
                                 ),
-                                "temp": round(float(tmpc), 1),
-                                "dewpoint": round(
-                                    float(props.get("dwpc", tmpc - 2.0)), 1
-                                ),
-                                "slp": round(
-                                    float(props.get("mslp") or 1013.2), 1
-                                ),
-                                "wind_dir": int(props.get("drct") or 0),
-                                "wind_spd": int(props.get("sknt") or 0),
-                            },
-                        })
+                            ),
+                            "temp": round(float(temp), 1),
+                            "dewpoint": round(float(dewp), 1)
+                            if dewp is not None
+                            else round(float(temp) - 2.0, 1),
+                            "slp": round(float(item.get("slp", 1013.2)), 1),
+                            "wind_dir": int(item.get("wdir", 0)),
+                            "wind_spd": int(item.get("wspd", 0)),
+                        },
+                    })
 
-            if features:
-                geojson = {"type": "FeatureCollection", "features": features}
-                with open("synoptic_data.json", "w") as f:
-                    json.dump(geojson, f, indent=2)
+        if features:
+            geojson = {"type": "FeatureCollection", "features": features}
+            with open("synoptic_data.json", "w") as f:
+                json.dump(geojson, f, indent=2)
 
-                print(
-                    f"✓ Success: Wrote {len(features)} East Asia stations via"
-                    " IEM Mesonet."
-                )
-                return True
+            print(
+                f"✓ Success: Wrote {len(features)} East Asia observations to"
+                " synoptic_data.json"
+            )
+            return True
 
-        except Exception as e:
-            print(f"❌ Connection error on {url}: {e}")
+        print("⚠️ No observations matched East Asia bounding box.")
+        return False
 
-    return False
+    except Exception as e:
+        print(f"❌ Fetch error: {e}")
+        return False
 
 
 def main():
@@ -139,17 +143,18 @@ def main():
 
     while True:
         print(
-            f"\n--- Sync Cycle: {datetime.utcnow().strftime('%H:%M:%S UTC')} ---"
+            "\n--- Sync Cycle:"
+            f" {datetime.now(timezone.utc).strftime('%H:%M:%S UTC')} ---"
         )
 
-        success = fetch_mesonet_data(catalog)
+        success = fetch_awc_realtime_data(catalog)
         if not success:
-            print("⚠️ Fetch failed. Retrying in 30 seconds...")
-            time.sleep(30)
+            print("⚠️ Fetch failed. Retrying in 60 seconds...")
+            time.sleep(60)
             continue
 
         print("Sleeping 15 minutes until next cycle...")
-        time.sleep(900)
+        time.sleep(7200)
 
 
 if __name__ == "__main__":
