@@ -9,7 +9,7 @@ import requests
 LAT_MIN, LAT_MAX = 0.0, 60.0
 LON_MIN, LON_MAX = 80.0, 145.0
 
-# NOAA AWC Official Live Cache File (Updated globally every 60 seconds)
+# Official Live Global METAR Cache File from NOAA AWC
 AWC_CACHE_URL = "https://aviationweather.gov/data/cache/metars.cache.csv.gz"
 STATION_LIST_URL = "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv"
 
@@ -54,27 +54,70 @@ def build_east_asia_wmo_catalog():
 def fetch_awc_cache_data(catalog):
     print("Downloading global live weather cache from NOAA AWC...")
     try:
-        resp = requests.get(AWC_CACHE_URL, headers=HEADERS, timeout=20)
+        resp = requests.get(AWC_CACHE_URL, headers=HEADERS, timeout=25)
 
         if resp.status_code != 200:
             print(f"⚠️ NOAA Cache download returned HTTP {resp.status_code}")
             return False
 
-        # Read the gzipped CSV directly into Pandas, skipping the 5-line metadata header
-        df = pd.read_csv(
-            io.BytesIO(resp.content), compression="gzip", skiprows=5
+        # Load CSV into memory
+        raw_bytes = io.BytesIO(resp.content)
+
+        # Dynamic Header Locator: Scan raw bytes to find where the actual header starts
+        # This prevents breaking if NOAA changes the number of comment/metadata lines at top
+        header_row_idx = 0
+        raw_lines = io.TextIOWrapper(
+            io.BytesIO(resp.content), encoding="utf-8", errors="ignore"
         )
-        df.columns = df.columns.str.lower()
+        for idx, line in enumerate(raw_lines):
+            line_lower = line.lower()
+            if "raw_text" in line_lower or "station" in line_lower:
+                header_row_idx = idx
+                break
 
-        # Clean coordinates and numeric values
-        df = df.dropna(subset=["latitude", "longitude", "temp_c"])
+        # Re-read CSV starting directly from the detected header line
+        raw_bytes.seek(0)
+        df = pd.read_csv(
+            raw_bytes, compression="gzip", skiprows=header_row_idx
+        )
+        df.columns = df.columns.str.lower().str.strip()
 
-        # Filter strictly for East Asia Bounding Box
+        # Handle column naming variations (New AWC schema vs Legacy schema)
+        lat_col = "lat" if "lat" in df.columns else "latitude"
+        lon_col = "lon" if "lon" in df.columns else "longitude"
+        temp_col = "temp" if "temp" in df.columns else "temp_c"
+        dewp_col = "dewp" if "dewp" in df.columns else "dewpoint_c"
+        id_col = "station_id" if "station_id" in df.columns else "icao_id"
+        time_col = (
+            "observation_time"
+            if "observation_time" in df.columns
+            else "report_time"
+        )
+
+        # Ensure required columns were identified
+        missing_cols = [
+            c
+            for c in [lat_col, lon_col, temp_col]
+            if c not in df.columns
+        ]
+        if missing_cols:
+            print(f"⚠️ Missing columns in dataset: {missing_cols}")
+            print(f"Available columns: {list(df.columns)}")
+            return False
+
+        # Clean numerical types
+        df[lat_col] = pd.to_numeric(df[lat_col], errors="coerce")
+        df[lon_col] = pd.to_numeric(df[lon_col], errors="coerce")
+        df[temp_col] = pd.to_numeric(df[temp_col], errors="coerce")
+
+        df = df.dropna(subset=[lat_col, lon_col, temp_col])
+
+        # Spatial Filter: East Asia Bounding Box
         ea_mask = (
-            (df["latitude"] >= LAT_MIN)
-            & (df["latitude"] <= LAT_MAX)
-            & (df["longitude"] >= LON_MIN)
-            & (df["longitude"] <= LON_MAX)
+            (df[lat_col] >= LAT_MIN)
+            & (df[lat_col] <= LAT_MAX)
+            & (df[lon_col] >= LON_MIN)
+            & (df[lon_col] <= LON_MAX)
         )
         ea_df = df[ea_mask].copy()
 
@@ -84,13 +127,18 @@ def fetch_awc_cache_data(catalog):
 
         features = []
         for _, row in ea_df.iterrows():
-            icao = str(row.get("station_id", "UNK")).strip()
-            lat = float(row["latitude"])
-            lon = float(row["longitude"])
-            temp = float(row["temp_c"])
+            icao = (
+                str(row.get(id_col, "UNK")).strip()
+                if id_col in row
+                else "UNK"
+            )
+            lat = float(row[lat_col])
+            lon = float(row[lon_col])
+            temp = float(row[temp_col])
+
             dewp = (
-                float(row["dewpoint_c"])
-                if pd.notna(row.get("dewpoint_c"))
+                float(row[dewp_col])
+                if dewp_col in row and pd.notna(row[dewp_col])
                 else round(temp - 2.0, 1)
             )
 
@@ -108,7 +156,7 @@ def fetch_awc_cache_data(catalog):
                     "country": meta.get("country", ""),
                     "time": str(
                         row.get(
-                            "observation_time",
+                            time_col,
                             datetime.now(timezone.utc).strftime(
                                 "%Y-%m-%d %H:%M UTC"
                             ),
@@ -118,20 +166,20 @@ def fetch_awc_cache_data(catalog):
                     "dewpoint": round(dewp, 1),
                     "slp": round(
                         float(
-                            row.get("sea_level_pressure_mb")
-                            if pd.notna(row.get("sea_level_pressure_mb"))
+                            row.get("slp", 1013.2)
+                            if "slp" in row and pd.notna(row["slp"])
                             else 1013.2
                         ),
                         1,
                     ),
                     "wind_dir": int(
-                        row.get("wind_dir_degrees")
-                        if pd.notna(row.get("wind_dir_degrees"))
+                        row.get("wdir", 0)
+                        if "wdir" in row and pd.notna(row["wdir"])
                         else 0
                     ),
                     "wind_spd": int(
-                        row.get("wind_speed_kt")
-                        if pd.notna(row.get("wind_speed_kt"))
+                        row.get("wspd", 0)
+                        if "wspd" in row and pd.notna(row["wspd"])
                         else 0
                     ),
                 },
@@ -163,11 +211,11 @@ def main():
 
         success = fetch_awc_cache_data(catalog)
         if not success:
-            print("⚠️ Sync failed. Retrying in 60 seconds...")
-            time.sleep(60)
+            print("⚠️ Sync failed. Retrying in 2 hours...")
+            time.sleep(7200)
             continue
 
-        print("Sleeping 15 minutes until next cycle...")
+        print("Sleeping 2 hours until next cycle...")
         time.sleep(7200)
 
 
