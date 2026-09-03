@@ -6,7 +6,7 @@ from metpy.units import units
 import pandas as pd
 from pyisd import IsdLite
 
-# Spatial Bounds: East Asia / Western Pacific
+# Spatial Bounds: East Asia / Western Pacific (0-60N, 80-145E)
 LAT_MIN, LAT_MAX = 0.0, 60.0
 LON_MIN, LON_MAX = 80.0, 145.0
 
@@ -18,54 +18,53 @@ def fetch_synoptic_geojson(isd_client, limit=100):
         " observations..."
     )
 
-    # Access internal metadata table directly
+    # 1. Access internal metadata table directly & normalize columns to lowercase
     meta = isd_client.raw_metadata.copy()
+    meta.columns = meta.columns.str.lower()
 
-    # Filter spatial bounding box
+    # 2. Filter spatial bounding box safely
     in_bounds = meta[
         (meta["lat"] >= LAT_MIN)
         & (meta["lat"] <= LAT_MAX)
         & (meta["lon"] >= LON_MIN)
         & (meta["lon"] <= LON_MAX)
-    ]
+    ].copy()
 
-    # Filter for active stations (BEGIN <= current year, END >= recent year)
-    active = in_bounds[in_bounds["end"].astype(str).str.startswith("202")]
+    # 3. Filter for active stations (BEGIN / END date checks)
+    in_bounds["end_num"] = pd.to_numeric(in_bounds["end"], errors="coerce")
+    active = in_bounds[in_bounds["end_num"] >= 20250101]
 
-    print(f"Found {len(active)} active station candidate records.")
+    print(f"Found {len(active)} candidate stations within bounding box.")
 
-    # Limit station count to prevent long initial wait times
+    # Limit station count to prevent initial rate throttling
     target_stations = active.head(limit)
 
     now = datetime.utcnow()
-    # Query short recent date range
-    start_dt = now - timedelta(days=3)
-    end_dt = now
+    start_dt = (now - timedelta(days=5)).strftime("%Y-%m-%d")
+    end_dt = now.strftime("%Y-%m-%d")
 
     features = []
 
     for idx, row in target_stations.iterrows():
         try:
-            # Query pyisd passing the metadata row directly or usaf integer
+            # Safely extract integer USAF ID
             usaf_val = int(row["usaf"])
 
-            # pyisd get_data call using integer USAF
+            # Query pyisd passing integer USAF ID
             data_dict = isd_client.get_data(
-                start=start_dt.strftime("%Y-%m-%d"),
-                end=end_dt.strftime("%Y-%m-%d"),
-                station_id=usaf_val,
+                start=start_dt, end=end_dt, station_id=usaf_val
             )
 
             if not data_dict:
                 continue
 
-            # Extract DataFrame from returned dictionary
+            # Extract DataFrame from dictionary
             df = list(data_dict.values())[0]
 
             if df is None or df.empty:
                 continue
 
-            # Clean temperature and wind speed values
+            # Clean temperature values
             df["temp"] = pd.to_numeric(df["temp"], errors="coerce")
             df_valid = df.dropna(subset=["temp"])
 
@@ -84,7 +83,7 @@ def fetch_synoptic_geojson(isd_client, limit=100):
                 else float(rh_val)
             )
 
-            # Dew Point calculation
+            # Dew Point calculation with MetPy
             dp = round(
                 dewpoint_from_relative_humidity(
                     temp * units.degC, rh * units.percent
@@ -92,15 +91,17 @@ def fetch_synoptic_geojson(isd_client, limit=100):
                 1,
             )
 
-            # Extract spatial coordinates (fallback to metadata if missing in obs)
+            # Extract coordinates (fallback to metadata row if absent in row index)
             lat_coord = float(
-                latest.get("latitude", row.get("lat", 0.0))
+                latest.get("latitude", latest.get("lat", row.get("lat", 0.0)))
             )
             lon_coord = float(
-                latest.get("longitude", row.get("lon", 0.0))
+                latest.get("longitude", latest.get("lon", row.get("lon", 0.0)))
             )
 
-            st_id_str = f"{str(row['usaf']).zfill(6)}-{str(row['wban']).zfill(5)}"
+            st_id_str = (
+                f"{str(row['usaf']).zfill(6)}-{str(row['wban']).zfill(5)}"
+            )
 
             features.append({
                 "type": "Feature",
@@ -130,8 +131,8 @@ def fetch_synoptic_geojson(isd_client, limit=100):
         json.dump(geojson, f)
 
     print(
-        f"[{datetime.now().strftime('%H:%M:%S')}] Successfully wrote"
-        f" {len(features)} live station plots to synoptic_data.json."
+        f"[{datetime.now().strftime('%H:%M:%S')}] Successfully generated"
+        f" synoptic_data.json with {len(features)} live station plots."
     )
 
 
@@ -139,6 +140,6 @@ if __name__ == "__main__":
     isd = IsdLite(crs=4326)
 
     while True:
-        fetch_synoptic_geojson(isd, limit=80)
-        print("Sleeping for 10 minutes...")
+        fetch_synoptic_geojson(isd, limit=100)
+        print("Sleeping 2 hours until next fetch...")
         time.sleep(7200)
