@@ -1,3 +1,4 @@
+import io
 import json
 import time
 from datetime import datetime, timezone
@@ -8,8 +9,8 @@ import requests
 LAT_MIN, LAT_MAX = 0.0, 60.0
 LON_MIN, LON_MAX = 80.0, 145.0
 
-# Official NOAA AWC METAR JSON Endpoint
-AWC_API_URL = "https://aviationweather.gov/api/data/metar"
+# NOAA AWC Official Live Cache File (Updated globally every 60 seconds)
+AWC_CACHE_URL = "https://aviationweather.gov/data/cache/metars.cache.csv.gz"
 STATION_LIST_URL = "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv"
 
 HEADERS = {
@@ -50,89 +51,104 @@ def build_east_asia_wmo_catalog():
         return {}
 
 
-def fetch_awc_realtime_data(catalog):
-    print("Fetching live surface observations from NOAA AWC...")
+def fetch_awc_cache_data(catalog):
+    print("Downloading global live weather cache from NOAA AWC...")
     try:
-        # AWC expects bbox formatted as: minlon,minlat,maxlon,maxlat
-        bbox_str = f"{LON_MIN},{LAT_MIN},{LON_MAX},{LAT_MAX}"
-
-        params = {
-            "format": "json",
-            "bbox": bbox_str,
-            "hours": 2,
-        }
-
-        resp = requests.get(
-            AWC_API_URL, params=params, headers=HEADERS, timeout=20
-        )
+        resp = requests.get(AWC_CACHE_URL, headers=HEADERS, timeout=20)
 
         if resp.status_code != 200:
-            print(f"⚠️ AWC API returned HTTP status {resp.status_code}")
+            print(f"⚠️ NOAA Cache download returned HTTP {resp.status_code}")
             return False
 
-        data = resp.json()
-        if not data or not isinstance(data, list):
-            print("⚠️ AWC API returned empty or invalid response format.")
+        # Read the gzipped CSV directly into Pandas, skipping the 5-line metadata header
+        df = pd.read_csv(
+            io.BytesIO(resp.content), compression="gzip", skiprows=5
+        )
+        df.columns = df.columns.str.lower()
+
+        # Clean coordinates and numeric values
+        df = df.dropna(subset=["latitude", "longitude", "temp_c"])
+
+        # Filter strictly for East Asia Bounding Box
+        ea_mask = (
+            (df["latitude"] >= LAT_MIN)
+            & (df["latitude"] <= LAT_MAX)
+            & (df["longitude"] >= LON_MIN)
+            & (df["longitude"] <= LON_MAX)
+        )
+        ea_df = df[ea_mask].copy()
+
+        if ea_df.empty:
+            print("⚠️ No observations match the East Asia bounding box.")
             return False
 
         features = []
+        for _, row in ea_df.iterrows():
+            icao = str(row.get("station_id", "UNK")).strip()
+            lat = float(row["latitude"])
+            lon = float(row["longitude"])
+            temp = float(row["temp_c"])
+            dewp = (
+                float(row["dewpoint_c"])
+                if pd.notna(row.get("dewpoint_c"))
+                else round(temp - 2.0, 1)
+            )
 
-        for item in data:
-            lat = item.get("lat")
-            lon = item.get("lon")
-            icao = item.get("icaoId", "UNK")
+            meta = catalog.get(icao, {})
 
-            if lat is None or lon is None:
-                continue
-
-            temp = item.get("temp")
-            dewp = item.get("dewp")
-
-            if temp is not None:
-                meta = catalog.get(icao, {})
-
-                features.append({
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [float(lon), float(lat)],
-                    },
-                    "properties": {
-                        "station_id": icao,
-                        "name": meta.get("name", item.get("name", icao)),
-                        "country": meta.get("country", ""),
-                        "time": item.get(
-                            "reportTime",
+            features.append({
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [lon, lat],
+                },
+                "properties": {
+                    "station_id": icao,
+                    "name": meta.get("name", icao),
+                    "country": meta.get("country", ""),
+                    "time": str(
+                        row.get(
+                            "observation_time",
                             datetime.now(timezone.utc).strftime(
                                 "%Y-%m-%d %H:%M UTC"
                             ),
+                        )
+                    ),
+                    "temp": round(temp, 1),
+                    "dewpoint": round(dewp, 1),
+                    "slp": round(
+                        float(
+                            row.get("sea_level_pressure_mb")
+                            if pd.notna(row.get("sea_level_pressure_mb"))
+                            else 1013.2
                         ),
-                        "temp": round(float(temp), 1),
-                        "dewpoint": round(float(dewp), 1)
-                        if dewp is not None
-                        else round(float(temp) - 2.0, 1),
-                        "slp": round(float(item.get("slp") or 1013.2), 1),
-                        "wind_dir": int(item.get("wdir") or 0),
-                        "wind_spd": int(item.get("wspd") or 0),
-                    },
-                })
+                        1,
+                    ),
+                    "wind_dir": int(
+                        row.get("wind_dir_degrees")
+                        if pd.notna(row.get("wind_dir_degrees"))
+                        else 0
+                    ),
+                    "wind_spd": int(
+                        row.get("wind_speed_kt")
+                        if pd.notna(row.get("wind_speed_kt"))
+                        else 0
+                    ),
+                },
+            })
 
-        if features:
-            geojson = {"type": "FeatureCollection", "features": features}
-            with open("synoptic_data.json", "w") as f:
-                json.dump(geojson, f, indent=2)
+        geojson = {"type": "FeatureCollection", "features": features}
+        with open("synoptic_data.json", "w") as f:
+            json.dump(geojson, f, indent=2)
 
-            print(
-                f"✓ Success: Wrote {len(features)} East Asia observations to"
-                " synoptic_data.json"
-            )
-            return True
-
-        print("⚠️ No observations returned inside East Asia bounding box.")
-        return False
+        print(
+            f"✓ Success: Filtered {len(features)} East Asia observations from"
+            " global cache -> synoptic_data.json"
+        )
+        return True
 
     except Exception as e:
-        print(f"❌ Fetch error: {e}")
+        print(f"❌ Cache processing failed: {e}")
         return False
 
 
@@ -145,14 +161,14 @@ def main():
             f" {datetime.now(timezone.utc).strftime('%H:%M:%S UTC')} ---"
         )
 
-        success = fetch_awc_realtime_data(catalog)
+        success = fetch_awc_cache_data(catalog)
         if not success:
-            print("⚠️ Fetch failed. Retrying in 60 seconds...")
+            print("⚠️ Sync failed. Retrying in 60 seconds...")
             time.sleep(60)
             continue
 
         print("Sleeping 15 minutes until next cycle...")
-        time.sleep(900)
+        time.sleep(7200)
 
 
 if __name__ == "__main__":
