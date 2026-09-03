@@ -10,40 +10,56 @@ from pyisd import IsdLite
 LAT_MIN, LAT_MAX = 0.0, 60.0
 LON_MIN, LON_MAX = 80.0, 145.0
 
+NOAA_STATION_LIST_URL = (
+    "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv"
+)
 
-def get_active_stations_in_bounds(isd_client):
-    """Retrieves metadata using pyisd's built-in metadata table."""
-    print("Filtering station metadata...")
 
-    # Access pyisd's pre-loaded metadata DataFrame
-    df_meta = isd_client.raw_metadata.copy()
+def get_active_stations_in_bounds():
+    """Download NOAA station inventory, normalize column names, and filter spatially."""
+    print("Fetching master station list from NOAA...")
+    try:
+        df_stations = pd.read_csv(NOAA_STATION_LIST_URL)
 
-    # Normalize coordinate column names (pyisd uses lowercase 'lat' and 'lon')
-    lat_col = 'lat' if 'lat' in df_meta.columns else 'LAT'
-    lon_col = 'lon' if 'lon' in df_meta.columns else 'LON'
+        # Normalize column names to lowercase to avoid KeyError: 'LAT'
+        df_stations.columns = df_stations.columns.str.lower()
 
-    # 1. Filter spatially
-    in_bounds = df_meta[
-        (df_meta[lat_col] >= LAT_MIN)
-        & (df_meta[lat_col] <= LAT_MAX)
-        & (df_meta[lon_col] >= LON_MIN)
-        & (df_meta[lon_col] <= LON_MAX)
-    ]
+        # Clean coordinates and IDs
+        df_stations = df_stations.dropna(subset=['lat', 'lon'])
+        df_stations['usaf'] = df_stations['usaf'].astype(str).str.zfill(6)
+        df_stations['wban'] = df_stations['wban'].astype(str).str.zfill(5)
 
-    # 2. Extract USAF identifiers as list
-    usaf_ids = in_bounds['usaf'].astype(str).str.zfill(6).tolist()
-    print(f"Found {len(usaf_ids)} candidate stations within spatial bounds.")
-    return usaf_ids
+        # Filter spatial bounding box (0-60N, 80-145E)
+        in_bounds = df_stations[
+            (df_stations['lat'] >= LAT_MIN)
+            & (df_stations['lat'] <= LAT_MAX)
+            & (df_stations['lon'] >= LON_MIN)
+            & (df_stations['lon'] <= LON_MAX)
+        ].copy()
+
+        # Filter for stations active in the current year
+        current_year = str(datetime.utcnow().year)
+        active_in_bounds = in_bounds[
+            in_bounds['end'].astype(str).str.startswith(current_year)
+        ]
+
+        # Use USAF string codes for pyisd station lookup
+        station_ids = active_in_bounds['usaf'].tolist()
+        print(f"Found {len(station_ids)} active candidate stations in bounds.")
+        return station_ids
+
+    except Exception as e:
+        print(f"Error fetching NOAA station list: {e}")
+        return []
 
 
 def update_data(isd_client, station_ids, limit=100):
-    """Fetch recent observations for target stations and write GeoJSON."""
+    """Fetch observation data for target stations and write multi-point GeoJSON."""
     print(
-        f"[{datetime.now().strftime('%H:%M:%S')}] Querying station"
-        " observations..."
+        f"[{datetime.now().strftime('%H:%M:%S')}] Fetching observations..."
     )
 
-    # Query short timeframe (last 3 days) to speed up download drastically
+    # Fetch only recent data (last 3 days) to optimize speed and avoid timeouts
     now = datetime.utcnow()
     start_date = (now - timedelta(days=3)).strftime('%Y-%m-%d')
     end_date = now.strftime('%Y-%m-%d')
@@ -53,7 +69,7 @@ def update_data(isd_client, station_ids, limit=100):
 
     for st_id in target_stations:
         try:
-            # Query pyisd using standard USAF code
+            # Query pyisd using standard station ID
             data_dict = isd_client.get_data(
                 start=start_date, end=end_date, station_id=st_id
             )
@@ -65,18 +81,18 @@ def update_data(isd_client, station_ids, limit=100):
             if df.empty:
                 continue
 
-            # Drop missing values
+            # Drop missing essential values
             df_valid = df.dropna(subset=['temp', 'windspeed'])
             if df_valid.empty:
                 continue
 
-            # Get latest observation row
+            # Extract the most recent valid observation
             latest = df_valid.iloc[-1]
 
             temp = float(latest['temp'])
             rh = float(latest['rh'])
 
-            # Compute Dew Point using MetPy
+            # Calculate Dew Point using MetPy
             dp = round(
                 dewpoint_from_relative_humidity(
                     temp * units.degC, rh * units.percent
@@ -104,8 +120,8 @@ def update_data(isd_client, station_ids, limit=100):
                 },
             })
 
-        except Exception as e:
-            # Skip unreachable or inactive stations silently
+        except Exception:
+            # Skip unreachable or inactive stations gracefully
             continue
 
     geojson = {"type": "FeatureCollection", "features": features}
@@ -114,16 +130,23 @@ def update_data(isd_client, station_ids, limit=100):
         json.dump(geojson, f)
 
     print(
-        f"Successfully generated synoptic_data.json with {len(features)}"
-        " active station plots."
+        f"[{datetime.now().strftime('%H:%M:%S')}] Wrote {len(features)}"
+        " stations to synoptic_data.json."
     )
 
 
 if __name__ == "__main__":
+    # Initialize pyisd client with WGS84 CRS
     isd = IsdLite(crs=4326)
-    station_list = get_active_stations_in_bounds(isd)
 
-    while True:
-        update_data(isd, station_list, limit=100)
-        print("Sleeping for 2 hours...")
-        time.sleep(7200)
+    # Fetch initial target list
+    station_list = get_active_stations_in_bounds()
+
+    if not station_list:
+        print("No stations found. Exiting.")
+    else:
+        # Loop endlessly every 10 minutes to auto-refresh data
+        while True:
+            update_data(isd, station_list, limit=120)
+            print("Waiting 2 hours for next update loop...")
+            time.sleep(7200)
