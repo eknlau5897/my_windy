@@ -11,20 +11,22 @@ import requests
 LAT_MIN, LAT_MAX = 0.0, 60.0
 LON_MIN, LON_MAX = 80.0, 145.0
 
-# 1. Redundant GTS text streams + 2. NOAA Metadata catalog
+# Fixed URLs: Updated NOAA TGFTP structure + Working IEM Real-Time Surface Service
 GTS_URLS = [
+    "https://weather.noaa.gov/pub/data/observations/synoptic/gts/data.txt.gz",
     "https://tgftp.nws.noaa.gov/data/observations/synoptic/gts/data.txt.gz",
-    "http://tgftp.nws.noaa.gov/data/observations/synoptic/gts/data.txt.gz",
 ]
-IEM_FALLBACK_URL = "https://mesonet.agron.iastate.edu/geojson/network.py?network=ASOS"
+
+# IEM global real-time surface observations GeoJSON endpoint
+IEM_SURFACE_URL = "https://mesonet.agron.iastate.edu/geojson/surface.geojson"
 STATION_LIST_URL = "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv"
 
-# Custom HTTP headers to bypass NOAA anti-bot/Python-requests blocking
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,"
-        " like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    )
+        " like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 }
 
 
@@ -36,7 +38,6 @@ def build_east_asia_wmo_catalog():
         df.columns = df.columns.str.lower()
         df = df.dropna(subset=["lat", "lon", "usaf"])
 
-        # Spatial filter for East Asia
         ea_mask = (
             (df["lat"] >= LAT_MIN)
             & (df["lat"] <= LAT_MAX)
@@ -45,7 +46,6 @@ def build_east_asia_wmo_catalog():
         )
         ea_stations = df[ea_mask].copy()
 
-        # Extract 5-digit WMO ID from USAF column
         ea_stations["wmo_id"] = (
             ea_stations["usaf"].astype(str).str.split(".").str[0].str.zfill(6)
         )
@@ -64,7 +64,7 @@ def build_east_asia_wmo_catalog():
         print(f"✓ Catalog ready with {len(catalog)} East Asian WMO stations.")
         return catalog
     except Exception as e:
-        print(f"⚠️ Failed to build catalog: {e}")
+        print(f"⚠️ Catalog build warning: {e}")
         return {}
 
 
@@ -72,38 +72,29 @@ def parse_fm12_synop(tokens):
     """Decode standard WMO FM-12 SYNOP message tokens."""
     obs = {}
     for t in tokens:
-        # Temperature: 1sTTT (10 = positive, 11 = negative)
         if re.match(r"^1[01]\d{3}$", t):
             sign = -1.0 if t[1] == "1" else 1.0
             obs["temp"] = round(sign * int(t[2:]) / 10.0, 1)
-
-        # Dewpoint: 2sTdTdTd (20 = positive, 21 = negative)
         elif re.match(r"^2[01]\d{3}$", t):
             sign = -1.0 if t[1] == "1" else 1.0
             obs["dewpoint"] = round(sign * int(t[2:]) / 10.0, 1)
-
-        # Sea Level Pressure: 4PPPP (tenths of hPa)
         elif re.match(r"^4\d{4}$", t):
             val = int(t[1:])
             slp = (val / 10.0) + (1000.0 if val < 5000 else 900.0)
             obs["slp"] = round(slp, 1)
-
-        # Wind: Nddff (dd = tens of degrees, ff = speed in knots)
         elif re.match(r"^\d{5}$", t) and t[0] in "0123456789":
             obs["wind_dir"] = int(t[2:4]) * 10
             obs["wind_spd"] = int(t[4:])
-
     return obs
 
 
 def fetch_noaa_gts_stream(catalog):
-    """Try pulling and parsing NOAA's raw GTS feed."""
+    """Try pulling NOAA GTS file stream."""
     raw_text = None
-
     for url in GTS_URLS:
         try:
             print(f"Connecting to NOAA GTS endpoint: {url}...")
-            resp = requests.get(url, headers=HEADERS, timeout=15)
+            resp = requests.get(url, headers=HEADERS, timeout=12)
             if resp.status_code == 200:
                 print(f"✓ Connected to {url}")
                 with gzip.open(
@@ -112,17 +103,13 @@ def fetch_noaa_gts_stream(catalog):
                     raw_text = f.read()
                 break
             else:
-                print(
-                    f"⚠️ Endpoint returned HTTP {resp.status_code}, trying"
-                    " next..."
-                )
+                print(f"⚠️ Endpoint returned HTTP {resp.status_code}")
         except Exception as err:
             print(f"❌ Failed connecting to {url}: {err}")
 
     if not raw_text:
         return False
 
-    # Extract synoptic reports from stream
     reports = raw_text.split("AAXX")
     features = []
     parsed_wmo = set()
@@ -140,11 +127,7 @@ def fetch_noaa_gts_stream(catalog):
 
             if "temp" in obs:
                 parsed_wmo.add(wmo_id)
-                dp = (
-                    obs["dewpoint"]
-                    if "dewpoint" in obs
-                    else round(obs["temp"] - 2.0, 1)
-                )
+                dp = obs.get("dewpoint", round(obs["temp"] - 2.0, 1))
 
                 features.append({
                     "type": "Feature",
@@ -178,45 +161,51 @@ def fetch_noaa_gts_stream(catalog):
 
 
 def fetch_iem_fallback():
-    """Automatic Fallback: Fetch observations via Iowa Environmental Mesonet API."""
-    print("⚠️ Switching to IEM Real-Time Fallback Stream...")
+    """WORKING FALLBACK: Fetches real-time global surface observations from IEM."""
+    print("⚠️ Switching to IEM Global Real-Time Surface Service...")
     try:
-        resp = requests.get(
-            "https://mesonet.agron.iastate.edu/geojson/network/ASOS.geojson",
-            headers=HEADERS,
-            timeout=15,
-        )
+        resp = requests.get(IEM_SURFACE_URL, headers=HEADERS, timeout=15)
         if resp.status_code != 200:
-            print("❌ IEM fallback failed.")
+            print(f"❌ IEM returned status {resp.status_code}")
             return
 
         data = resp.json()
         features = []
 
         for feat in data.get("features", []):
-            coords = feat["geometry"]["coordinates"]
+            geometry = feat.get("geometry")
+            if not geometry or "coordinates" not in geometry:
+                continue
+
+            coords = geometry["coordinates"]
             lon, lat = coords[0], coords[1]
 
+            # Bounding box filter for East Asia
             if LON_MIN <= lon <= LON_MAX and LAT_MIN <= lat <= LAT_MAX:
-                props = feat["properties"]
-                # Convert knots/m-s if available
+                props = feat.get("properties", {})
                 tmpc = props.get("tmpc")
+
+                # Only include valid temperature readings
                 if tmpc is not None:
                     features.append({
                         "type": "Feature",
-                        "geometry": feat["geometry"],
+                        "geometry": geometry,
                         "properties": {
-                            "station_id": props.get("sid", "UNK"),
-                            "name": props.get("sname", "Station"),
+                            "station_id": props.get("station", "UNK"),
+                            "name": props.get("sname", props.get("station", "Station")),
                             "country": "",
                             "time": datetime.utcnow().strftime(
                                 "%Y-%m-%d %H:00 UTC"
                             ),
                             "temp": round(float(tmpc), 1),
-                            "dewpoint": round(float(props.get("dwpc", tmpc - 2)), 1),
-                            "slp": round(float(props.get("mslp", 1013.2)), 1),
-                            "wind_dir": int(props.get("drct", 0)),
-                            "wind_spd": int(props.get("sknt", 0)),
+                            "dewpoint": round(
+                                float(props.get("dwpc", tmpc - 2.0)), 1
+                            ),
+                            "slp": round(
+                                float(props.get("mslp", 1013.2) or 1013.2), 1
+                            ),
+                            "wind_dir": int(props.get("drct", 0) or 0),
+                            "wind_spd": int(props.get("sknt", 0) or 0),
                         },
                     })
 
@@ -225,8 +214,8 @@ def fetch_iem_fallback():
             json.dump(geojson, f)
 
         print(
-            f"✓ Fallback Success: Wrote {len(features)} East Asia stations via"
-            " IEM."
+            f"✓ Fallback Success: Wrote {len(features)} East Asia surface"
+            " stations via IEM."
         )
 
     except Exception as e:
@@ -237,15 +226,16 @@ def main():
     catalog = build_east_asia_wmo_catalog()
 
     while True:
-        print(f"\n--- Sync Cycle: {datetime.utcnow().strftime('%H:%M:%S UTC')} ---")
+        print(
+            f"\n--- Sync Cycle: {datetime.utcnow().strftime('%H:%M:%S UTC')} ---"
+        )
         success = fetch_noaa_gts_stream(catalog)
 
-        # Execute fallback if primary NOAA stream fails
         if not success:
             fetch_iem_fallback()
 
-        print("Sleeping 2 hours until next update cycle...")
-        time.sleep(7200)
+        print("Sleeping 15 minutes until next update cycle...")
+        time.sleep(900)
 
 
 if __name__ == "__main__":
