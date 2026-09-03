@@ -57,12 +57,15 @@ def get_active_stations_in_bounds():
 
 
 def update_data(isd_client, station_ids, limit=100):
-    """Fetch observation data for target stations and generate synoptic GeoJSON."""
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Querying station observations...")
+    """Fetch observation data for target stations and generate multi-point GeoJSON."""
+    print(
+        f"[{datetime.now().strftime('%H:%M:%S')}] Querying station"
+        " observations..."
+    )
 
     now = datetime.utcnow()
-    # Fetch recent days (or fallback year if current year processing has delay)
-    start_date = (now - timedelta(days=5)).strftime('%Y-%m-%d')
+    # Query last 3 days
+    start_date = (now - timedelta(days=3)).strftime('%Y-%m-%d')
     end_date = now.strftime('%Y-%m-%d')
 
     features = []
@@ -70,30 +73,46 @@ def update_data(isd_client, station_ids, limit=100):
 
     for st_id in target_stations:
         try:
-            # Query pyisd using full USAF-WBAN format
+            # Parse USAF (6 digits) and WBAN (5 digits) as separate arguments
+            usaf, wban = st_id.split('-')
+
+            # Pass usaf and wban directly or pass USAF as integer
             data_dict = isd_client.get_data(
-                start=start_date, end=end_date, station_id=st_id
+                start=start_date, end=end_date, station_id=int(usaf)
             )
 
-            if not data_dict or st_id not in data_dict:
+            if not data_dict:
                 continue
 
-            df = data_dict[st_id]
-            if df.empty:
+            # Extract first DataFrame from returned dictionary regardless of key name
+            df = list(data_dict.values())[0]
+
+            if df is None or df.empty:
                 continue
 
-            # Drop missing essential observations
-            df_valid = df.dropna(subset=['temp', 'windspeed'])
+            # Clean temperature and windspeed (convert 999.9 missing indicators to NaN)
+            df['temp'] = pd.to_numeric(df['temp'], errors='coerce')
+            df['windspeed'] = pd.to_numeric(df['windspeed'], errors='coerce')
+
+            # Drop rows missing critical temperature or wind parameters
+            df_valid = df.dropna(subset=['temp'])
             if df_valid.empty:
                 continue
 
-            # Extract latest observation row
+            # Get latest observation row
             latest = df_valid.iloc[-1]
 
             temp = float(latest['temp'])
-            rh = float(latest['rh'])
 
-            # Compute Dew Point using MetPy
+            # Fallback for missing RH to avoid Dewpoint computation errors
+            rh_val = latest.get('rh', 50.0)
+            rh = (
+                50.0
+                if (pd.isna(rh_val) or rh_val is None)
+                else float(rh_val)
+            )
+
+            # Calculate Dew Point using MetPy
             dp = round(
                 dewpoint_from_relative_humidity(
                     temp * units.degC, rh * units.percent
@@ -101,27 +120,31 @@ def update_data(isd_client, station_ids, limit=100):
                 1,
             )
 
+            # Ensure latitude/longitude exist in row index/columns
+            lat_val = float(latest.get('latitude', latest.get('lat', 0.0)))
+            lon_val = float(latest.get('longitude', latest.get('lon', 0.0)))
+
             features.append({
                 "type": "Feature",
                 "geometry": {
                     "type": "Point",
-                    "coordinates": [
-                        float(latest['longitude']),
-                        float(latest['latitude']),
-                    ],
+                    "coordinates": [lon_val, lat_val],
                 },
                 "properties": {
                     "station_id": st_id,
                     "time": latest.name.strftime('%Y-%m-%d %H:%M UTC'),
                     "temp": round(temp, 1),
                     "dewpoint": dp,
-                    "slp": round(float(latest.get('slp', 1013.2)), 1),
-                    "wind_dir": int(latest['winddir']),
-                    "wind_spd": int(latest['windspeed']),
+                    "slp": round(
+                        float(latest.get('slp', 1013.2) or 1013.2), 1
+                    ),
+                    "wind_dir": int(latest.get('winddir', 0) or 0),
+                    "wind_spd": int(latest.get('windspeed', 0) or 0),
                 },
             })
 
-        except Exception:
+        except Exception as e:
+            # Continue past failing stations
             continue
 
     geojson = {"type": "FeatureCollection", "features": features}
@@ -130,7 +153,8 @@ def update_data(isd_client, station_ids, limit=100):
         json.dump(geojson, f)
 
     print(
-        f"[{datetime.now().strftime('%H:%M:%S')}] Wrote {len(features)} live station plots to synoptic_data.json."
+        f"[{datetime.now().strftime('%H:%M:%S')}] Wrote {len(features)} live"
+        " station plots to synoptic_data.json."
     )
 
 
