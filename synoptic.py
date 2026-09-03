@@ -8,12 +8,14 @@ import requests
 LAT_MIN, LAT_MAX = 0.0, 60.0
 LON_MIN, LON_MAX = 80.0, 145.0
 
-# NOAA Aviation Weather Center (AWC) Official Live METAR / SYNOP API
+# Official NOAA AWC METAR JSON Endpoint
 AWC_API_URL = "https://aviationweather.gov/api/data/metar"
 STATION_LIST_URL = "https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv"
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) WeatherDataScript/1.0"
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) WeatherDataScript/1.0"
+    )
 }
 
 
@@ -39,8 +41,6 @@ def build_east_asia_wmo_catalog():
                 catalog[icao] = {
                     "name": str(row.get("station name", icao)),
                     "country": str(row.get("ctry", "")),
-                    "lat": float(row["lat"]),
-                    "lon": float(row["lon"]),
                 }
 
         print(f"✓ Catalog ready with {len(catalog)} East Asian ICAO records.")
@@ -51,10 +51,16 @@ def build_east_asia_wmo_catalog():
 
 
 def fetch_awc_realtime_data(catalog):
-    print("Fetching live global surface observations from NOAA AWC...")
+    print("Fetching live surface observations from NOAA AWC...")
     try:
-        # Fetch global decoded METARs in JSON format
-        params = {"format": "json", "hours": 2}
+        # AWC expects bbox formatted as: minlon,minlat,maxlon,maxlat
+        bbox_str = f"{LON_MIN},{LAT_MIN},{LON_MAX},{LAT_MAX}"
+
+        params = {
+            "format": "json",
+            "bbox": bbox_str,
+            "hours": 2,
+        }
 
         resp = requests.get(
             AWC_API_URL, params=params, headers=HEADERS, timeout=20
@@ -64,10 +70,9 @@ def fetch_awc_realtime_data(catalog):
             print(f"⚠️ AWC API returned HTTP status {resp.status_code}")
             return False
 
-        try:
-            data = resp.json()
-        except json.JSONDecodeError:
-            print("⚠️ Response from NOAA AWC was not valid JSON.")
+        data = resp.json()
+        if not data or not isinstance(data, list):
+            print("⚠️ AWC API returned empty or invalid response format.")
             return False
 
         features = []
@@ -75,49 +80,42 @@ def fetch_awc_realtime_data(catalog):
         for item in data:
             lat = item.get("lat")
             lon = item.get("lon")
-            icao = item.get("icaoId", "")
-
-            # If coords aren't in payload, look them up in our catalog
-            if (lat is None or lon is None) and icao in catalog:
-                lat = catalog[icao]["lat"]
-                lon = catalog[icao]["lon"]
+            icao = item.get("icaoId", "UNK")
 
             if lat is None or lon is None:
                 continue
 
-            # Check if point falls within East Asia bounding box
-            if LAT_MIN <= lat <= LAT_MAX and LON_MIN <= lon <= LON_MAX:
-                temp = item.get("temp")
-                dewp = item.get("dewp")
+            temp = item.get("temp")
+            dewp = item.get("dewp")
 
-                if temp is not None:
-                    meta = catalog.get(icao, {})
+            if temp is not None:
+                meta = catalog.get(icao, {})
 
-                    features.append({
-                        "type": "Feature",
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": [float(lon), float(lat)],
-                        },
-                        "properties": {
-                            "station_id": icao,
-                            "name": meta.get("name", item.get("name", icao)),
-                            "country": meta.get("country", ""),
-                            "time": item.get(
-                                "reportTime",
-                                datetime.now(timezone.utc).strftime(
-                                    "%Y-%m-%d %H:%M UTC"
-                                ),
+                features.append({
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [float(lon), float(lat)],
+                    },
+                    "properties": {
+                        "station_id": icao,
+                        "name": meta.get("name", item.get("name", icao)),
+                        "country": meta.get("country", ""),
+                        "time": item.get(
+                            "reportTime",
+                            datetime.now(timezone.utc).strftime(
+                                "%Y-%m-%d %H:%M UTC"
                             ),
-                            "temp": round(float(temp), 1),
-                            "dewpoint": round(float(dewp), 1)
-                            if dewp is not None
-                            else round(float(temp) - 2.0, 1),
-                            "slp": round(float(item.get("slp", 1013.2)), 1),
-                            "wind_dir": int(item.get("wdir", 0)),
-                            "wind_spd": int(item.get("wspd", 0)),
-                        },
-                    })
+                        ),
+                        "temp": round(float(temp), 1),
+                        "dewpoint": round(float(dewp), 1)
+                        if dewp is not None
+                        else round(float(temp) - 2.0, 1),
+                        "slp": round(float(item.get("slp") or 1013.2), 1),
+                        "wind_dir": int(item.get("wdir") or 0),
+                        "wind_spd": int(item.get("wspd") or 0),
+                    },
+                })
 
         if features:
             geojson = {"type": "FeatureCollection", "features": features}
@@ -130,7 +128,7 @@ def fetch_awc_realtime_data(catalog):
             )
             return True
 
-        print("⚠️ No observations matched East Asia bounding box.")
+        print("⚠️ No observations returned inside East Asia bounding box.")
         return False
 
     except Exception as e:
@@ -154,7 +152,7 @@ def main():
             continue
 
         print("Sleeping 15 minutes until next cycle...")
-        time.sleep(7200)
+        time.sleep(900)
 
 
 if __name__ == "__main__":
