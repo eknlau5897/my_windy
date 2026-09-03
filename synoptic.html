@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>East Asia Synoptic Map (0-60N, 80-145E)</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- MarkerCluster CSS (Optimizes performance for 100+ stations) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+  <!-- Leaflet & MarkerCluster JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+    
+    #map {
+      height: 100vh;
+      width: 100vw;
+      background-color: #aadaff;
+    }
+
+    /* WMO Standard Synoptic Station Plot Layout */
+    .station-plot {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      font-family: 'Courier New', Courier, monospace;
+      font-weight: bold;
+      font-size: 11px;
+    }
+    
+    /* Central Station Identifier Point */
+    .station-dot {
+      position: absolute;
+      top: 36px;
+      left: 36px;
+      width: 8px;
+      height: 8px;
+      background: #000;
+      border-radius: 50%;
+      z-index: 2;
+    }
+
+    /* Meteorological Element Placements */
+    .temp {
+      position: absolute;
+      top: 18px;
+      left: 10px;
+      color: #d32f2f; /* Red for Temperature */
+    }
+    
+    .dewpoint {
+      position: absolute;
+      bottom: 18px;
+      left: 10px;
+      color: #388e3c; /* Green for Dew Point */
+    }
+    
+    .slp {
+      position: absolute;
+      top: 18px;
+      right: 10px;
+      color: #1976d2; /* Blue for Sea Level Pressure */
+    }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script>
+  // 1. Define Strict Spatial Bounding Box: 0-60N, 80-145E
+  const southWest = L.latLng(0, 80);
+  const northEast = L.latLng(60, 145);
+  const regionBounds = L.latLngBounds(southWest, northEast);
+
+  // 2. Initialize Leaflet Map
+  const map = L.map('map', {
+    preferCanvas: true,            // Optimizes rendering performance
+    maxBounds: regionBounds,       // Locks map panning inside target box
+    maxBoundsViscosity: 1.0,        // Completely prevents dragging outside bounds
+    minZoom: 4,
+    maxZoom: 11
+  }).fitBounds(regionBounds);
+
+  // 3. Add OpenStreetMap Base Layer
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    bounds: regionBounds
+  }).addTo(map);
+
+  // 4. Initialize Marker Cluster Group to handle hundreds of overlapping stations
+  const markersCluster = L.markerClusterGroup({
+    disableClusteringAtZoom: 8, // Automatically expands all individual plots when zoomed in
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false
+  });
+  map.addLayer(markersCluster);
+
+  // 5. SVG Wind Barb Generator (Plots 50kt Flags, 10kt Barbs, 5kt Half-Barbs)
+  function createWindBarbSVG(dir, spd) {
+    let barbsHTML = '';
+    let currentY = 10;
+    let speed = spd;
+
+    // 50-Knot Flags
+    while (speed >= 50) {
+      barbsHTML += `<polygon points="20,${currentY} 35,${currentY + 4} 20,${currentY + 8}" fill="black" />`;
+      currentY += 10;
+      speed -= 50;
+    }
+    // 10-Knot Barbs
+    while (speed >= 10) {
+      barbsHTML += `<line x1="20" y1="${currentY}" x2="35" y2="${currentY - 5}" stroke="black" stroke-width="2" />`;
+      currentY += 6;
+      speed -= 10;
+    }
+    // 5-Knot Half-Barb
+    if (speed >= 5) {
+      barbsHTML += `<line x1="20" y1="${currentY}" x2="28" y2="${currentY - 3}" stroke="black" stroke-width="2" />`;
+    }
+
+    return `
+      <svg style="position: absolute; top:0; left:0; width:80px; height:80px; pointer-events:none; transform: rotate(${dir}deg); transform-origin: 40px 40px;" viewBox="0 0 80 80">
+        <line x1="40" y1="40" x2="20" y2="10" stroke="black" stroke-width="2" />
+        <g transform="translate(20,10) rotate(-60)">${barbsHTML}</g>
+      </svg>`;
+  }
+
+  // 6. Fetch Data Function (with Cache-Busting)
+  function loadLiveData() {
+    // Append time timestamp to avoid HTTP browser caching
+    const url = 'synoptic_data.json?t=' + new Date().getTime();
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        // Clear previous station markers
+        markersCluster.clearLayers();
+
+        // Parse GeoJSON features and build synoptic icons
+        const geojsonLayer = L.geoJSON(data, {
+          pointToLayer: function (feature, latlng) {
+            const p = feature.properties;
+
+            // Format Sea Level Pressure to last 3 standard WMO digits (e.g. 1013.2 -> 132)
+            const slpFormatted = String(p.slp).replace('.', '').slice(-3);
+
+            const html = `
+              <div class="station-plot">
+                <div class="temp">${p.temp}°</div>
+                <div class="dewpoint">${p.dewpoint}°</div>
+                <div class="slp">${slpFormatted}</div>
+                <div class="station-dot"></div>
+                ${createWindBarbSVG(p.wind_dir, p.wind_spd)}
+              </div>`;
+
+            const customIcon = L.divIcon({
+              html: html,
+              className: '',
+              iconSize: [80, 80],
+              iconAnchor: [40, 40]
+            });
+
+            return L.marker(latlng, { icon: customIcon })
+              .bindPopup(`
+                <b>Station ID:</b> ${p.station_id}<br>
+                <b>Observation Time:</b> ${p.time}<br>
+                <b>Temperature:</b> ${p.temp} °C<br>
+                <b>Dew Point:</b> ${p.dewpoint} °C<br>
+                <b>Pressure:</b> ${p.slp} hPa<br>
+                <b>Wind:</b> ${p.wind_dir}° at ${p.wind_spd} kts
+              `);
+          }
+        });
+
+        // Add markers to cluster layer
+        markersCluster.addLayer(geojsonLayer);
+        console.log(`[${new Date().toLocaleTimeString()}] Synoptic map updated.`);
+      })
+      .catch(err => console.error("Error loading station data:", err));
+  }
+
+  // 7. Initial Run & Set Auto-Refresh Interval (Every 60 Seconds)
+  loadLiveData();
+  setInterval(loadLiveData, 60000);
+</script>
+
+</body>
+</html>
