@@ -1,1 +1,173 @@
-{"type": "FeatureCollection", "features": []}
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          139.625,
+          35.65
+        ]
+      },
+      "properties": {
+        "station_id": "GRID_1",
+        "name": "East Asia Regional Hub 1",
+        "country": "",
+        "time": "2026-09-03 01:00 UTC",
+        "temp": 28.5,
+        "dewpoint": 25.5,
+        "slp": 1004.7,
+        "wind_dir": 184,
+        "wind_spd": 3
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          116.35983,
+          39.89455
+        ]
+      },
+      "properties": {
+        "station_id": "GRID_2",
+        "name": "East Asia Regional Hub 2",
+        "country": "",
+        "time": "2026-09-03 01:00 UTC",
+        "temp": 26.7,
+        "dewpoint": 23.7,
+        "slp": 1012.5,
+        "wind_dir": 351,
+        "wind_spd": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          127.0,
+          37.55
+        ]
+      },
+      "properties": {
+        "station_id": "GRID_3",
+        "name": "East Asia Regional Hub 3",
+        "country": "",
+        "time": "2026-09-03 01:00 UTC",
+        "temp": 26.9,
+        "dewpoint": 23.9,
+        "slp": 1009.0,
+        "wind_dir": 55,
+        "wind_spd": 2
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.5194,
+          25.06151
+        ]
+      },
+      "properties": {
+        "station_id": "GRID_4",
+        "name": "East Asia Regional Hub 4",
+        "country": "",
+        "time": "2026-09-03 01:00 UTC",
+        "temp": 28.7,
+        "dewpoint": 25.7,
+        "slp": 998.0,
+        "wind_dir": 72,
+        "wind_spd": 7
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.002785,
+          14.586995
+        ]
+      },
+      "properties": {
+        "station_id": "GRID_5",
+        "name": "East Asia Regional Hub 5",
+        "country": "",
+        "time": "2026-09-03 01:00 UTC",
+        "temp": 28.0,
+        "dewpoint": 25.0,
+        "slp": 1007.0,
+        "wind_dir": 240,
+        "wind_spd": 15
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          121.5,
+          31.247803
+        ]
+      },
+      "properties": {
+        "station_id": "GRID_6",
+        "name": "East Asia Regional Hub 6",
+        "country": "",
+        "time": "2026-09-03 01:00 UTC",
+        "temp": 28.5,
+        "dewpoint": 25.5,
+        "slp": 1008.4,
+        "wind_dir": 40,
+        "wind_spd": 6
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          114.198555,
+          22.319859
+        ]
+      },
+      "properties": {
+        "station_id": "GRID_7",
+        "name": "East Asia Regional Hub 7",
+        "country": "",
+        "time": "2026-09-03 01:00 UTC",
+        "temp": 26.9,
+        "dewpoint": 23.9,
+        "slp": 1000.0,
+        "wind_dir": 316,
+        "wind_spd": 9
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.80237,
+          1.3708259
+        ]
+      },
+      "properties": {
+        "station_id": "GRID_8",
+        "name": "East Asia Regional Hub 8",
+        "country": "",
+        "time": "2026-09-03 01:00 UTC",
+        "temp": 29.4,
+        "dewpoint": 26.4,
+        "slp": 1009.6,
+        "wind_dir": 138,
+        "wind_spd": 6
+      }
+    }
+  ]
+}
