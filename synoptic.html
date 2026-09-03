@@ -2,134 +2,251 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>East Asia Real-Time Synoptic Surface Map (Wind Barbs)</title>
-  
-  <!-- Leaflet & MarkerCluster CSS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>East Asia Synoptic Weather Map</title>
+
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; }
-    #map { width: 100%; height: 100vh; background: #111; }
-    
-    /* Station label displaying Temperature & Pressure beside the Wind Barb */
-    .station-label {
-      background: rgba(0, 0, 0, 0.75);
-      border: 1px solid #555;
-      border-radius: 4px;
-      color: #fff;
-      padding: 2px 4px;
-      font-size: 10px;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+    }
+    #map {
+      height: 100vh;
+      width: 100vw;
+      background: #090d16;
+    }
+    /* Floating Header Dashboard */
+    .dashboard-panel {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 1000;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      max-width: 340px;
+    }
+    .dashboard-panel h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #38bdf8;
+      margin-bottom: 4px;
+    }
+    .dashboard-panel p {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+    .stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-value {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #f1f5f9;
+    }
+    .stat-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: #64748b;
+    }
+
+    /* Custom Leaflet Marker Styling */
+    .station-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1.5px solid #38bdf8;
+      border-radius: 20px;
+      padding: 2px 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
       white-space: nowrap;
-      pointer-events: none;
+      color: #fff;
+      font-weight: 600;
+      font-size: 11px;
+    }
+    .wind-arrow {
+      display: inline-block;
+      margin-left: 4px;
+      font-size: 10px;
+      color: #38bdf8;
+    }
+
+    /* Leaflet Popup Styling Override */
+    .leaflet-popup-content-wrapper {
+      background: #1e293b;
+      color: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .leaflet-popup-tip {
+      background: #1e293b;
+    }
+    .popup-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 6px;
+    }
+    .popup-grid {
+      display: grid;
+      grid-template-columns: auto auto;
+      gap: 4px 12px;
+      font-size: 12px;
+    }
+    .popup-label {
+      color: #94a3b8;
+    }
+    .popup-val {
+      font-weight: 600;
+      text-align: right;
     }
   </style>
 </head>
 <body>
 
+  <div class="dashboard-panel">
+    <h1>East Asia Synoptic Stream</h1>
+    <p id="last-updated">Loading weather data...</p>
+    <div class="stats">
+      <div class="stat-item">
+        <span class="stat-value" id="station-count">0</span>
+        <span class="stat-label">Active Stations</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="avg-temp">-- °C</span>
+        <span class="stat-label">Avg Temp</span>
+      </div>
+    </div>
+  </div>
+
   <div id="map"></div>
 
-  <!-- Leaflet, MarkerCluster, and Wind Barb Plugin JS -->
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/spatialsparks/Leaflet.windbarb@master/src/leaflet-windbarb.js"></script>
 
   <script>
-    // 1. Initialize Leaflet Map centered on East Asia
-    const map = L.map('map').setView([30.0, 115.0], 4);
+    // Initialize Leaflet map centered over East Asia
+    const map = L.map('map', {
+      zoomControl: false
+    }).setView([30.0, 115.0], 4);
 
-    // 2. Base Tile Layer (CartoDB Dark Theme)
+    // Add Zoom controls to bottom-right
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    // Dark Map Base Tiles (CartoDB Dark Matter)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap &copy; CARTO | Data: NOAA WMO GTS',
-      maxZoom: 18
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 19
     }).addTo(map);
 
-    // 3. Cluster Group for Stations
-    const markersGroup = L.markerClusterGroup({
-      maxClusterRadius: 35,
-      spiderfyOnMaxZoom: true,
-      showCoverageOnHover: false
-    });
-    map.addLayer(markersGroup);
+    let geojsonLayer;
 
-    // Color code temperature
-    function getTempColor(t) {
-      if (t >= 30) return '#ff4d4d'; // Warm (Red)
-      if (t >= 20) return '#ffaa00'; // Moderate (Orange)
-      if (t >= 10) return '#00cccc'; // Cool (Cyan)
-      if (t >= 0)  return '#3399ff'; // Cold (Blue)
-      return '#e600e6';             // Freezing (Magenta)
+    // Returns temperature-dependent color scale
+    function getTempColor(temp) {
+      return temp > 30 ? '#ef4444' : // Hot (Red)
+             temp > 20 ? '#f97316' : // Warm (Orange)
+             temp > 10 ? '#eab308' : // Mild (Yellow)
+             temp > 0  ? '#06b6d4' : // Cool (Cyan)
+             '#3b82f6';  // Freezing (Blue)
     }
 
-    // 4. Fetch and Plot GTS Synoptic Data
     async function loadSynopticData() {
       try {
-        const response = await fetch('synoptic_data.json?cache=' + Date.now());
-        if (!response.ok) throw new Error('Data file not found');
-        
-        const geojson = await response.json();
-        markersGroup.clearLayers();
+        // Fetch generated synoptic_data.json (bypassing browser cache)
+        const response = await fetch(`synoptic_data.json?t=${new Date().getTime()}`);
+        if (!response.ok) throw new Error('Could not load synoptic_data.json');
 
-        const geoJsonLayer = L.geoJSON(geojson, {
+        const data = await response.json();
+
+        // Clear existing markers
+        if (geojsonLayer) {
+          map.removeLayer(geojsonLayer);
+        }
+
+        let totalTemp = 0;
+        const totalStations = data.features.length;
+
+        // Render GeoJSON Features
+        geojsonLayer = L.geoJSON(data, {
           pointToLayer: function (feature, latlng) {
             const props = feature.properties;
+            totalTemp += props.temp;
+
             const tempColor = getTempColor(props.temp);
+            const windRotation = props.wind_dir;
 
-            // Create Meteorological Wind Barb Icon using plugin
-            const barbIcon = L.WindBarb.icon({
-              deg: props.wind_dir,       // Direction in degrees (0-360)
-              speed: props.wind_spd,     // Wind speed in knots
-              pointRadius: 4,            // Station circle radius
-              strokeWidth: 2,            // Barb line thickness
-              strokeLength: 18,          // Length of main shaft
-              barbSpaceing: 4,           // Spacing between barbs
-              barbHeight: 12,            // Barb length
-              fillColor: tempColor,      // Color center circle by temperature
-              color: tempColor           // Color barb lines by temperature
+            // Custom HTML Marker showing temperature and wind arrow
+            const customIcon = L.divIcon({
+              className: 'custom-station-icon',
+              html: `
+                <div class="station-marker" style="border-color: ${tempColor}">
+                  <span>${props.temp}°C</span>
+                  <span class="wind-arrow" style="transform: rotate(${windRotation}deg); display: inline-block;">↑</span>
+                </div>
+              `,
+              iconSize: [60, 24],
+              iconAnchor: [30, 12]
             });
 
-            // Create marker with wind barb
-            const marker = L.marker(latlng, { icon: barbIcon });
-
-            // Attach tooltip showing Temperature and Pressure next to the barb
-            marker.bindTooltip(`<b>${Math.round(props.temp)}°C</b> | ${props.slp}hPa`, {
-              permanent: true,
-              direction: 'right',
-              offset: [10, -5],
-              className: 'station-label'
-            });
-
-            // Popup details on click
-            marker.bindPopup(`
-              <div style="font-size: 13px; line-height: 1.5;">
-                <strong style="font-size: 14px;">${props.name} (${props.station_id})</strong><br/>
-                <b>Country:</b> ${props.country}<br/>
-                <b>Obs Time:</b> ${props.time}<br/>
-                <hr style="border: 0; border-top: 1px solid #ccc; margin: 5px 0;">
-                <b>Temperature:</b> ${props.temp} °C<br/>
-                <b>Dew Point:</b> ${props.dewpoint} °C<br/>
-                <b>Pressure (SLP):</b> ${props.slp} hPa<br/>
-                <b>Wind:</b> ${props.wind_dir}° at ${props.wind_spd} knots
+            return L.marker(latlng, { icon: customIcon });
+          },
+          onEachFeature: function (feature, layer) {
+            const p = feature.properties;
+            
+            // Popup Details
+            const popupContent = `
+              <div class="popup-title">${p.name || p.station_id}</div>
+              <div class="popup-grid">
+                <span class="popup-label">Station ID:</span><span class="popup-val">${p.station_id}</span>
+                <span class="popup-label">Temperature:</span><span class="popup-val">${p.temp} °C</span>
+                <span class="popup-label">Dewpoint:</span><span class="popup-val">${p.dewpoint} °C</span>
+                <span class="popup-label">Sea Level Pressure:</span><span class="popup-val">${p.slp} hPa</span>
+                <span class="popup-label">Wind:</span><span class="popup-val">${p.wind_dir}° at ${p.wind_spd} kt</span>
+                <span class="popup-label">Report Time:</span><span class="popup-val">${p.time}</span>
               </div>
-            `);
-
-            return marker;
+            `;
+            layer.bindPopup(popupContent);
           }
-        });
+        }).addTo(map);
 
-        markersGroup.addLayer(geoJsonLayer);
-        console.log(`Rendered ${geojson.features.length} station wind barbs.`);
+        // Update Dashboard Summary Stats
+        document.getElementById('station-count').innerText = totalStations;
+        document.getElementById('avg-temp').innerText = totalStations > 0 
+          ? (totalTemp / totalStations).toFixed(1) + ' °C' 
+          : '-- °C';
+        document.getElementById('last-updated').innerText = `Synced at ${new Date().toLocaleTimeString()}`;
 
       } catch (err) {
-        console.error('Error loading synoptic_data.json:', err);
+        console.error('Error rendering weather layer:', err);
+        document.getElementById('last-updated').innerText = 'Waiting for synoptic_data.json...';
       }
     }
 
-    // Initial load + automatically refresh map every 5 minutes
+    // Initial Load & Auto-Refresh every 60 seconds
     loadSynopticData();
-    setInterval(loadSynopticData, 300000);
+    setInterval(loadSynopticData, 60000);
   </script>
 </body>
 </html>
